@@ -8,10 +8,13 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      isOpen: false,
+      lastAddedItem: null,
 
       addItem: (newItem: Omit<CartItem, "quantity">) => {
         const items = get().items;
         const existing = items.find((i) => i.variantId === newItem.variantId);
+        const itemRecord: CartItem = { ...newItem, quantity: 1 };
 
         if (existing) {
           set({
@@ -20,9 +23,15 @@ export const useCartStore = create<CartState>()(
                 ? { ...i, quantity: i.quantity + 1 }
                 : i
             ),
+            isOpen: true,
+            lastAddedItem: itemRecord,
           });
         } else {
-          set({ items: [...items, { ...newItem, quantity: 1 }] });
+          set({
+            items: [...items, itemRecord],
+            isOpen: true,
+            lastAddedItem: itemRecord,
+          });
         }
       },
 
@@ -44,6 +53,11 @@ export const useCartStore = create<CartState>()(
 
       clearCart: () => set({ items: [] }),
 
+      openCart: () => set({ isOpen: true }),
+      closeCart: () => set({ isOpen: false }),
+      toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
+      clearLastAdded: () => set({ lastAddedItem: null }),
+
       itemCount: () =>
         get().items.reduce((total, item) => total + item.quantity, 0),
 
@@ -55,6 +69,7 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "green-basket-cart",
+      partialize: (state) => ({ items: state.items }), // Only persist items array to localStorage
     }
   )
 );

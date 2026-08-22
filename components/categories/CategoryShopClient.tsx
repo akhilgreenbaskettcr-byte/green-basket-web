@@ -88,35 +88,20 @@ export function CategoryShopClient({
         })}
       </div>
 
-      {/* Editorial Commercial Ad Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#245B35] via-[#1a4427] to-[#12311b] text-white p-6 sm:p-8 md:p-10 shadow-sm border border-emerald-800/30">
-        <div className="relative z-10 max-w-2xl space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-xs text-lime-300 text-[11px] font-bold tracking-wider uppercase">
-            <Sparkles size={12} /> Authentic Kerala Kitchen Produce
-          </div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">
-            {currentCategory.name}
-          </h2>
-          <p className="text-white/80 text-xs sm:text-sm md:text-base leading-relaxed">
-            {currentCategory.description ||
-              "Cleaned, hygienic, and delivered fresh to your doorstep every morning."}
-          </p>
+      {/* Clean Category Heading */}
+      <div className="text-left pt-1 pb-2">
+        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-gb-green text-[11px] font-bold uppercase tracking-wider mb-2.5 border border-emerald-200/60 shadow-2xs">
+          AUTHENTIC KERALA KITCHEN PRODUCE
+        </span>
 
-          <div className="flex flex-wrap gap-4 pt-2 text-[11px] font-semibold text-emerald-100/90">
-            <span className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-xl">
-              <Leaf size={13} className="text-lime-400" /> 100% Zero Additives
-            </span>
-            <span className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-xl">
-              <ShieldCheck size={13} className="text-lime-400" /> Hygienic Food Grade Pack
-            </span>
-            <span className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-xl">
-              <Truck size={13} className="text-lime-400" /> Same-Day Dispatch
-            </span>
-          </div>
-        </div>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gb-charcoal tracking-tight leading-tight uppercase mb-2">
+          {currentCategory.name}
+        </h1>
 
-        {/* Decorative background glow */}
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-linear-to-l from-white/10 to-transparent pointer-events-none rounded-r-3xl" />
+        <p className="text-gray-500 text-xs sm:text-sm md:text-base leading-relaxed max-w-2xl">
+          {currentCategory.description ||
+            "Cleaned, hygienic, and delivered fresh to your doorstep every morning."}
+        </p>
       </div>
 
       {/* Interactive Toolbar */}

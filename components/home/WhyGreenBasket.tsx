@@ -70,7 +70,7 @@ export function WhyGreenBasket({ settings = {} }: WhyGreenBasketProps) {
 
           <h2
             id="why-gb-heading"
-            className="text-2xl sm:text-4xl md:text-5xl font-black text-[#141414] tracking-tight leading-tight mb-2.5 sm:mb-3"
+            className="text-2xl sm:text-4xl md:text-5xl font-black text-[#141414] tracking-tight leading-tight uppercase mb-2.5 sm:mb-3"
           >
             The Green Basket{" "}
             <span style={{ color: "#718F42" }}>difference.</span>

@@ -10,30 +10,27 @@ export async function AnnouncementBar() {
     settings["same_day_message"] ?? "Order before 1PM for same day delivery.";
 
   return (
-    <div className="announcement-bar" role="banner" aria-label="Store announcement">
+    <div
+      className="announcement-bar bg-gb-green text-white text-xs py-2 px-3 border-b border-emerald-800/30"
+      role="banner"
+      aria-label="Store announcement"
+    >
       <div className="gb-container">
-        <div className="flex items-center justify-between gap-4">
-          <span className="hidden sm:block truncate">{deliveryMessage}</span>
-          <span className="sm:hidden text-center w-full">
-            Freshly cut. Hygienically packed.
+        <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-1 sm:gap-4 text-center sm:text-left leading-tight">
+          {/* Main Delivery Message */}
+          <span className="font-medium text-[11px] sm:text-xs">
+            {deliveryMessage}
           </span>
-          <span className="hidden sm:flex items-center gap-1.5 shrink-0 text-white/80">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            <span className="font-medium text-white">{sameDayMessage}</span>
-          </span>
+
+          {/* Same Day Cutoff Message */}
+          {sameDayMessage && (
+            <span className="flex items-center justify-center gap-1.5 text-[11px] sm:text-xs text-white/90 shrink-0">
+              <span className="hidden sm:inline text-white/40">•</span>
+              <span className="font-bold text-lime-300 sm:text-white sm:font-semibold">
+                {sameDayMessage}
+              </span>
+            </span>
+          )}
         </div>
       </div>
     </div>

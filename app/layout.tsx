@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { CartSlideOver } from "@/components/cart/CartSlideOver";
+import { CartToast } from "@/components/cart/CartToast";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -45,6 +47,8 @@ export default function RootLayout({
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
         {children}
+        <CartSlideOver />
+        <CartToast />
       </body>
     </html>
   );

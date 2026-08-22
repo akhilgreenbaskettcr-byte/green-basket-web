@@ -106,8 +106,8 @@ export default async function CategoriesPage() {
               Curated Kitchen Essentials
             </span>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gb-charcoal tracking-tight leading-tight mb-3">
-              Our <span style={{ color: "#245B35" }}>Categories</span>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gb-charcoal tracking-tight leading-tight uppercase mb-3">
+              OUR <span style={{ color: "#245B35" }}>CATEGORIES</span>
             </h1>
 
             <p className="text-gray-500 text-sm sm:text-base max-w-2xl leading-relaxed">

@@ -13,10 +13,16 @@ export interface CartItem {
 
 export interface CartState {
   items: CartItem[];
+  isOpen: boolean;
+  lastAddedItem: CartItem | null;
   addItem: (item: Omit<CartItem, "quantity">) => void;
   removeItem: (variantId: string) => void;
   updateQuantity: (variantId: string, quantity: number) => void;
   clearCart: () => void;
+  openCart: () => void;
+  closeCart: () => void;
+  toggleCart: () => void;
+  clearLastAdded: () => void;
   itemCount: () => number;
   subtotal: () => number;
 }

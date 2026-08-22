@@ -66,7 +66,7 @@ export function HowItWorks({ settings = {} }: HowItWorksProps) {
 
           <h2
             id="how-it-works-heading"
-            className="text-3xl sm:text-4xl md:text-5xl font-black text-[#141414] tracking-tight leading-tight"
+            className="text-3xl sm:text-4xl md:text-5xl font-black text-[#141414] tracking-tight leading-tight uppercase"
           >
             Fresh <span style={{ color: "#718F42" }}>made simple.</span>
           </h2>
@@ -95,7 +95,45 @@ export function HowItWorks({ settings = {} }: HowItWorksProps) {
             </svg>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 relative z-10">
+          {/* Curved Dotted Connecting Line for Mobile (2x2 Grid) */}
+          <div
+            className="lg:hidden absolute inset-0 pointer-events-none -z-0"
+            aria-hidden="true"
+          >
+            <svg
+              className="w-full h-full text-emerald-600/35 overflow-visible"
+              viewBox="0 0 360 480"
+              fill="none"
+              preserveAspectRatio="none"
+            >
+              {/* Row 1 connection */}
+              <path
+                d="M 90,48 Q 180,18 270,48"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeDasharray="5 6"
+                strokeLinecap="round"
+              />
+              {/* Diagonal transition to Row 2 */}
+              <path
+                d="M 270,55 Q 310,180 90,285"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeDasharray="5 6"
+                strokeLinecap="round"
+              />
+              {/* Row 2 connection */}
+              <path
+                d="M 90,290 Q 180,260 270,290"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeDasharray="5 6"
+                strokeLinecap="round"
+              />
+            </svg>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 sm:gap-10 lg:gap-8 relative z-10">
             {steps.map((step) => {
               return (
                 <div
@@ -103,21 +141,21 @@ export function HowItWorks({ settings = {} }: HowItWorksProps) {
                   className="flex flex-col items-center text-center group"
                 >
                   {/* Luminous Node Circle with Step Badge */}
-                  <div className="relative mb-5">
+                  <div className="relative mb-4 sm:mb-5">
                     {/* Outer soft glowing aura */}
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#EBF2EA] flex items-center justify-center border border-emerald-200/80 p-2 shadow-sm group-hover:scale-105 transition-transform duration-300">
+                    <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-[#EBF2EA] flex items-center justify-center border border-emerald-200/80 p-1.5 sm:p-2 shadow-sm group-hover:scale-105 transition-transform duration-300">
                       <div className="relative w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden shadow-2xs">
                         {step.imageUrl && step.imageUrl.trim() !== "" ? (
                           <Image
                             src={step.imageUrl}
                             alt={step.imageAlt}
                             fill
-                            sizes="(max-width: 640px) 96px, 112px"
+                            sizes="(max-width: 640px) 80px, 112px"
                             className="object-contain p-1 select-none"
                             unoptimized={step.imageUrl.startsWith("data:")}
                           />
                         ) : (
-                          <span className="text-xs font-bold text-gray-400">
+                          <span className="text-[11px] sm:text-xs font-bold text-gray-400">
                             Icon {step.number}
                           </span>
                         )}
@@ -125,16 +163,16 @@ export function HowItWorks({ settings = {} }: HowItWorksProps) {
                     </div>
 
                     {/* Step number badge */}
-                    <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-gb-green text-white text-[11px] font-extrabold px-3 py-0.5 rounded-full shadow-xs border-2 border-white">
+                    <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-gb-green text-white text-[10px] sm:text-[11px] font-extrabold px-2.5 sm:px-3 py-0.5 rounded-full shadow-xs border-2 border-white">
                       {step.number}
                     </span>
                   </div>
 
                   {/* Text */}
-                  <h3 className="font-extrabold text-[#141414] text-lg sm:text-xl mb-2 mt-2">
+                  <h3 className="font-extrabold text-[#141414] text-sm sm:text-xl mb-1.5 sm:mb-2 mt-2">
                     {step.title}
                   </h3>
-                  <p className="text-gray-500 text-xs sm:text-sm leading-relaxed max-w-[240px]">
+                  <p className="text-gray-500 text-[11px] sm:text-sm leading-snug sm:leading-relaxed max-w-[240px]">
                     {step.description}
                   </p>
                 </div>

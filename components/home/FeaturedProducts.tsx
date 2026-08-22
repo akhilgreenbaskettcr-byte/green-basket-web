@@ -135,23 +135,23 @@ export function FeaturedProducts({ products }: FeaturedProductsProps) {
         <div className="flex items-end justify-between mb-10 gap-4">
           <div>
             <p
-              className="text-xs font-semibold uppercase tracking-widest mb-2"
+              className="text-xs font-bold uppercase tracking-widest mb-2"
               style={{ color: "#245B35" }}
             >
-              Popular Picks
+              POPULAR PICKS
             </p>
             <h2
               id="featured-products-heading"
-              className="text-2xl md:text-3xl font-bold text-gb-charcoal"
+              className="text-2xl md:text-3xl font-extrabold text-gb-charcoal uppercase"
             >
-              Our bestsellers.
+              OUR BESTSELLERS.
             </h2>
           </div>
           <Link
             href="/categories"
-            className="hidden sm:flex items-center gap-2 text-sm font-semibold text-gb-charcoal hover:text-gb-green transition-colors shrink-0"
+            className="hidden sm:flex items-center gap-2 text-sm font-bold text-gb-charcoal hover:text-gb-green transition-colors shrink-0 uppercase tracking-wide"
           >
-            View all
+            VIEW ALL
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>

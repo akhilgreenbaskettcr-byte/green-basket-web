@@ -69,16 +69,16 @@ export function CategorySection({ categories }: CategorySectionProps) {
         {/* Header */}
         <div className="text-center mb-10">
           <p
-            className="text-xs font-semibold uppercase tracking-widest mb-2"
+            className="text-xs font-bold uppercase tracking-widest mb-2"
             style={{ color: "#245B35" }}
           >
-            Shop by Category
+            SHOP BY CATEGORY
           </p>
           <h2
             id="category-section-heading"
-            className="text-2xl md:text-3xl font-bold text-gb-charcoal"
+            className="text-2xl md:text-3xl font-extrabold text-gb-charcoal uppercase"
           >
-            Everything you need, in one place.
+            EVERYTHING YOU NEED, IN ONE PLACE.
           </h2>
         </div>
 
