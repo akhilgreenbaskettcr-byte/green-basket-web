@@ -88,20 +88,20 @@ export function WhyGreenBasket({ settings = {} }: WhyGreenBasketProps) {
             return (
               <div
                 key={card.id}
-                className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/80 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden p-4 sm:p-7 pb-0 sm:pb-0 min-h-[290px] sm:min-h-[440px] group"
+                className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/80 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden p-3.5 sm:p-6 lg:p-7 pb-0 sm:pb-0 lg:pb-0 min-h-[330px] sm:min-h-[440px] group"
               >
                 {/* Top Content */}
                 <div className="space-y-2.5 sm:space-y-4">
                   {/* Dark Green circular icon badge */}
-                  <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#245B35] text-white flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-xs">
+                  <div className="w-9 h-9 sm:w-13 sm:h-13 rounded-full bg-[#245B35] text-white flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-xs">
                     <Icon className="w-4.5 h-4.5 sm:w-6 sm:h-6" strokeWidth={2.4} />
                   </div>
 
                   <div>
-                    <h3 className="font-bold sm:font-extrabold text-[#141414] text-sm sm:text-xl leading-snug mb-1 sm:mb-2 line-clamp-1 sm:line-clamp-none">
+                    <h3 className="font-bold sm:font-extrabold text-[#141414] text-[13px] sm:text-lg md:text-xl leading-tight sm:leading-snug mb-1 sm:mb-2">
                       {card.title}
                     </h3>
-                    <p className="text-gray-500 text-[11px] sm:text-sm leading-snug sm:leading-relaxed line-clamp-2 sm:line-clamp-none">
+                    <p className="text-gray-500 text-[10.5px] sm:text-xs md:text-sm leading-snug sm:leading-relaxed">
                       {card.description}
                     </p>
                   </div>
