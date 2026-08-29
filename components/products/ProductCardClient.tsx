@@ -86,7 +86,7 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
       </Link>
 
       {/* Info Body */}
-      <div className="p-4 sm:p-5 flex flex-col flex-1 bg-white">
+      <div className="p-3 sm:p-5 flex flex-col flex-1 bg-white">
         {category && (
           <p className="text-[10px] font-bold uppercase tracking-wider text-gb-olive mb-1 font-mono">
             {category.name}
@@ -94,20 +94,20 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
         )}
 
         <Link href={`/products/${product.slug}`} className="group-hover:text-gb-green transition-colors">
-          <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-snug mb-1">
+          <h3 className="font-bold text-gray-900 text-xs sm:text-base leading-snug mb-1 line-clamp-2">
             {product.name}
           </h3>
         </Link>
 
         {product.description && (
-          <p className="text-gray-400 text-xs leading-relaxed mb-3 line-clamp-2 flex-1">
+          <p className="text-gray-400 text-xs leading-relaxed mb-3 line-clamp-2 flex-1 hidden sm:block">
             {product.description}
           </p>
         )}
 
         {/* Size / Variant Selector */}
         {availableVariants.length > 1 && (
-          <div className="flex flex-wrap gap-1.5 mb-4" role="group" aria-label="Select package size">
+          <div className="flex flex-wrap gap-1 mb-3.5" role="group" aria-label="Select package size">
             {availableVariants.map((v) => (
               <button
                 key={v.id}
@@ -117,7 +117,7 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
                   setSelectedVariant(v);
                 }}
                 className={cn(
-                  "text-[11px] font-semibold py-1 px-2.5 rounded-lg border transition-all cursor-pointer",
+                  "text-[10px] sm:text-[11px] font-semibold py-0.5 px-2 sm:py-1 sm:px-2.5 rounded-lg border transition-all cursor-pointer",
                   v.id === selectedVariant.id
                     ? "bg-gb-green text-white border-gb-green shadow-2xs font-bold"
                     : "bg-gray-50 text-gray-600 border-gray-200 hover:border-gb-green"
@@ -131,18 +131,18 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
         )}
 
         {availableVariants.length === 1 && (
-          <div className="mb-4">
-            <span className="text-[11px] font-semibold py-0.5 px-2 rounded-md bg-green-50 text-gb-green border border-green-100">
+          <div className="mb-3.5">
+            <span className="text-[10px] sm:text-[11px] font-semibold py-0.5 px-2 rounded-md bg-green-50 text-gb-green border border-green-100">
               Pack: {selectedVariant.label}
             </span>
           </div>
         )}
 
         {/* Price & Add to Cart */}
-        <div className="flex items-center justify-between gap-2 mt-auto pt-3 border-t border-gray-100">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2 mt-auto pt-2.5 sm:pt-3 border-t border-gray-100">
           <div>
-            <p className="text-[10px] text-gray-400 font-semibold uppercase">Price</p>
-            <span className="font-black text-gray-900 text-base sm:text-lg leading-none">
+            <p className="text-[9px] sm:text-[10px] text-gray-400 font-semibold uppercase">Price</p>
+            <span className="font-black text-gray-900 text-sm sm:text-lg leading-none">
               {formatPrice(selectedVariant.price)}
             </span>
           </div>
@@ -150,7 +150,7 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
           <button
             onClick={handleAddToCart}
             className={cn(
-              "flex items-center justify-center gap-1.5 text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95",
+              "flex items-center justify-center gap-1 sm:gap-1.5 text-xs font-bold px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 shrink-0",
               added
                 ? "bg-emerald-600 text-white"
                 : "bg-gb-green text-white hover:bg-gb-green-dark"
@@ -160,13 +160,13 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
           >
             {added ? (
               <>
-                <Check size={14} aria-hidden="true" />
-                <span>Added</span>
+                <Check size={13} aria-hidden="true" />
+                <span className="text-[11px] sm:text-xs">Added</span>
               </>
             ) : (
               <>
-                <ShoppingCart size={14} aria-hidden="true" />
-                <span>Add</span>
+                <ShoppingCart size={13} aria-hidden="true" />
+                <span className="text-[11px] sm:text-xs">Add</span>
               </>
             )}
           </button>
