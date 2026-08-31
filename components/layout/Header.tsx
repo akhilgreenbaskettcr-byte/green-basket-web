@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { User } from "lucide-react";
 import { NavLinks } from "./NavLinks";
 import { CartIcon } from "./CartIcon";
 import { SearchBar } from "./SearchBar";
 import { MobileMenu } from "./MobileMenu";
+import { UserNavIcon } from "./UserNavIcon";
 import { Logo } from "@/components/ui/Logo";
 
 export function Header() {
@@ -23,13 +23,7 @@ export function Header() {
           {/* Right actions */}
           <div className="flex items-center gap-2 shrink-0">
             <SearchBar />
-            <Link
-              href="/account"
-              className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="My account"
-            >
-              <User size={19} className="text-gb-charcoal" aria-hidden="true" />
-            </Link>
+            <UserNavIcon />
             <CartIcon />
           </div>
         </div>
@@ -44,15 +38,9 @@ export function Header() {
             <Logo href="/" size="sm" />
 
             {/* Right icons */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <SearchBar />
-              <Link
-                href="/account"
-                className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 transition-colors"
-                aria-label="My account"
-              >
-                <User size={18} className="text-gb-charcoal" aria-hidden="true" />
-              </Link>
+              <UserNavIcon />
               <CartIcon />
             </div>
           </div>

@@ -148,7 +148,7 @@ export function CategoryShopClient({
 
       {/* Products Grid */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4 md:gap-5">
           {filtered.map((product) => (
             <ProductCardClient key={product.id} product={product} />
           ))}

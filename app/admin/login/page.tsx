@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
 
     if (profile?.role !== "admin") {
       await supabase.auth.signOut();
-      setError("You do not have admin access.");
+      setError("You do not have admin access. Please ensure your user role is set to 'admin' in the profiles table in Supabase.");
       setLoading(false);
       return;
     }

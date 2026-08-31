@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useCartStore } from "@/lib/store/cart";
@@ -18,6 +19,7 @@ import {
   ChevronDown,
   Info,
   Package,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +28,7 @@ interface ProductDetailClientProps {
 }
 
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
+  const router = useRouter();
   const availableVariants = product.product_variants.filter((v) => v.is_available);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
     availableVariants[0]
@@ -33,12 +36,14 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
+  const addItemSilent = useCartStore((s) => s.addItemSilent);
+  const closeCart = useCartStore((s) => s.closeCart);
 
   const handleAddToCart = () => {
     if (!selectedVariant) return;
 
-    for (let i = 0; i < quantity; i++) {
-      addItem({
+    addItem(
+      {
         productId: product.id,
         variantId: selectedVariant.id,
         productName: product.name,
@@ -46,14 +51,36 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         price: selectedVariant.price,
         imageUrl: product.image_url,
         slug: product.slug,
-      });
-    }
+      },
+      quantity
+    );
 
     setAdded(true);
     setTimeout(() => {
       setAdded(false);
       setQuantity(1);
     }, 2000);
+  };
+
+  const handleBuyNow = () => {
+    if (!selectedVariant) return;
+
+    // Use silent add — keeps cart drawer closed (cart drawer sets isOpen:true on normal addItem)
+    closeCart();
+    addItemSilent(
+      {
+        productId: product.id,
+        variantId: selectedVariant.id,
+        productName: product.name,
+        variantLabel: selectedVariant.label,
+        price: selectedVariant.price,
+        imageUrl: product.image_url,
+        slug: product.slug,
+      },
+      quantity
+    );
+
+    router.push("/checkout");
   };
 
   const category = product.categories;
@@ -143,8 +170,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           </div>
         </div>
 
-        {/* Product Title (Displayed cleanly below image on mobile) */}
-        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-gb-charcoal tracking-tight leading-tight mb-3 sm:mb-4">
+        {/* Product Title (Moderately sized & clean on desktop, unchanged on mobile) */}
+        <h1 className="text-2xl sm:text-3xl lg:text-[38px] font-black text-gb-charcoal tracking-tight leading-tight mb-3 sm:mb-4">
           {product.name}
         </h1>
 
@@ -194,16 +221,16 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           </div>
         )}
 
-        {/* Price Presentation */}
+        {/* Price Presentation (Balanced desktop price size, unchanged on mobile) */}
         {selectedVariant && (
           <div className="flex items-baseline gap-3 my-4 sm:my-6">
-            <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-gb-charcoal tracking-tight font-sans">
+            <span className="text-3xl sm:text-3xl lg:text-4xl font-black text-gb-charcoal tracking-tight font-sans">
               {formatPrice(selectedVariant.price)}
             </span>
             {selectedVariant.compare_price &&
               selectedVariant.compare_price > selectedVariant.price && (
                 <>
-                  <span className="text-base sm:text-xl text-gray-400 line-through font-medium">
+                  <span className="text-base sm:text-lg text-gray-400 line-through font-medium">
                     {formatPrice(selectedVariant.compare_price)}
                   </span>
                   <span className="text-[11px] sm:text-xs font-extrabold text-emerald-800 bg-emerald-100/90 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">
@@ -214,59 +241,74 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           </div>
         )}
 
-        {/* Purchase Controls — Side-by-Side Horizontal Row on Mobile */}
-        <div className="flex flex-row items-center gap-2.5 sm:gap-3.5 mb-6 sm:mb-8">
-          {/* Stepper */}
-          <div className="flex items-center justify-between border border-gray-300/80 bg-white rounded-xl h-12 px-1.5 sm:px-2 shrink-0 w-[110px] sm:w-[130px]">
+        {/* Purchase Controls — Desktop Equal Width & Perfect Alignment (Mobile 100% Untouched) */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3.5 mb-6 sm:mb-8">
+          {/* Mobile Row 1: Stepper + Add to Cart (On Desktop sm:contents makes buttons equal flex-1 children) */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 max-sm:w-full sm:contents">
+            {/* Stepper */}
+            <div className="flex items-center justify-between border border-gray-300/80 bg-white rounded-xl h-12 px-1.5 sm:px-2 shrink-0 w-[105px] sm:w-[120px]">
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:scale-95 transition-all text-gray-600 cursor-pointer shrink-0"
+                aria-label="Decrease quantity"
+              >
+                <Minus size={14} className="stroke-[2.5]" />
+              </button>
+              <span
+                className="text-sm sm:text-base font-extrabold text-gb-charcoal px-1 font-mono"
+                aria-label={`Quantity: ${quantity}`}
+                aria-live="polite"
+              >
+                {quantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => q + 1)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:scale-95 transition-all text-gray-600 cursor-pointer shrink-0"
+                aria-label="Increase quantity"
+              >
+                <Plus size={14} className="stroke-[2.5]" />
+              </button>
+            </div>
+
+            {/* Add to Cart CTA */}
             <button
               type="button"
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 active:scale-95 transition-all text-gray-600 cursor-pointer shrink-0"
-              aria-label="Decrease quantity"
+              onClick={handleAddToCart}
+              disabled={!selectedVariant || selectedVariant.stock_quantity === 0}
+              id="product-add-to-cart-btn"
+              className={cn(
+                "flex-1 sm:flex-1 h-12 flex items-center justify-center gap-2 rounded-xl text-sm sm:text-base font-extrabold transition-all shadow-xs hover:shadow-md cursor-pointer active:scale-[0.99] px-3 sm:px-4 border border-gb-green/20",
+                added
+                  ? "bg-emerald-600 text-white"
+                  : "bg-green-50 hover:bg-green-100 text-gb-green"
+              )}
             >
-              <Minus size={14} className="stroke-[2.5]" />
-            </button>
-            <span
-              className="text-sm sm:text-base font-extrabold text-gb-charcoal px-1 sm:px-3 font-mono"
-              aria-label={`Quantity: ${quantity}`}
-              aria-live="polite"
-            >
-              {quantity}
-            </span>
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => q + 1)}
-              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 active:scale-95 transition-all text-gray-600 cursor-pointer shrink-0"
-              aria-label="Increase quantity"
-            >
-              <Plus size={14} className="stroke-[2.5]" />
+              {added ? (
+                <>
+                  <Check size={17} className="stroke-[3] shrink-0" aria-hidden="true" />
+                  <span>Added to Cart</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingCart size={17} className="stroke-[2.5] shrink-0" aria-hidden="true" />
+                  <span>Add to Cart</span>
+                </>
+              )}
             </button>
           </div>
 
-          {/* Add to Cart CTA */}
+          {/* Buy Now CTA — Full-width on mobile, 50% equal width on desktop */}
           <button
             type="button"
-            onClick={handleAddToCart}
+            onClick={handleBuyNow}
             disabled={!selectedVariant || selectedVariant.stock_quantity === 0}
-            id="product-add-to-cart-btn"
-            className={cn(
-              "flex-1 h-12 flex items-center justify-center gap-2 sm:gap-2.5 rounded-xl text-sm sm:text-base font-extrabold transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-[0.99] px-3 sm:px-4 min-w-0",
-              added
-                ? "bg-emerald-600 text-white"
-                : "bg-gb-green hover:bg-gb-green-dark text-white"
-            )}
+            id="product-buy-now-btn"
+            className="w-full sm:flex-1 h-12 flex items-center justify-center gap-2 rounded-xl text-sm sm:text-base font-extrabold bg-gb-green hover:bg-gb-green-dark text-white transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-[0.99] px-4 shrink-0"
           >
-            {added ? (
-              <>
-                <Check size={17} className="stroke-[3] shrink-0" aria-hidden="true" />
-                <span className="truncate">Added to Cart</span>
-              </>
-            ) : (
-              <>
-                <ShoppingCart size={17} className="stroke-[2.5] shrink-0" aria-hidden="true" />
-                <span className="truncate">Add to Cart</span>
-              </>
-            )}
+            <Zap size={17} className="stroke-[2.5] shrink-0 fill-amber-300 text-amber-300" aria-hidden="true" />
+            <span>Buy Now</span>
           </button>
         </div>
 

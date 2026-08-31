@@ -15,7 +15,8 @@ export interface CartState {
   items: CartItem[];
   isOpen: boolean;
   lastAddedItem: CartItem | null;
-  addItem: (item: Omit<CartItem, "quantity">) => void;
+  addItem: (item: Omit<CartItem, "quantity">, qty?: number) => void;
+  addItemSilent: (item: Omit<CartItem, "quantity">, qty?: number) => void;
   removeItem: (variantId: string) => void;
   updateQuantity: (variantId: string, quantity: number) => void;
   clearCart: () => void;

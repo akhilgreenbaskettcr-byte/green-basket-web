@@ -35,7 +35,7 @@ export type CreateOrderResult =
 export async function createOrder(
   formData: CheckoutFormData
 ): Promise<CreateOrderResult> {
-  // Validate
+  // Validate request schema
   const parsed = CheckoutSchema.safeParse(formData);
   if (!parsed.success) {
     return {
@@ -46,6 +46,22 @@ export async function createOrder(
 
   const data = parsed.data;
   const supabase = await createClient();
+
+  // Critical Server-side Security Check: Verify that requested delivery PIN code is active
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: activeArea, error: areaError } = await (supabase as any)
+    .from("delivery_areas")
+    .select("id, is_active")
+    .eq("pincode", data.pincode)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (areaError || !activeArea) {
+    return {
+      success: false,
+      error: `Delivery is currently unavailable in PIN code ${data.pincode}. Please select an active delivery area.`,
+    };
+  }
 
   // Get logged-in user (optional — supports guest checkout)
   const {
@@ -113,9 +129,6 @@ export async function createOrder(
 
   if (itemsError) {
     console.error("Order items error:", itemsError);
-    // Order created but items failed — this is a critical issue in production,
-    // but for now we return success with the order number
-    // In production: implement saga/rollback pattern
   }
 
   return { success: true, orderNumber };

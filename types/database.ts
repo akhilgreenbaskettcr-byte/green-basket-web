@@ -259,6 +259,68 @@ export interface Database {
           updated_at?: string;
         };
       };
+      delivery_areas: {
+        Row: {
+          id: string;
+          pincode: string;
+          area_name: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          pincode: string;
+          area_name: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          pincode?: string;
+          area_name?: string;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+      };
+      addresses: {
+        Row: {
+          id: string;
+          user_id: string;
+          full_name: string;
+          phone: string;
+          address_line: string;
+          city: string;
+          pincode: string;
+          label: string;
+          is_default: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          full_name: string;
+          phone: string;
+          address_line: string;
+          city: string;
+          pincode: string;
+          label?: string;
+          is_default?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          full_name?: string;
+          phone?: string;
+          address_line?: string;
+          city?: string;
+          pincode?: string;
+          label?: string;
+          is_default?: boolean;
+          updated_at?: string;
+        };
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -287,6 +349,8 @@ export type ProductVariant =
 export type Order = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
 export type SiteSetting = Database["public"]["Tables"]["site_settings"]["Row"];
+export type DeliveryArea = Database["public"]["Tables"]["delivery_areas"]["Row"];
+export type SavedAddress = Database["public"]["Tables"]["addresses"]["Row"];
 
 export type OrderStatus = Order["status"];
 

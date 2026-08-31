@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 
 export default function NotFound() {
   return (
     <>
-      <AnnouncementBar />
-      <Header />
+      {/* Minimal nav bar — avoids next/headers restriction on not-found.tsx */}
+      <header className="h-16 bg-white border-b border-gray-200 flex items-center px-6">
+        <Link href="/" className="font-bold text-gb-green text-lg">
+          🌿 Green Basket
+        </Link>
+      </header>
+
       <main id="main-content" className="min-h-screen bg-gb-cream flex items-center justify-center py-20">
         <div className="gb-container text-center max-w-lg mx-auto">
           <p className="text-7xl font-bold text-gb-green/20 mb-4">404</p>
@@ -23,7 +25,10 @@ export default function NotFound() {
           </div>
         </div>
       </main>
-      <Footer />
+
+      <footer className="border-t border-gray-200 py-7 bg-white/40 text-center text-xs text-gray-400">
+        © {new Date().getFullYear()} GREEN BASKET TCR. ALL RIGHTS RESERVED.
+      </footer>
     </>
   );
 }
