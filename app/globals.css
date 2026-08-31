@@ -472,6 +472,15 @@ input[type="search"]::-webkit-search-cancel-button {
   display: inline-block;
 }
 
+/* Hide scrollbars completely (e.g. category pills, horizontal carousels) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* ============================================================
    MOTION PREFERENCES
    ============================================================ */

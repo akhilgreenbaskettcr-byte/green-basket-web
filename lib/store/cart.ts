@@ -11,16 +11,17 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
       lastAddedItem: null,
 
-      addItem: (newItem: Omit<CartItem, "quantity">) => {
+      addItem: (newItem: Omit<CartItem, "quantity">, qty: number = 1) => {
         const items = get().items;
         const existing = items.find((i) => i.variantId === newItem.variantId);
-        const itemRecord: CartItem = { ...newItem, quantity: 1 };
+        const amountToAdd = Math.max(1, qty);
+        const itemRecord: CartItem = { ...newItem, quantity: amountToAdd };
 
         if (existing) {
           set({
             items: items.map((i) =>
               i.variantId === newItem.variantId
-                ? { ...i, quantity: i.quantity + 1 }
+                ? { ...i, quantity: i.quantity + amountToAdd }
                 : i
             ),
             isOpen: true,
@@ -31,6 +32,32 @@ export const useCartStore = create<CartState>()(
             items: [...items, itemRecord],
             isOpen: true,
             lastAddedItem: itemRecord,
+          });
+        }
+      },
+
+      // Like addItem but does NOT open the cart drawer — used by Buy Now
+      addItemSilent: (newItem: Omit<CartItem, "quantity">, qty: number = 1) => {
+        const items = get().items;
+        const existing = items.find((i) => i.variantId === newItem.variantId);
+        const amountToAdd = Math.max(1, qty);
+        const itemRecord: CartItem = { ...newItem, quantity: amountToAdd };
+
+        if (existing) {
+          set({
+            items: items.map((i) =>
+              i.variantId === newItem.variantId
+                ? { ...i, quantity: i.quantity + amountToAdd }
+                : i
+            ),
+            lastAddedItem: itemRecord,
+            // isOpen intentionally NOT set — cart drawer stays closed
+          });
+        } else {
+          set({
+            items: [...items, itemRecord],
+            lastAddedItem: itemRecord,
+            // isOpen intentionally NOT set — cart drawer stays closed
           });
         }
       },

@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Users,
   Settings,
+  MapPin,
   ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/admin/home-editor", label: "Home Page Editor", icon: LayoutTemplate },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: Tags },
+  { href: "/admin/delivery-areas", label: "Delivery Areas", icon: MapPin },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/settings", label: "Store Settings", icon: Settings },

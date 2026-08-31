@@ -11,12 +11,11 @@ import {
   Package,
   History,
   Clock,
-  CornerDownLeft,
-  ChevronRight,
   Loader2,
   Tag,
   Plus,
   Check,
+  ChevronRight,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { formatPrice } from "@/lib/utils";
@@ -75,7 +74,6 @@ export function SearchBar() {
       // Ignore localStorage errors
     }
 
-    // Fetch categories for quick filter pills
     async function loadCategories() {
       try {
         const supabase = createClient();
@@ -107,7 +105,7 @@ export function SearchBar() {
       setRecentSearches(updated);
       localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
     } catch {
-      // Ignore localStorage errors
+      // Ignore
     }
   };
 
@@ -352,7 +350,7 @@ export function SearchBar() {
         <Search size={18} />
       </button>
 
-      {/* Modern Command Palette Search Modal */}
+      {/* Fresh Minimal Search Modal */}
       {open && (
         <div
           className="fixed inset-0 z-[100] flex items-start justify-center pt-6 sm:pt-16 md:pt-20 px-3 sm:px-4"
@@ -362,15 +360,15 @@ export function SearchBar() {
           aria-label="Search Modal"
           onKeyDown={handleKeyDownInModal}
         >
-          {/* Glassmorphism Backdrop Overlay */}
+          {/* Backdrop Overlay */}
           <div className="absolute inset-0 bg-black/45 backdrop-blur-md transition-opacity animate-in fade-in duration-200" />
 
-          {/* Search Spotlight Dialog Window */}
+          {/* Search Window */}
           <div
             className="relative w-full max-w-2xl bg-white rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-gray-100 overflow-hidden flex flex-col z-10 animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Top Search Input Bar (No focus border line around input!) */}
+            {/* Top Search Input Bar */}
             <form
               onSubmit={handleSearchSubmit}
               className="relative flex items-center border-b border-gray-100 px-4 sm:px-6 py-1 bg-white"
@@ -386,7 +384,7 @@ export function SearchBar() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search fresh vegetables, fruits, dairy, ghee..."
+                placeholder="Search fresh vegetables, fruits, powders..."
                 className="w-full text-base sm:text-lg font-medium text-gb-charcoal placeholder-gray-400 bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 py-3.5 sm:py-4"
                 style={{ outline: "none", boxShadow: "none" }}
                 aria-label="Search fresh groceries"
@@ -410,17 +408,15 @@ export function SearchBar() {
               <button
                 type="button"
                 onClick={handleClose}
-                className="text-xs font-mono font-bold text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-md transition-colors shrink-0 cursor-pointer border border-gray-200/60"
+                className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0 cursor-pointer"
+                aria-label="Close search"
               >
-                ESC
+                <X size={20} />
               </button>
             </form>
 
             {/* Quick Category Filter Pills */}
             <div className="flex items-center gap-1.5 px-4 sm:px-6 py-2.5 bg-gray-50/70 border-b border-gray-100 overflow-x-auto no-scrollbar text-xs">
-              <span className="text-[11px] font-mono font-semibold uppercase text-gray-400 mr-1 shrink-0">
-                Category:
-              </span>
               <button
                 type="button"
                 onClick={() => setCategoryFilter("all")}
@@ -449,21 +445,16 @@ export function SearchBar() {
               ))}
             </div>
 
-            {/* Modal Body: Active Results or Empty State */}
-            <div className="max-h-[60vh] overflow-y-auto p-4 sm:p-6">
+            {/* Modal Body */}
+            <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
               {query.trim().length > 0 ? (
                 <div>
-                  <div className="flex items-center justify-between mb-3 text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">
+                  <div className="flex items-center justify-between mb-3 text-xs font-semibold text-gray-400">
                     <span>
                       {loading
                         ? "Searching products..."
                         : `Found ${results.length} matching product${results.length === 1 ? "" : "s"}`}
                     </span>
-                    {results.length > 0 && (
-                      <span className="hidden sm:inline text-[11px] font-sans normal-case text-gray-400">
-                        Use ↑ ↓ to navigate, Enter to select
-                      </span>
-                    )}
                   </div>
 
                   {results.length > 0 ? (
@@ -573,7 +564,7 @@ export function SearchBar() {
                         onClick={() => executeSearch(query)}
                         className="w-full text-center py-2.5 mt-3 rounded-xl bg-gb-green/10 hover:bg-gb-green hover:text-white text-gb-green text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer group"
                       >
-                        <span>View all matching results for &quot;{query}&quot;</span>
+                        <span>View all results for &quot;{query}&quot;</span>
                         <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                       </button>
                     </div>
@@ -587,7 +578,7 @@ export function SearchBar() {
                           No groceries found for &quot;{query}&quot;
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          Check for spelling errors or search for common items like Tomatoes, Cut Vegetables, Milk, or Ghee.
+                          Try searching for Vegetables, Powders, or Oils.
                         </p>
                       </div>
                     </div>
@@ -608,13 +599,13 @@ export function SearchBar() {
                   )}
                 </div>
               ) : (
-                /* Default Zero-State View: Recent Searches + Quick Store Shortcuts */
+                /* Default Minimal View: Recent Searches + Quick Browse */
                 <div className="space-y-6">
-                  {/* Recent Searches (if available) */}
+                  {/* Recent Searches */}
                   {recentSearches.length > 0 && (
                     <div>
                       <div className="flex items-center justify-between mb-2.5">
-                        <div className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-gray-400">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-400">
                           <Clock size={13} className="text-gray-400" />
                           <span>Recent Searches</span>
                         </div>
@@ -652,7 +643,7 @@ export function SearchBar() {
 
                   {/* Quick Store Highlights */}
                   <div>
-                    <div className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-gray-400 mb-3">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 mb-3">
                       <Tag size={13} className="text-gb-green" />
                       <span>Quick Browse</span>
                     </div>
@@ -691,33 +682,12 @@ export function SearchBar() {
               )}
             </div>
 
-            {/* Footer Navigation Bar with Keyboard Shortcuts */}
-            <div className="bg-gray-50 border-t border-gray-100 px-4 sm:px-6 py-3 flex items-center justify-between text-[11px] text-gray-400">
-              <div className="hidden sm:flex items-center gap-4">
-                <span className="flex items-center gap-1">
-                  <kbd className="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-200 text-gray-600 font-bold shadow-2xs">
-                    ↑↓
-                  </kbd>{" "}
-                  Navigate
-                </span>
-                <span className="flex items-center gap-1">
-                  <kbd className="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-200 text-gray-600 font-bold shadow-2xs">
-                    <CornerDownLeft size={10} className="inline" />
-                  </kbd>{" "}
-                  Select
-                </span>
-                <span className="flex items-center gap-1">
-                  <kbd className="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-200 text-gray-600 font-bold shadow-2xs">
-                    ESC
-                  </kbd>{" "}
-                  Close
-                </span>
-              </div>
-              <div className="sm:hidden text-gray-400 font-mono">Press Enter to search</div>
+            {/* Clean Minimal Footer */}
+            <div className="bg-gray-50/80 border-t border-gray-100 px-4 sm:px-6 py-3 flex items-center justify-end text-[11px]">
               <Link
                 href="/categories"
                 onClick={handleClose}
-                className="text-gb-green hover:underline font-bold flex items-center gap-1 ml-auto"
+                className="text-gb-green hover:underline font-bold flex items-center gap-1"
               >
                 <span>Browse All Categories</span>
                 <ArrowRight size={12} />

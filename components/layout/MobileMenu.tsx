@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, X, ChevronRight, LogIn, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
+import { createClient } from "@/utils/supabase/client";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -18,6 +19,27 @@ const NAV_LINKS = [
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u || null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user || null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setUser(null);
+    setOpen(false);
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <>
@@ -90,6 +112,54 @@ export function MobileMenu() {
                     </Link>
                   </li>
                 ))}
+
+                {/* Auth section — divider */}
+                <li className="pt-2">
+                  <div className="border-t border-gray-100 mb-2" />
+                  {user ? (
+                    <>
+                      {/* Logged-in: Profile info */}
+                      <div className="px-3 py-2 mb-1">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-gb-green text-white flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                            {(user.user_metadata?.full_name || user.email || "U").charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gb-charcoal truncate max-w-[160px]">
+                              {user.user_metadata?.full_name || user.email}
+                            </p>
+                            <p className="text-[10px] text-gray-400">Signed in</p>
+                          </div>
+                        </div>
+                      </div>
+                      <Link
+                        href="/account"
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-gb-green hover:bg-green-50 transition-colors"
+                      >
+                        <User size={16} />
+                        My Profile & Orders
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors text-left mt-0.5"
+                      >
+                        <LogOut size={16} />
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      href="/login"
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-semibold text-gb-green bg-green-50/60 hover:bg-green-50 transition-colors"
+                    >
+                      <LogIn size={16} />
+                      <span>Login / Create Account</span>
+                    </Link>
+                  )}
+                </li>
               </ul>
             </nav>
 
