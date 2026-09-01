@@ -5,9 +5,23 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-  title: "About Us — Green Basket",
+  title: "About Green Basket TCR — Fresh Farm-to-Kitchen Groceries in Thrissur",
   description:
-    "Green Basket is a Kerala fresh food brand delivering freshly cut vegetables, aromatic powders, and pure oils to your doorstep.",
+    "Learn about Green Basket TCR, Thrissur's premier online grocery service offering hygienically cut vegetables, traditional Kerala curry powders, and pure cold-pressed coconut oil delivered fresh.",
+  keywords: [
+    "about Green Basket TCR",
+    "fresh vegetables Thrissur story",
+    "Kerala organic grocery brand",
+    "Ayyanthole Thrissur vegetables",
+  ],
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    title: "About Green Basket TCR — Fresh Farm-to-Kitchen Groceries Thrissur",
+    description: "Learn about Green Basket TCR and our mission to simplify Kerala kitchens with farm-fresh produce.",
+    url: "https://greenbaskettcr.com/about",
+  },
 };
 
 export default function AboutPage() {

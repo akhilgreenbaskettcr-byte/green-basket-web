@@ -12,9 +12,25 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Shop All Categories — Green Basket Kerala",
+  title: "Shop Fresh Cut Vegetables, Curry Powders & Oils in Thrissur — Green Basket TCR",
   description:
-    "Shop fresh vegetables cuts, fruits, pure stone-ground curry powders, authentic masala blends, and cold-pressed traditional oils.",
+    "Explore all grocery categories at Green Basket TCR: Freshly cut ready-to-cook vegetables, authentic Kerala homemade curry powders, stone-ground masalas, and 100% pure cold-pressed coconut oil. Delivered fresh across Thrissur.",
+  keywords: [
+    "fresh cut vegetables Thrissur",
+    "ready to cook vegetables Thrissur",
+    "Kerala curry powders online",
+    "cold pressed coconut oil Thrissur",
+    "online grocery shopping Thrissur",
+    "Green Basket TCR categories",
+  ],
+  alternates: {
+    canonical: "/categories",
+  },
+  openGraph: {
+    title: "Shop Fresh Cut Vegetables, Curry Powders & Oils — Green Basket TCR Thrissur",
+    description: "Browse farm-fresh Kerala vegetables, pure oils, and homemade masala powders delivered next-day in Thrissur.",
+    url: "https://greenbaskettcr.com/categories",
+  },
 };
 
 function CategoryListCard({ category }: { category: Category }) {

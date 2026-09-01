@@ -24,17 +24,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = await getCategoryBySlug(slug);
 
   if (!category) {
-    return { title: "Category Not Found" };
+    return { title: "Category Not Found | Green Basket TCR" };
   }
 
+  const title = `Buy Fresh ${category.name} Online in Thrissur — Green Basket TCR`;
+  const description =
+    category.description ||
+    `Order authentic fresh ${category.name.toLowerCase()} online with next-day doorstep delivery in Thrissur, Kerala from Green Basket TCR.`;
+
   return {
-    title: `${category.name} — Green Basket`,
-    description:
-      category.description ??
-      `Shop fresh ${category.name.toLowerCase()} from Green Basket. Hygienically packed and delivered to your doorstep.`,
+    title,
+    description,
+    keywords: [
+      `buy ${category.name.toLowerCase()} Thrissur`,
+      `${category.name.toLowerCase()} delivery Thrissur`,
+      `fresh ${category.name.toLowerCase()} Kerala`,
+      "Green Basket TCR Thrissur",
+      "online grocery delivery Thrissur",
+    ],
+    alternates: {
+      canonical: `/categories/${slug}`,
+    },
     openGraph: {
-      title: `${category.name} — Green Basket`,
-      description: category.description ?? undefined,
+      title,
+      description,
+      url: `https://greenbaskettcr.com/categories/${slug}`,
+      siteName: "Green Basket TCR",
+      locale: "en_IN",
+      images: category.image_url ? [{ url: category.image_url, alt: category.name }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
       images: category.image_url ? [category.image_url] : [],
     },
   };

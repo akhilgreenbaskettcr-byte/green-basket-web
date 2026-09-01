@@ -8,6 +8,7 @@ import { ProductDetailClient } from "@/components/products/ProductDetailClient";
 import { ProductCardClient } from "@/components/products/ProductCardClient";
 import { getProductBySlug, getProductsByCategory } from "@/lib/supabase/queries";
 import { ChevronRight, Home, Leaf } from "lucide-react";
+import { ProductJsonLd } from "@/components/seo/ProductJsonLd";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
 
-  if (!product) return { title: "Product Not Found" };
+  if (!product) return { title: "Product Not Found | Green Basket TCR" };
 
   const lowestPrice = product.product_variants
     .filter((v) => v.is_available)
@@ -28,15 +29,48 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       (min, v) => (v.price < min ? v.price : min),
       Infinity
     );
+  const displayPrice = lowestPrice !== Infinity ? `₹${lowestPrice}` : "";
+
+  const title = `Buy ${product.name} Online in Thrissur ${displayPrice ? `at ${displayPrice}` : ""} — Green Basket TCR`;
+  const description =
+    product.description ||
+    `Order ${product.name} online from Green Basket TCR. Freshly prepared, hygienically packed, and delivered next-day across Thrissur, Kerala.`;
 
   return {
-    title: `${product.name} — Green Basket`,
-    description:
-      product.description ??
-      `Buy ${product.name} from Green Basket. Fresh, hygienically packed and delivered to your doorstep.`,
+    title,
+    description,
+    keywords: [
+      `buy ${product.name.toLowerCase()} Thrissur`,
+      `${product.name.toLowerCase()} home delivery Thrissur`,
+      `${product.name.toLowerCase()} Kerala price`,
+      `order ${product.name.toLowerCase()} online Kerala`,
+      "fresh cut vegetables Thrissur",
+      "Green Basket TCR",
+    ],
+    alternates: {
+      canonical: `/products/${slug}`,
+    },
     openGraph: {
-      title: `${product.name} — Green Basket`,
-      description: product.description ?? undefined,
+      title,
+      description,
+      url: `https://greenbaskettcr.com/products/${slug}`,
+      siteName: "Green Basket TCR",
+      locale: "en_IN",
+      images: product.image_url
+        ? [
+            {
+              url: product.image_url,
+              width: 800,
+              height: 800,
+              alt: `${product.name} - Green Basket TCR`,
+            },
+          ]
+        : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
       images: product.image_url ? [product.image_url] : [],
     },
   };
@@ -57,6 +91,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
+      <ProductJsonLd product={product} />
       <AnnouncementBar />
       <Header />
       <main id="main-content" className="bg-[#FAFAF7] min-h-screen py-6 sm:py-10">

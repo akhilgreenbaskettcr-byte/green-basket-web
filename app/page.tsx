@@ -19,13 +19,44 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Green Basket — Your Kitchen, Simplified",
+  title: "Green Basket TCR — Fresh Cut Vegetables & Kerala Groceries Online Thrissur",
   description:
-    "Fresh vegetables, aromatic powders, and pure Kerala oils delivered fresh to your doorstep. Order before 1 PM for same-day delivery.",
+    "Buy fresh hygienically cut vegetables, authentic Kerala homemade curry powders, stone-ground masalas & 100% pure cold-pressed coconut oil online in Thrissur. Order before 1:00 PM for next-day doorstep delivery across Ayyanthole, Poonkunnam, Ollur, Kakkanad & Thrissur district.",
+  keywords: [
+    "online cut vegetables delivery Thrissur",
+    "fresh cut vegetables Thrissur",
+    "ready to cook vegetables Thrissur",
+    "sambar cut vegetables Thrissur",
+    "Kerala curry powders online",
+    "cold pressed coconut oil Thrissur",
+    "Green Basket TCR Thrissur",
+    "grocery store Ayyanthole 680003",
+  ],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Green Basket — Your Kitchen, Simplified",
+    title: "Green Basket TCR — Fresh Cut Vegetables & Kerala Groceries Online Thrissur",
     description:
-      "Fresh vegetables, aromatic powders, and pure Kerala oils delivered fresh to your doorstep.",
+      "Order freshly cut vegetables, aromatic homemade masala powders & pure cold-pressed coconut oil delivered to your doorstep in Thrissur, Kerala.",
+    url: "https://greenbaskettcr.com",
+    siteName: "Green Basket TCR",
+    locale: "en_IN",
+    images: [
+      {
+        url: "/images/delivery-banner.png",
+        width: 1200,
+        height: 630,
+        alt: "Green Basket TCR - Fresh Groceries Thrissur",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Green Basket TCR — Fresh Cut Vegetables & Kerala Groceries Online Thrissur",
+    description:
+      "Fresh ready-to-cook vegetables, authentic stone-ground curry powders, and pure cold-pressed oils. Doorstep delivery in Thrissur, Kerala.",
+    images: ["/images/delivery-banner.png"],
   },
 };
 

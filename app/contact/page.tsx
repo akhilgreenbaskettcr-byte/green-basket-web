@@ -6,9 +6,24 @@ import { getSiteSettings } from "@/lib/supabase/queries";
 import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Contact Us — Green Basket",
+  title: "Contact Green Basket TCR — Customer Care, WhatsApp & Store Location Thrissur",
   description:
-    "Get in touch with Green Basket. We'd love to hear from you.",
+    "Contact Green Basket TCR for grocery orders, delivery queries, and bulk bookings in Thrissur, Kerala. Phone: +91 90481 78886, WhatsApp, and store at Near Ayyanthole Ground, Thrissur - 680003.",
+  keywords: [
+    "Green Basket Thrissur contact",
+    "Green Basket phone number",
+    "Green Basket Ayyanthole location",
+    "grocery customer care Thrissur",
+    "vegetables delivery WhatsApp Thrissur",
+  ],
+  alternates: {
+    canonical: "/contact",
+  },
+  openGraph: {
+    title: "Contact Green Basket TCR — Thrissur Kerala",
+    description: "Get in touch with Green Basket TCR for fresh grocery deliveries and customer assistance in Thrissur.",
+    url: "https://greenbaskettcr.com/contact",
+  },
 };
 
 export default async function ContactPage() {
