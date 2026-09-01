@@ -6,7 +6,9 @@ interface ProductJsonLdProps {
 }
 
 export function ProductJsonLd({ product }: ProductJsonLdProps) {
-  const availableVariants = product.product_variants.filter((v) => v.is_available);
+  if (!product) return null;
+
+  const availableVariants = product.product_variants?.filter((v) => v.is_available) || [];
   const prices = availableVariants.map((v) => v.price);
   const lowPrice = prices.length > 0 ? Math.min(...prices) : 0;
   const highPrice = prices.length > 0 ? Math.max(...prices) : lowPrice;
@@ -15,7 +17,7 @@ export function ProductJsonLd({ product }: ProductJsonLdProps) {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": product.name,
-    "image": product.image_url ? [product.image_url] : ["https://greenbaskettcr.com/images/delivery-banner.png"],
+    "image": product.image_url ? [product.image_url] : ["https://www.greenbaskettcr.com/images/delivery-banner.png"],
     "description": product.description || `${product.name} fresh from Green Basket TCR, Thrissur Kerala.`,
     "sku": `GB-${product.slug}`,
     "mpn": `GB-${product.id.slice(0, 8)}`,
@@ -42,7 +44,7 @@ export function ProductJsonLd({ product }: ProductJsonLdProps) {
       "seller": {
         "@type": "Organization",
         "name": "Green Basket TCR",
-        "url": "https://greenbaskettcr.com"
+        "url": "https://www.greenbaskettcr.com"
       },
       "hasMerchantReturnPolicy": {
         "@type": "MerchantReturnPolicy",
@@ -91,19 +93,19 @@ export function ProductJsonLd({ product }: ProductJsonLdProps) {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://greenbaskettcr.com"
+        "item": "https://www.greenbaskettcr.com"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": product.categories?.name || "Categories",
-        "item": `https://greenbaskettcr.com/categories/${product.categories?.slug || ""}`
+        "item": `https://www.greenbaskettcr.com/categories/${product.categories?.slug || ""}`
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": product.name,
-        "item": `https://greenbaskettcr.com/products/${product.slug}`
+        "item": `https://www.greenbaskettcr.com/products/${product.slug}`
       }
     ]
   };

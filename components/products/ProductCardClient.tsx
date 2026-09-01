@@ -14,7 +14,7 @@ interface ProductCardClientProps {
 }
 
 export function ProductCardClient({ product }: ProductCardClientProps) {
-  const availableVariants = product.product_variants.filter((v) => v.is_available);
+  const availableVariants = product.product_variants?.filter((v) => v.is_available) || [];
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
     availableVariants[0]
   );
@@ -46,18 +46,14 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
   const isVegetables = product.slug.includes("cut") || product.slug.includes("coconut");
 
   return (
-    // Outer card — relative so the overlay link can cover it fully
-    <div className="product-card group relative flex flex-col h-full bg-white rounded-none border border-gray-200 shadow-2xs hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer">
-
-      {/* Full-card clickable overlay — sits behind interactive elements (z-0) */}
+    <div className="product-card group relative flex flex-col h-full bg-white rounded-none border border-gray-200 shadow-2xs hover:shadow-lg transition-all duration-300 overflow-hidden">
+      
+      {/* Clickable Image Poster */}
       <Link
         href={`/products/${product.slug}`}
-        className="absolute inset-0 z-0"
+        className="relative aspect-square w-full max-h-40 sm:max-h-44 overflow-hidden bg-[#FAFAF5] flex items-center justify-center p-3 rounded-none block cursor-pointer"
         aria-label={`View ${product.name}`}
-      />
-
-      {/* Poster Image Container */}
-      <div className="relative aspect-square w-full max-h-40 sm:max-h-44 overflow-hidden bg-[#FAFAF5] flex items-center justify-center p-3 rounded-none">
+      >
         {/* Floating Brand Badge */}
         <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1 pointer-events-none">
           {product.is_featured && (
@@ -88,7 +84,7 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
             </svg>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Info Body */}
       <div className="p-3 sm:p-4 flex flex-col flex-1 bg-white justify-between">
@@ -99,10 +95,13 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
             </p>
           )}
 
-          {/* Product name — above link overlay, purely display */}
-          <h3 className="font-bold text-gray-900 text-xs sm:text-sm leading-snug mb-1 line-clamp-1 group-hover:text-gb-green transition-colors">
-            {product.name}
-          </h3>
+          {/* Clickable Product Name */}
+          <Link
+            href={`/products/${product.slug}`}
+            className="block font-bold text-gray-900 text-xs sm:text-sm leading-snug mb-1 line-clamp-1 group-hover:text-gb-green hover:underline transition-colors"
+          >
+            <h3>{product.name}</h3>
+          </Link>
 
           {product.description && (
             <p className="text-gray-500 text-[11px] sm:text-xs leading-relaxed mb-2.5 line-clamp-3">
@@ -110,9 +109,9 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
             </p>
           )}
 
-          {/* Size / Variant Selector — z-10 to sit above overlay link */}
+          {/* Size / Variant Selector */}
           {availableVariants.length > 1 && (
-            <div className="flex flex-wrap gap-1 mb-2.5 relative z-10" role="group" aria-label="Select package size">
+            <div className="flex flex-wrap gap-1 mb-2.5 relative z-20" role="group" aria-label="Select package size">
               {availableVariants.map((v) => (
                 <button
                   key={v.id}
@@ -145,8 +144,8 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
           )}
         </div>
 
-        {/* Price & Add to Cart — z-10 to sit above overlay link */}
-        <div className="flex items-center justify-between gap-1.5 pt-2.5 border-t border-gray-100 mt-2 relative z-10">
+        {/* Price & Add to Cart */}
+        <div className="flex items-center justify-between gap-1.5 pt-2.5 border-t border-gray-100 mt-2 relative z-20">
           <div>
             <p className="text-[9px] text-gray-400 font-semibold uppercase">Price</p>
             <span className="font-black text-gray-900 text-sm sm:text-base leading-none">

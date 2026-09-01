@@ -29,9 +29,9 @@ interface ProductDetailClientProps {
 
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const router = useRouter();
-  const availableVariants = product.product_variants.filter((v) => v.is_available);
+  const availableVariants = product.product_variants?.filter((v) => v.is_available) || [];
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
-    availableVariants[0]
+    availableVariants[0] || product.product_variants[0]
   );
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -184,7 +184,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
           {/* Stock Indicator */}
           <div>
-            {selectedVariant?.stock_quantity > 0 ? (
+            {selectedVariant.stock_quantity > 0 ? (
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
