@@ -14,11 +14,6 @@ export function CartSlideOver() {
   const totalAmount = subtotal();
   const totalCount = itemCount();
 
-  // Free shipping threshold (e.g. ₹500)
-  const FREE_SHIPPING_THRESHOLD = 500;
-  const progressPercent = Math.min(100, Math.round((totalAmount / FREE_SHIPPING_THRESHOLD) * 100));
-  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - totalAmount);
-
   // Close on Escape key press
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -75,30 +70,6 @@ export function CartSlideOver() {
           >
             <X size={18} />
           </button>
-        </div>
-
-        {/* Free Shipping Progress Meter */}
-        <div className="px-5 py-3 bg-[#FAFAF5] border-b border-gray-200/60">
-          <div className="flex items-center justify-between text-xs font-semibold text-gray-700 mb-1.5">
-            <span>
-              {remainingForFreeShipping === 0 ? (
-                <span className="text-gb-green font-bold flex items-center gap-1">
-                  <ShieldCheck size={14} /> You unlocked FREE Same-Day Delivery!
-                </span>
-              ) : (
-                <span>
-                  Add <strong className="text-gb-green">{formatPrice(remainingForFreeShipping)}</strong> more for FREE delivery
-                </span>
-              )}
-            </span>
-            <span className="text-[11px] text-gray-400 font-mono">{progressPercent}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-gb-green h-full rounded-full transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
         </div>
 
         {/* Items List */}

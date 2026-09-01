@@ -8,7 +8,6 @@ import { useCartStore } from "@/lib/store/cart";
 import { formatPrice } from "@/lib/utils";
 
 const DELIVERY_FEE = 40;
-const FREE_DELIVERY_ABOVE = 500;
 
 export default function CartPageContent() {
   const [mounted, setMounted] = useState(false);
@@ -19,7 +18,7 @@ export default function CartPageContent() {
   }, []);
 
   const sub = subtotal();
-  const delivery = sub >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_FEE;
+  const delivery = DELIVERY_FEE;
   const total = sub + delivery;
   const count = itemCount();
 
@@ -134,12 +133,9 @@ export default function CartPageContent() {
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Delivery</span>
                     <span className="font-medium text-gb-charcoal">
-                      {delivery === 0 ? <span className="text-green-600">Free</span> : formatPrice(delivery)}
+                      {formatPrice(delivery)}
                     </span>
                   </div>
-                  {delivery > 0 && (
-                    <p className="text-xs text-gray-400">Add {formatPrice(FREE_DELIVERY_ABOVE - sub)} more for free delivery</p>
-                  )}
                 </div>
 
                 <div className="border-t border-gb-border pt-4 mb-6">

@@ -19,7 +19,6 @@ import {
   ChevronDown,
   Info,
   Package,
-  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -336,9 +335,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             onClick={handleBuyNow}
             disabled={!selectedVariant || selectedVariant.stock_quantity === 0}
             id="product-buy-now-btn"
-            className="w-full sm:flex-1 h-12 flex items-center justify-center gap-2 rounded-xl text-sm sm:text-base font-extrabold bg-gb-green hover:bg-gb-green-dark text-white transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-[0.99] px-4 shrink-0"
+            className="w-full sm:flex-1 h-12 flex items-center justify-center rounded-xl text-sm sm:text-base font-extrabold bg-gb-green hover:bg-gb-green-dark text-white transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-[0.99] px-4 shrink-0 uppercase tracking-wide"
           >
-            <Zap size={17} className="stroke-[2.5] shrink-0 fill-amber-300 text-amber-300" aria-hidden="true" />
             <span>Buy Now</span>
           </button>
         </div>

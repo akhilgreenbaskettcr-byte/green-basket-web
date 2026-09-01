@@ -34,7 +34,6 @@ import {
 import type { DeliveryArea, SavedAddress } from "@/types/database";
 
 const DELIVERY_FEE = 40;
-const FREE_DELIVERY_ABOVE = 500;
 
 interface FormData {
   customer_name: string;
@@ -293,7 +292,7 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
   const isPinApproved = Boolean(matchedDeliveryArea);
 
   const sub = subtotal();
-  const delivery = sub >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_FEE;
+  const delivery = DELIVERY_FEE;
   const total = sub + delivery;
 
   const handleChange = (
@@ -871,11 +870,7 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Delivery</span>
                 <span className="font-medium text-gb-charcoal">
-                  {delivery === 0 ? (
-                    <span className="text-green-600 font-semibold">Free</span>
-                  ) : (
-                    formatPrice(delivery)
-                  )}
+                  {formatPrice(delivery)}
                 </span>
               </div>
             </div>

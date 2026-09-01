@@ -36,7 +36,7 @@ export const useCartStore = create<CartState>()(
         }
       },
 
-      // Like addItem but does NOT open the cart drawer — used by Buy Now
+      // Like addItem but does NOT open the cart drawer or show toast — used by Buy Now
       addItemSilent: (newItem: Omit<CartItem, "quantity">, qty: number = 1) => {
         const items = get().items;
         const existing = items.find((i) => i.variantId === newItem.variantId);
@@ -50,13 +50,13 @@ export const useCartStore = create<CartState>()(
                 ? { ...i, quantity: i.quantity + amountToAdd }
                 : i
             ),
-            lastAddedItem: itemRecord,
+            lastAddedItem: null,
             // isOpen intentionally NOT set — cart drawer stays closed
           });
         } else {
           set({
             items: [...items, itemRecord],
-            lastAddedItem: itemRecord,
+            lastAddedItem: null,
             // isOpen intentionally NOT set — cart drawer stays closed
           });
         }
