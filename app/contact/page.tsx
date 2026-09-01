@@ -14,10 +14,10 @@ export const metadata: Metadata = {
 export default async function ContactPage() {
   const settings = await getSiteSettings();
 
-  const phone = settings["contact_phone"] ?? "";
-  const email = settings["contact_email"] ?? "";
-  const address = settings["contact_address"] ?? "";
-  const whatsapp = settings["whatsapp_number"] ?? "";
+  const phone = settings["contact_phone"] ?? "+91 90481 78886";
+  const email = settings["contact_email"] ?? "info@greenbaskettcr.com";
+  const address = settings["contact_address"] ?? "Green Basket Tcr, Near Ayyanthole Ground, Thrissur, Kerala - 680003.";
+  const whatsapp = settings["whatsapp_number"] ?? "+919048178886";
 
   return (
     <>

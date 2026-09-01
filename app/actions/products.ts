@@ -112,3 +112,53 @@ export async function updateProduct(payload: UpdateProductPayload) {
     return { success: false, error: err.message || "Failed to update product" };
   }
 }
+
+export async function searchProductsLiveAction(
+  searchTerm: string,
+  categorySlug: string = "all"
+) {
+  try {
+    const term = searchTerm.trim();
+    if (!term || term.length < 1) return [];
+
+    const supabase = await createClient();
+    const cleanTerm = term.replace(/[%_,()"]/g, "").trim();
+    if (!cleanTerm) return [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query = (supabase as any)
+      .from("products")
+      .select(`
+        id, name, slug, description, image_url,
+        categories:category_id(id, name, slug),
+        product_variants(id, label, price, stock_quantity, is_available)
+      `)
+      .eq("is_active", true)
+      .ilike("name", `%${cleanTerm}%`)
+      .limit(8);
+
+    if (categorySlug && categorySlug !== "all") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: cat } = await (supabase as any)
+        .from("categories")
+        .select("id")
+        .eq("slug", categorySlug)
+        .maybeSingle();
+
+      if (cat?.id) {
+        query = query.eq("category_id", cat.id);
+      }
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error("searchProductsLiveAction query error:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (err: any) {
+    console.error("searchProductsLiveAction exception:", err);
+    return [];
+  }
+}

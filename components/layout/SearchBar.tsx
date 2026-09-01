@@ -16,10 +16,13 @@ import {
   Plus,
   Check,
   ChevronRight,
+  Leaf,
+  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { formatPrice } from "@/lib/utils";
 import { useCartStore } from "@/lib/store/cart";
+import { searchProductsLiveAction } from "@/app/actions/products";
 
 interface ProductVariant {
   id: string;
@@ -156,7 +159,7 @@ export function SearchBar() {
     };
   }, [open]);
 
-  // Live Autocomplete search fetch
+  // Live Autocomplete search fetch via Server Action
   const fetchLiveResults = useCallback(async (searchTerm: string, categorySlug: string) => {
     const term = searchTerm.trim();
     if (!term || term.length < 2) {
@@ -167,44 +170,8 @@ export function SearchBar() {
 
     setLoading(true);
     try {
-      const supabase = createClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let req = (supabase as any)
-        .from("products")
-        .select(
-          `
-          id, name, slug, description, image_url,
-          categories:category_id(id, name, slug),
-          product_variants(id, label, price, stock_quantity, is_available)
-        `
-        )
-        .eq("is_active", true)
-        .or(`name.ilike.%${term}%,description.ilike.%${term}%`)
-        .limit(8);
-
-      if (categorySlug !== "all") {
-        req = (supabase as any)
-          .from("products")
-          .select(
-            `
-            id, name, slug, description, image_url,
-            categories!inner:category_id(id, name, slug),
-            product_variants(id, label, price, stock_quantity, is_available)
-          `
-          )
-          .eq("is_active", true)
-          .or(`name.ilike.%${term}%,description.ilike.%${term}%`)
-          .eq("categories.slug", categorySlug)
-          .limit(8);
-      }
-
-      const { data, error } = await req;
-      if (error) {
-        console.error("Supabase search error:", error);
-        setResults([]);
-      } else {
-        setResults((data as LiveProductResult[]) || []);
-      }
+      const data = await searchProductsLiveAction(term, categorySlug);
+      setResults((data as LiveProductResult[]) || []);
       setSelectedIndex(-1);
     } catch (err) {
       console.error("Live search exception:", err);
@@ -652,9 +619,11 @@ export function SearchBar() {
                       <Link
                         href="/categories"
                         onClick={handleClose}
-                        className="flex items-center gap-3 p-3.5 rounded-2xl border border-gray-200/80 bg-gray-50/60 hover:bg-emerald-50/60 hover:border-emerald-200 transition-all group"
+                        className="flex items-center gap-3 p-3 rounded-2xl border border-gray-200/80 bg-gray-50/60 hover:bg-emerald-50/60 hover:border-emerald-200 transition-all group"
                       >
-                        <span className="text-2xl">🥦</span>
+                        <div className="w-9 h-9 rounded-xl bg-emerald-100/70 text-gb-green flex items-center justify-center shrink-0 border border-emerald-200/60 group-hover:bg-gb-green group-hover:text-white transition-colors">
+                          <Leaf size={16} />
+                        </div>
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-gb-charcoal group-hover:text-gb-green transition-colors truncate">
                             Fresh Produce
@@ -666,9 +635,11 @@ export function SearchBar() {
                       <Link
                         href="/categories"
                         onClick={handleClose}
-                        className="flex items-center gap-3 p-3.5 rounded-2xl border border-gray-200/80 bg-gray-50/60 hover:bg-emerald-50/60 hover:border-emerald-200 transition-all group"
+                        className="flex items-center gap-3 p-3 rounded-2xl border border-gray-200/80 bg-gray-50/60 hover:bg-emerald-50/60 hover:border-emerald-200 transition-all group"
                       >
-                        <span className="text-2xl">🌶️</span>
+                        <div className="w-9 h-9 rounded-xl bg-emerald-100/70 text-gb-green flex items-center justify-center shrink-0 border border-emerald-200/60 group-hover:bg-gb-green group-hover:text-white transition-colors">
+                          <Sparkles size={16} />
+                        </div>
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-gb-charcoal group-hover:text-gb-green transition-colors truncate">
                             Kerala Essentials

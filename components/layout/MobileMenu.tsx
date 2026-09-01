@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, ChevronRight, LogIn, User, LogOut } from "lucide-react";
+import { Menu, X, ChevronRight, LogIn, User, LogOut, LayoutDashboard, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
 import { createClient } from "@/utils/supabase/client";
@@ -22,12 +22,35 @@ export function MobileMenu() {
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u || null));
+
+    const checkUserRole = async (currentUser: any) => {
+      if (!currentUser) {
+        setUser(null);
+        setIsAdmin(false);
+        return;
+      }
+      setUser(currentUser);
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: profile } = await (supabase as any)
+          .from("profiles")
+          .select("role")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+
+        setIsAdmin(profile?.role === "admin" || currentUser.email === "admin@greenbasket.in");
+      } catch {
+        setIsAdmin(currentUser.email === "admin@greenbasket.in");
+      }
+    };
+
+    supabase.auth.getUser().then(({ data: { user: u } }) => checkUserRole(u));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user || null);
+      checkUserRole(session?.user || null);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -36,6 +59,7 @@ export function MobileMenu() {
     const supabase = createClient();
     await supabase.auth.signOut();
     setUser(null);
+    setIsAdmin(false);
     setOpen(false);
     router.push("/");
     router.refresh();
@@ -49,89 +73,112 @@ export function MobileMenu() {
         className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors"
         aria-label="Open navigation menu"
         aria-expanded={open}
-        aria-controls="mobile-menu"
       >
-        <Menu size={22} className="text-gb-charcoal" aria-hidden="true" />
+        <Menu size={22} className="text-gb-charcoal" />
       </button>
 
-      {/* Drawer overlay */}
+      {/* Backdrop & Drawer */}
       {open && (
         <div
-          className="fixed inset-0 z-[200]"
+          className="fixed inset-0 z-50 flex"
           role="dialog"
           aria-modal="true"
-          aria-label="Navigation menu"
-          id="mobile-menu"
+          aria-label="Navigation Menu"
         >
-          {/* Backdrop */}
+          {/* Overlay */}
           <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
 
           {/* Drawer panel */}
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col shadow-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <div onClick={() => setOpen(false)}>
-                <Logo href="/" size="sm" />
-              </div>
+          <div className="relative z-10 w-4/5 max-w-xs bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto">
+            {/* Top header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <Logo href="/" size="sm" />
               <button
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 transition-colors"
-                aria-label="Close navigation menu"
+                className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gb-charcoal transition-colors"
+                aria-label="Close menu"
               >
-                <X size={18} className="text-gray-500" aria-hidden="true" />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto py-4 px-3">
-              <ul role="list" className="space-y-1">
-                {NAV_LINKS.map(({ href, label }) => (
-                  <li key={href}>
-                    <Link
-                      href={href}
-                      onClick={() => setOpen(false)}
-                      className={cn(
-                        "flex items-center justify-between px-3 py-3 rounded-xl text-sm font-medium transition-colors",
-                        pathname === href
-                          ? "bg-green-50 text-gb-green font-semibold"
-                          : "text-gb-charcoal hover:bg-gray-50"
-                      )}
-                    >
-                      <span>{label}</span>
-                      <ChevronRight
-                        size={16}
-                        className={
-                          pathname === href ? "text-gb-green" : "text-gray-300"
-                        }
-                        aria-hidden="true"
-                      />
-                    </Link>
-                  </li>
-                ))}
+            {/* Nav links */}
+            <nav className="p-4 flex-1">
+              <ul className="space-y-1">
+                {NAV_LINKS.map(({ href, label }) => {
+                  const isActive = pathname === href;
+                  return (
+                    <li key={href}>
+                      <Link
+                        href={href}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center justify-between px-3 py-3 rounded-xl text-sm font-semibold transition-colors",
+                          isActive
+                            ? "bg-green-50 text-gb-green"
+                            : "text-gb-charcoal hover:bg-gray-50"
+                        )}
+                      >
+                        <span>{label}</span>
+                        <ChevronRight
+                          size={16}
+                          className={cn(
+                            "transition-transform",
+                            isActive ? "text-gb-green" : "text-gray-400"
+                          )}
+                        />
+                      </Link>
+                    </li>
+                  );
+                })}
 
-                {/* Auth section — divider */}
+                {/* Auth section */}
                 <li className="pt-2">
                   <div className="border-t border-gray-100 mb-2" />
                   {user ? (
                     <>
-                      {/* Logged-in: Profile info */}
+                      {/* Logged-in info */}
                       <div className="px-3 py-2 mb-1">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-gb-green text-white flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                            {(user.user_metadata?.full_name || user.email || "U").charAt(0)}
+                          <div
+                            className={`w-7 h-7 rounded-full text-white flex items-center justify-center font-bold text-xs uppercase shrink-0 ${
+                              isAdmin ? "bg-emerald-700" : "bg-gb-green"
+                            }`}
+                          >
+                            {isAdmin ? <Shield size={13} /> : (user.user_metadata?.full_name || user.email || "U").charAt(0)}
                           </div>
-                          <div>
-                            <p className="text-xs font-bold text-gb-charcoal truncate max-w-[160px]">
-                              {user.user_metadata?.full_name || user.email}
-                            </p>
-                            <p className="text-[10px] text-gray-400">Signed in</p>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs font-bold text-gb-charcoal truncate">
+                                {isAdmin ? "Admin User" : user.user_metadata?.full_name || user.email}
+                              </p>
+                              {isAdmin && (
+                                <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                                  ADMIN
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
                           </div>
                         </div>
                       </div>
+
+                      {/* Admin Dashboard shortcut */}
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 text-white mb-2 shadow-xs"
+                        >
+                          <LayoutDashboard size={16} />
+                          <span>Admin Dashboard →</span>
+                        </Link>
+                      )}
+
                       <Link
                         href="/account"
                         onClick={() => setOpen(false)}
@@ -169,7 +216,7 @@ export function MobileMenu() {
                 Fresh Kerala Groceries
               </p>
               <p className="text-[11px] text-gray-400 mt-0.5">
-                Delivered across Ernakulam
+                Delivered across Thrissur, Kerala
               </p>
             </div>
           </div>

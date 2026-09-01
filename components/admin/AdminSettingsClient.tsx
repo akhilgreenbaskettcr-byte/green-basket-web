@@ -267,12 +267,12 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
               />
             </div>
             <div>
-              <label className="gb-label">Same-Day Notice Message</label>
+              <label className="gb-label">Delivery Notice Message</label>
               <input
                 type="text"
                 value={values["same_day_message"] || ""}
                 onChange={(e) => handleChange("same_day_message", e.target.value)}
-                placeholder="Order before 1PM for same day delivery."
+                placeholder="Order before 1PM for next day delivery."
                 className="gb-input"
               />
             </div>
@@ -299,7 +299,7 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
                 type="tel"
                 value={values["contact_phone"] || ""}
                 onChange={(e) => handleChange("contact_phone", e.target.value)}
-                placeholder="+91 98765 43210"
+                placeholder="+91 90481 78886"
                 className="gb-input"
               />
             </div>
@@ -309,7 +309,7 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
                 type="tel"
                 value={values["whatsapp_number"] || ""}
                 onChange={(e) => handleChange("whatsapp_number", e.target.value)}
-                placeholder="+919876543210"
+                placeholder="+919048178886"
                 className="gb-input"
               />
             </div>
@@ -319,17 +319,17 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
                 type="email"
                 value={values["contact_email"] || ""}
                 onChange={(e) => handleChange("contact_email", e.target.value)}
-                placeholder="hello@greenbasket.in"
+                placeholder="info@greenbaskettcr.com"
                 className="gb-input"
               />
             </div>
             <div>
-              <label className="gb-label">Store / Prep Kitchen Address</label>
+              <label className="gb-label">Official Store Address</label>
               <input
                 type="text"
                 value={values["contact_address"] || ""}
                 onChange={(e) => handleChange("contact_address", e.target.value)}
-                placeholder="Ernakulam, Kerala, India"
+                placeholder="Green Basket Tcr, Near Ayyanthole Ground, Thrissur, Kerala - 680003."
                 className="gb-input"
               />
             </div>
@@ -339,7 +339,7 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
                 type="url"
                 value={values["instagram_url"] || ""}
                 onChange={(e) => handleChange("instagram_url", e.target.value)}
-                placeholder="https://instagram.com/greenbasketin"
+                placeholder="https://www.instagram.com/greenbaskettcr?igsi=MWR2aGZja3Z0dXB6OA=="
                 className="gb-input"
               />
             </div>
@@ -349,7 +349,7 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
                 type="url"
                 value={values["facebook_url"] || ""}
                 onChange={(e) => handleChange("facebook_url", e.target.value)}
-                placeholder="https://facebook.com/greenbasketin"
+                placeholder="https://www.facebook.com/share/1D6LKpc5Rx/"
                 className="gb-input"
               />
             </div>

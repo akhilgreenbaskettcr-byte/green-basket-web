@@ -9,12 +9,26 @@ interface DeliveryCTAProps {
 }
 
 export function DeliveryCTA({ settings = {}, cutoffTime = "1:00 PM" }: DeliveryCTAProps) {
-  const tag = settings["delivery_banner_tag"] || "SAME DAY DELIVERY";
-  const headline =
-    settings["delivery_banner_headline"] || `Order before ${cutoffTime},\nget it today.`;
-  const description =
+  let rawTag = settings["delivery_banner_tag"] || "NEXT DAY DELIVERY";
+  if (rawTag.toUpperCase().includes("SAME DAY")) {
+    rawTag = "NEXT DAY DELIVERY";
+  }
+
+  let rawHeadline = settings["delivery_banner_headline"] || `Order before ${cutoffTime},\nfor next day delivery.`;
+  if (rawHeadline.toLowerCase().includes("get it today") || rawHeadline.toLowerCase().includes("same day")) {
+    rawHeadline = `Order before ${cutoffTime},\nfor next day delivery.`;
+  }
+
+  let rawDescription =
     settings["delivery_banner_description"] ||
-    "Freshly cut, hygienically packed, and delivered straight to your kitchen — the same day you order.";
+    "Freshly cut, hygienically packed, and delivered straight to your kitchen — next day fresh.";
+  if (rawDescription.toLowerCase().includes("same day")) {
+    rawDescription = "Freshly cut, hygienically packed, and delivered straight to your kitchen — next day fresh.";
+  }
+
+  const tag = rawTag;
+  const headline = rawHeadline;
+  const description = rawDescription;
   const buttonText = settings["delivery_banner_btn_text"] || "Start Shopping";
   const buttonUrl = settings["delivery_banner_btn_url"] || "/categories";
   const bannerImage = settings["delivery_banner_image_url"]?.trim() || "";
@@ -30,7 +44,7 @@ export function DeliveryCTA({ settings = {}, cutoffTime = "1:00 PM" }: DeliveryC
           ? "bg-black"
           : "bg-linear-to-r from-[#245B35] via-[#1c472a] to-[#12311c]"
       }`}
-      aria-label="Same day delivery banner"
+      aria-label="Next day delivery banner"
     >
       {/* Background Image Container */}
       {bannerImage && (
@@ -118,7 +132,7 @@ export function DeliveryCTA({ settings = {}, cutoffTime = "1:00 PM" }: DeliveryC
 
             <div className="flex flex-col items-center text-center sm:border-r border-white/30 sm:px-2.5 py-0.5">
               <Truck size={16} className="text-[#bbf062] mb-1 drop-shadow-xs" />
-              <p className="text-[11px] sm:text-xs font-bold text-white leading-tight drop-shadow-xs">Same Day Delivery</p>
+              <p className="text-[11px] sm:text-xs font-bold text-white leading-tight drop-shadow-xs">Next Day Delivery</p>
             </div>
 
             <div className="flex flex-col items-center text-center sm:pl-2.5 py-0.5">

@@ -62,10 +62,10 @@ export function WhyGreenBasket({ settings = {} }: WhyGreenBasketProps) {
       <div className="gb-container relative z-10">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16">
-          <div className="inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.2em] mb-2.5 sm:mb-3 text-gb-green">
-            <span className="text-gb-olive">🌱</span>
+          <div className="inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.2em] mb-2.5 sm:mb-3 text-gb-green bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200/60 shadow-2xs">
+            <Leaf size={12} className="text-gb-olive" />
             <span>WHY CHOOSE US</span>
-            <span className="text-gb-olive">🍃</span>
+            <Leaf size={12} className="text-gb-olive" />
           </div>
 
           <h2

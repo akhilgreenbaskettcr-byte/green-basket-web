@@ -3,29 +3,59 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, LogIn, ShoppingBag, MapPin, LogOut, ChevronDown } from "lucide-react";
+import { User, LogIn, ShoppingBag, MapPin, LogOut, ChevronDown, Shield, LayoutDashboard } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
 export function UserNavIcon() {
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
+
+    const checkUserRole = async (currentUser: any) => {
+      if (!currentUser) {
+        setUser(null);
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
+
+      setUser(currentUser);
+
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: profile } = await (supabase as any)
+          .from("profiles")
+          .select("role")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+
+        if (profile?.role === "admin" || currentUser.email === "admin@greenbasket.in") {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
+      } catch {
+        setIsAdmin(currentUser.email === "admin@greenbasket.in");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     supabase.auth.getUser().then(({ data: { user: u } }) => {
-      setUser(u || null);
-      setLoading(false);
+      checkUserRole(u);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-      setLoading(false);
+      checkUserRole(session?.user || null);
     });
 
     // Close dropdown on outside click
@@ -46,6 +76,7 @@ export function UserNavIcon() {
     const supabase = createClient();
     await supabase.auth.signOut();
     setUser(null);
+    setIsAdmin(false);
     setDropdownOpen(false);
     router.push("/");
     router.refresh();
@@ -57,31 +88,61 @@ export function UserNavIcon() {
 
   // Logged-in Profile Avatar with Dropdown
   if (user) {
-    const displayName =
-      user.user_metadata?.full_name || user.email?.split("@")[0] || "Profile";
+    const displayName = isAdmin
+      ? "Admin"
+      : user.user_metadata?.full_name || user.email?.split("@")[0] || "Profile";
 
     return (
       <div className="relative shrink-0" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => setDropdownOpen((prev) => !prev)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 hover:bg-green-100 text-gb-green font-bold text-xs transition-colors border border-green-200 cursor-pointer"
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-xs transition-all border cursor-pointer ${
+            isAdmin
+              ? "bg-emerald-50 hover:bg-emerald-100 text-gb-green border-emerald-300 shadow-2xs"
+              : "bg-green-50 hover:bg-green-100 text-gb-green border-green-200"
+          }`}
           aria-expanded={dropdownOpen}
           aria-label="User account menu"
         >
-          <div className="w-5 h-5 rounded-full bg-gb-green text-white flex items-center justify-center font-bold text-[10px] uppercase">
-            {displayName.charAt(0)}
+          <div
+            className={`w-5 h-5 rounded-full text-white flex items-center justify-center font-bold text-[10px] uppercase ${
+              isAdmin ? "bg-emerald-700" : "bg-gb-green"
+            }`}
+          >
+            {isAdmin ? <Shield size={11} /> : displayName.charAt(0)}
           </div>
           <span className="max-w-[90px] truncate">{displayName}</span>
           <ChevronDown size={13} className={`transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
         </button>
 
         {dropdownOpen && (
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gb-border py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-            <div className="px-3.5 py-2 border-b border-gray-100">
-              <p className="text-[11px] text-gray-400 font-medium">Signed in as</p>
+          <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gb-border py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="px-3.5 py-2 border-b border-gray-100 mb-1">
+              <div className="flex items-center justify-between gap-1 mb-0.5">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Signed in as</p>
+                {isAdmin && (
+                  <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                    ADMIN
+                  </span>
+                )}
+              </div>
               <p className="text-xs font-bold text-gb-charcoal truncate">{user.email}</p>
             </div>
+
+            {/* Quick Admin Dashboard Link if Admin */}
+            {isAdmin && (
+              <div className="px-2 pb-1.5 mb-1 border-b border-gray-100">
+                <Link
+                  href="/admin"
+                  onClick={() => setDropdownOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all rounded-xl shadow-xs"
+                >
+                  <LayoutDashboard size={14} />
+                  <span>Admin Dashboard →</span>
+                </Link>
+              </div>
+            )}
 
             <Link
               href="/account"
@@ -115,7 +176,7 @@ export function UserNavIcon() {
             <button
               type="button"
               onClick={handleLogout}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 hover:bg-red-50 font-semibold transition-colors text-left"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 hover:bg-red-50 font-semibold transition-colors text-left cursor-pointer"
             >
               <LogOut size={14} />
               Sign Out
@@ -126,7 +187,7 @@ export function UserNavIcon() {
     );
   }
 
-  // Guest Login Button — icon + text style on desktop, icon only on mobile
+  // Guest Login Button
   return (
     <Link
       href="/login"

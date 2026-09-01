@@ -7,7 +7,7 @@ export async function AnnouncementBar() {
     settings["delivery_message"] ??
     "Freshly cut. Hygienically packed. Delivered to your doorstep.";
   const sameDayMessage =
-    settings["same_day_message"] ?? "Order before 1PM for same day delivery.";
+    settings["same_day_message"] ?? "Order before 1PM for next day delivery.";
 
   return (
     <div

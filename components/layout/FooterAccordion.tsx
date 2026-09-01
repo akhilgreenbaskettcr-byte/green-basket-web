@@ -112,7 +112,7 @@ export function FooterAccordion({
               </li>
               <li>
                 <Link href="/contact" className="text-gray-600 hover:text-gb-green transition-colors">
-                  CONTACT
+                  CONTACT US
                 </Link>
               </li>
               <li>
@@ -125,7 +125,52 @@ export function FooterAccordion({
         )}
       </div>
 
-      {/* 3. Kitchen Concierge Accordion */}
+      {/* 3. Razorpay Legal & Policies Accordion */}
+      <div className="border border-gray-200/80 rounded-2xl bg-white overflow-hidden shadow-2xs">
+        <button
+          type="button"
+          onClick={() => toggle("policies")}
+          className="w-full flex items-center justify-between p-4 text-left font-bold text-xs uppercase tracking-wider text-gb-charcoal cursor-pointer"
+          aria-expanded={openSection === "policies"}
+        >
+          <span className="text-gb-green font-mono">POLICIES & LEGAL</span>
+          <ChevronDown
+            size={16}
+            className={`text-gray-500 transition-transform duration-200 ${
+              openSection === "policies" ? "rotate-180 text-gb-green" : ""
+            }`}
+          />
+        </button>
+
+        {openSection === "policies" && (
+          <div className="px-4 pb-4 pt-1 border-t border-gray-100">
+            <ul className="space-y-2.5 text-xs font-medium">
+              <li>
+                <Link href="/shipping-policy" className="text-gray-600 hover:text-gb-green transition-colors">
+                  SHIPPING & DELIVERY POLICY
+                </Link>
+              </li>
+              <li>
+                <Link href="/refund-policy" className="text-gray-600 hover:text-gb-green transition-colors">
+                  CANCELLATION & REFUND POLICY
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy-policy" className="text-gray-600 hover:text-gb-green transition-colors">
+                  PRIVACY POLICY
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms-and-conditions" className="text-gray-600 hover:text-gb-green transition-colors">
+                  TERMS & CONDITIONS
+                </Link>
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* 4. Kitchen Concierge Accordion */}
       <div className="border border-gray-200/80 rounded-2xl bg-white overflow-hidden shadow-2xs">
         <button
           type="button"
@@ -166,7 +211,7 @@ export function FooterAccordion({
 
             <div>
               <p className="text-[10px] uppercase font-bold text-gray-400">SERVICE AREA</p>
-              <p className="font-medium text-gray-800">{address}</p>
+              <p className="font-medium text-gray-800">{address || "Thrissur, Kerala, India"}</p>
             </div>
           </div>
         )}

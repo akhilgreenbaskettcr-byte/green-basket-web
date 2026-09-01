@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useCartStore } from "@/lib/store/cart";
 import { createOrder } from "@/app/actions/order";
 import { formatPrice } from "@/lib/utils";
@@ -10,6 +11,7 @@ import { createClient } from "@/utils/supabase/client";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { MapPickerModal } from "@/components/checkout/MapPickerModal";
 import { extractCoordinatesFromUrl } from "@/lib/location-parser";
+import { loadRazorpayScript } from "@/lib/razorpay";
 import {
   Loader2,
   MapPin,
@@ -22,6 +24,11 @@ import {
   Plus,
   Search,
   Link as LinkIcon,
+  CreditCard,
+  Banknote,
+  ShieldCheck,
+  Lock,
+  ShoppingBag,
 } from "lucide-react";
 import type { DeliveryArea, SavedAddress } from "@/types/database";
 
@@ -53,8 +60,10 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
   const { items, subtotal, clearCart } = useCartStore();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState<"IDLE" | "OPENING" | "CONFIRMING" | "COD">("IDLE");
   const [serverError, setServerError] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("razorpay");
 
   // Auth & Saved Addresses state
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,7 +73,7 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
 
-  // GPS autofill state — does NOT control order eligibility
+  // GPS autofill state
   const [locationFetch, setLocationFetch] = useState<LocationFetchStatus>("IDLE");
   const [locationNote, setLocationNote] = useState("");
 
@@ -105,136 +114,101 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
     phone: "",
     email: "",
     address: "",
-    city: "",
+    city: "Thrissur",
     pincode: "",
     notes: "",
   });
 
+  // Pre-load Razorpay script on mount
+  useEffect(() => {
+    loadRazorpayScript();
+  }, []);
+
+  // Fetch logged in user & their saved addresses
   useEffect(() => {
     setMounted(true);
     const supabase = createClient();
 
-    const fetchUserData = async () => {
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      setUser(currentUser);
+    async function loadUserData() {
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
 
       if (currentUser) {
+        setUser(currentUser);
+
+        // Pre-fill name and email from profile if available
         setForm((prev) => ({
           ...prev,
+          customer_name:
+            prev.customer_name ||
+            currentUser.user_metadata?.full_name ||
+            "",
           email: prev.email || currentUser.email || "",
-          customer_name: prev.customer_name || currentUser.user_metadata?.full_name || "",
+          phone: prev.phone || currentUser.user_metadata?.phone || "",
         }));
 
         // Fetch saved addresses
-        const { data: addrs } = await supabase
-          .from("addresses")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: addresses } = await (supabase as any)
+          .from("saved_addresses")
           .select("*")
           .order("is_default", { ascending: false });
 
-        if (addrs && addrs.length > 0) {
-          const typedAddrs = addrs as SavedAddress[];
-          setSavedAddresses(typedAddrs);
-          // Auto-select default or first saved address
-          const defaultAddr = typedAddrs.find((a) => a.is_default) || typedAddrs[0];
-          handleSelectSavedAddress(defaultAddr);
+        if (addresses && addresses.length > 0) {
+          setSavedAddresses(addresses);
+          const defaultAddr = addresses.find((a: SavedAddress) => a.is_default) || addresses[0];
+          setSelectedAddressId(defaultAddr.id);
+          applySavedAddress(defaultAddr);
         }
       }
-    };
+    }
 
-    fetchUserData();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-      if (session?.user) {
-        fetchUserData();
-      } else {
-        setSavedAddresses([]);
-        setSelectedAddressId("custom");
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    loadUserData();
   }, []);
 
-  const handleSelectSavedAddress = (addr: SavedAddress) => {
-    setSelectedAddressId(addr.id);
+  const applySavedAddress = (addr: SavedAddress) => {
     setForm((prev) => ({
       ...prev,
-      customer_name: addr.full_name,
-      phone: addr.phone,
+      customer_name: (addr as any).full_name || (addr as any).recipient_name || prev.customer_name,
+      phone: addr.phone || prev.phone,
       address: addr.address_line,
-      city: addr.city,
+      city: addr.city || "Thrissur",
       pincode: addr.pincode,
     }));
-    setErrors({});
   };
 
-  const handleMapConfirm = (loc: { areaName: string; pincode: string }) => {
+  const handleSelectSavedAddress = (addrId: string) => {
+    setSelectedAddressId(addrId);
+    if (addrId === "custom") {
+      setForm((prev) => ({
+        ...prev,
+        address: "",
+        pincode: "",
+      }));
+    } else {
+      const selected = savedAddresses.find((a) => a.id === addrId);
+      if (selected) {
+        applySavedAddress(selected);
+      }
+    }
+  };
+
+  const handleMapConfirm = (locationData: {
+    areaName: string;
+    pincode: string;
+  }) => {
     setForm((prev) => ({
       ...prev,
-      city: loc.areaName,
-      pincode: loc.pincode,
+      city: locationData.areaName ? `${locationData.areaName}, Thrissur` : prev.city,
+      pincode: locationData.pincode || prev.pincode,
     }));
-    setLocationFetch("FILLED");
-    setLocationNote("Area and PIN code auto-filled from map selection.");
-    setErrors((prev) => ({ ...prev, city: "", pincode: "" }));
   };
 
-  const sub = subtotal();
-  const delivery = sub >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_FEE;
-  const total = sub + delivery;
-
-  // The sole eligibility check: PIN code must exist in active admin delivery areas
-  const isPinApproved =
-    form.pincode.trim().length === 6 &&
-    deliveryAreas.some((da) => da.pincode === form.pincode.trim() && da.is_active);
-
-  const approvedArea = deliveryAreas.find(
-    (da) => da.pincode === form.pincode.trim() && da.is_active
-  );
-
-  // Clear location inputs so user can choose manually or from dropdown
-  const handleClearLocation = () => {
-    setForm((prev) => ({
-      ...prev,
-      pincode: "",
-      city: "",
-    }));
-    setLocationFetch("IDLE");
-    setLocationNote("");
-    setErrors((prev) => ({ ...prev, pincode: "", city: "" }));
-  };
-
-  // Generic field change handler
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    // For pincode: only allow digits
-    const sanitized = name === "pincode" ? value.replace(/\D/g, "").slice(0, 6) : value;
-    setForm((prev) => ({ ...prev, [name]: sanitized }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
-  };
-
-  // Delivery area dropdown selection — auto-fills both area + PIN
-  const handleDeliveryAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedPin = e.target.value;
-    const matched = deliveryAreas.find((da) => da.pincode === selectedPin);
-    setForm((prev) => ({
-      ...prev,
-      pincode: selectedPin,
-      city: matched ? matched.area_name : prev.city,
-    }));
-    setLocationFetch("IDLE");
-    setLocationNote("");
-    setErrors((prev) => ({ ...prev, pincode: "", city: "" }));
-  };
-
-  // GPS autofill — optional convenience only, does NOT block checkout
-  const handleAutofillLocation = () => {
+  const handleGetLiveLocation = () => {
     if (!navigator.geolocation) {
       setLocationFetch("ERROR");
-      setLocationNote("Your browser does not support geolocation.");
+      setLocationNote("Geolocation is not supported by your browser.");
       return;
     }
 
@@ -243,60 +217,100 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        const { latitude, longitude } = position.coords;
         try {
-          const { latitude: lat, longitude: lng } = position.coords;
-          const res = await fetch(`/api/geocode/reverse?lat=${lat}&lng=${lng}`);
+          // Reverse geocode via OpenStreetMap Nominatim
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+            { headers: { "Accept-Language": "en" } }
+          );
           const data = await res.json();
 
-          if (data.success && data.pincode) {
+          if (data && data.address) {
+            const road = data.address.road || data.address.suburb || data.address.neighbourhood || "";
+            const city = data.address.city || data.address.town || data.address.village || data.address.county || "Thrissur";
+            const postcode = data.address.postcode ? data.address.postcode.replace(/\D/g, "").slice(0, 6) : "";
+            const fullAddr = data.display_name || `${road}, ${city}`;
+
             setForm((prev) => ({
               ...prev,
-              pincode: data.pincode,
-              city: data.areaName || prev.city,
+              address: fullAddr,
+              city: city,
+              pincode: postcode || prev.pincode,
             }));
-            setErrors((prev) => ({ ...prev, pincode: "", city: "" }));
+            setSelectedAddressId("custom");
             setLocationFetch("FILLED");
-            setLocationNote(`Area and PIN code auto-filled from your current location.`);
+            setLocationNote("Location auto-filled from GPS.");
           } else {
-            setLocationFetch("ERROR");
-            setLocationNote(
-              data.error ||
-                "Unable to detect your PIN code. Please enter your area and PIN code manually."
-            );
+            setLocationFetch("FILLED");
+            setForm((prev) => ({
+              ...prev,
+              address: `GPS: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+            }));
+            setLocationNote("Coordinates captured. Please add street details.");
           }
         } catch {
           setLocationFetch("ERROR");
-          setLocationNote(
-            "Unable to detect your location. Please enter your area and PIN code manually."
-          );
+          setLocationNote("Could not fetch address from coordinates. Please type manually.");
         }
       },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
           setLocationFetch("DENIED");
-          setLocationNote(
-            "Location access was denied. You can still enter your area and PIN code manually."
-          );
+          setLocationNote("Location permission was denied. Please enter your address manually.");
         } else {
           setLocationFetch("ERROR");
-          setLocationNote(
-            "Could not retrieve your location. Please enter your area and PIN code manually."
-          );
+          setLocationNote("Could not retrieve GPS location. Please enter manually.");
         }
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      { timeout: 10000, enableHighAccuracy: true }
     );
+  };
+
+  const handleDeliveryAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedPincode = e.target.value;
+    const matchedArea = deliveryAreas.find((da) => da.pincode === selectedPincode);
+
+    setForm((prev) => ({
+      ...prev,
+      pincode: selectedPincode,
+      city: matchedArea?.area_name ? `${matchedArea.area_name}, Thrissur` : prev.city,
+    }));
+  };
+
+  // Derive eligibility from active deliveryAreas DB prop
+  const currentPincode = form.pincode.trim();
+  const matchedDeliveryArea = deliveryAreas.find(
+    (da) => da.pincode.trim() === currentPincode && da.is_active
+  );
+  const isPinApproved = Boolean(matchedDeliveryArea);
+
+  const sub = subtotal();
+  const delivery = sub >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_FEE;
+  const total = sub + delivery;
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
-
-    if (form.customer_name.trim().length < 2)
-      newErrors.customer_name = "Name must be at least 2 characters";
-    if (!/^[6-9]\d{9}$/.test(form.phone.trim()))
+    if (!form.customer_name.trim())
+      newErrors.customer_name = "Name is required";
+    if (!form.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^[6-9]\d{9}$/.test(form.phone.replace(/\s/g, ""))) {
       newErrors.phone = "Enter a valid 10-digit Indian mobile number";
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
-      newErrors.email = "Enter a valid email";
+    }
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors.email = "Enter a valid email address";
+    }
     if (form.address.trim().length < 10)
       newErrors.address = "Please enter a complete address";
     if (!isPinApproved)
@@ -313,36 +327,164 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
     if (!validate()) return;
 
     setLoading(true);
+
     try {
-      const result = await createOrder({
-        ...form,
-        items: items.map((item) => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          productName: item.productName,
-          variantLabel: item.variantLabel,
-          price: item.price,
-          quantity: item.quantity,
-        })),
-        subtotal: sub,
-        deliveryFee: delivery,
-        total,
+      // 1. CASH ON DELIVERY FLOW
+      if (paymentMethod === "cod") {
+        setLoadingStatus("COD");
+        const result = await createOrder({
+          ...form,
+          payment_method: "cod",
+          items: items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            productName: item.productName,
+            variantLabel: item.variantLabel,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+          subtotal: sub,
+          deliveryFee: delivery,
+          total,
+        });
+
+        if (result.success) {
+          clearCart();
+          router.push(`/order-success?order=${result.orderNumber}`);
+        } else {
+          setServerError(result.error);
+          setLoading(false);
+          setLoadingStatus("IDLE");
+        }
+        return;
+      }
+
+      // 2. RAZORPAY PAYMENT FLOW
+      setLoadingStatus("OPENING");
+      const isScriptReady = await loadRazorpayScript();
+      if (!isScriptReady) {
+        setServerError("Unable to load Razorpay payment gateway. Please check your internet connection or choose Cash on Delivery.");
+        setLoading(false);
+        setLoadingStatus("IDLE");
+        return;
+      }
+
+      // Create Razorpay order on server with complete backup metadata
+      const orderRes = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: total,
+          receipt: `rcpt_${Date.now()}`,
+          customer_name: form.customer_name,
+          phone: form.phone,
+          email: form.email,
+          address: form.address,
+          city: form.city,
+          pincode: form.pincode,
+          notes: form.notes,
+          items: items.map((i) => ({
+            productId: i.productId,
+            variantId: i.variantId,
+            productName: i.productName,
+            variantLabel: i.variantLabel,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+          subtotal: sub,
+          deliveryFee: delivery,
+          total: total,
+        }),
       });
 
-      if (result.success) {
-        clearCart();
-        router.push(`/order-success?order=${result.orderNumber}`);
-      } else {
-        setServerError(result.error);
+      const rzpOrderData = await orderRes.json();
+
+      if (!orderRes.ok || !rzpOrderData.success) {
+        setServerError(rzpOrderData.error || "Failed to initialize Razorpay checkout. Please try again.");
+        setLoading(false);
+        setLoadingStatus("IDLE");
+        return;
       }
+
+      // Launch Razorpay popup
+      const options = {
+        key: rzpOrderData.keyId,
+        amount: rzpOrderData.amount,
+        currency: rzpOrderData.currency || "INR",
+        name: "Green Basket TCR",
+        description: "Fresh Kerala Kitchen Groceries",
+        image: "/images/logo/Green-basket-logo.png",
+        order_id: rzpOrderData.orderId,
+        prefill: {
+          name: form.customer_name,
+          contact: form.phone,
+          email: form.email || undefined,
+        },
+        theme: {
+          color: "#245B35",
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            setLoadingStatus("IDLE");
+            setServerError("Payment was cancelled. You can retry or choose Cash on Delivery.");
+          },
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        handler: async (response: any) => {
+          setLoading(true);
+          setLoadingStatus("CONFIRMING");
+          try {
+            const result = await createOrder({
+              ...form,
+              payment_method: "razorpay",
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              items: items.map((item) => ({
+                productId: item.productId,
+                variantId: item.variantId,
+                productName: item.productName,
+                variantLabel: item.variantLabel,
+                price: item.price,
+                quantity: item.quantity,
+              })),
+              subtotal: sub,
+              deliveryFee: delivery,
+              total,
+            });
+
+            if (result.success) {
+              clearCart();
+              router.push(`/order-success?order=${result.orderNumber}`);
+            } else {
+              setServerError(result.error);
+              setLoading(false);
+              setLoadingStatus("IDLE");
+            }
+          } catch {
+            setServerError("Payment received but order registration failed. Please contact support immediately.");
+            setLoading(false);
+            setLoadingStatus("IDLE");
+          }
+        },
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rzp = new (window as any).Razorpay(options);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rzp.on("payment.failed", (res: any) => {
+        setLoading(false);
+        setLoadingStatus("IDLE");
+        setServerError(res.error?.description || "Payment failed. Please try again.");
+      });
+      rzp.open();
     } catch {
       setServerError("Something went wrong placing your order. Please try again.");
-    } finally {
       setLoading(false);
+      setLoadingStatus("IDLE");
     }
   };
 
-  // Redirect to cart if empty after mounting — performed inside useEffect to avoid render side-effects
   useEffect(() => {
     if (mounted && items.length === 0) {
       router.push("/cart");
@@ -359,7 +501,6 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
 
           {/* ── Section 1: Delivery Location ── */}
           <div className="bg-white rounded-2xl border border-gb-border p-6 shadow-sm space-y-5">
-            {/* Header */}
             <div className="flex items-center gap-3 border-b border-gb-border pb-4">
               <div className="w-10 h-10 rounded-xl bg-green-50 text-gb-green flex items-center justify-center shrink-0">
                 <MapPin size={20} />
@@ -374,7 +515,7 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
               </div>
             </div>
 
-            {/* 1. FIRST: Delivery Area Dropdown */}
+            {/* Delivery Area Dropdown */}
             <div className="space-y-1">
               <label htmlFor="delivery_area_select" className="gb-label flex items-center justify-between">
                 <span>Select Delivery Area <span className="text-red-400">*</span></span>
@@ -400,285 +541,114 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
                   </option>
                   {deliveryAreas.map((area) => (
                     <option key={area.id} value={area.pincode}>
-                      {area.area_name} — {area.pincode}
+                      {area.area_name} — PIN {area.pincode}
                     </option>
                   ))}
                 </select>
               )}
-              <p className="text-[11px] text-gray-400 pt-0.5">
-                Selecting an area automatically fills Area and PIN Code below.
-              </p>
             </div>
 
-            {/* 2. SECOND: Area / Locality & PIN Code Inputs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              {/* Area / Locality */}
-              <div>
-                <label htmlFor="city" className="gb-label">
-                  Area / Locality <span className="text-red-400">*</span>
-                </label>
-                <input
-                  id="city"
-                  name="city"
-                  type="text"
-                  value={form.city}
-                  onChange={handleChange}
-                  placeholder="e.g. Kakkanad"
-                  className={`gb-input ${errors.city ? "!border-red-400" : ""}`}
-                  autoComplete="address-level2"
-                />
-                {errors.city && (
-                  <p className="text-red-500 text-xs mt-1">{errors.city}</p>
-                )}
+            {/* Paste Location Link Box */}
+            <div className="p-3.5 bg-gray-50/90 rounded-xl border border-gray-200/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                  <LinkIcon size={14} className="text-gb-green" />
+                  Have a location link? Paste it here
+                </span>
+                <span className="text-[10px] text-gray-400 font-mono">Google Maps link</span>
               </div>
-
-              {/* PIN Code */}
-              <div>
-                <label htmlFor="pincode" className="gb-label">
-                  PIN Code <span className="text-red-400">*</span>
-                </label>
+              <div className="flex gap-2">
                 <input
-                  id="pincode"
-                  name="pincode"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={form.pincode}
-                  onChange={handleChange}
-                  placeholder="682030"
-                  className={`gb-input font-mono tracking-wider ${errors.pincode ? "!border-red-400" : ""}`}
-                  autoComplete="postal-code"
-                />
-                {errors.pincode && (
-                  <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>
-                )}
-              </div>
-            </div>
-
-            {/* 3. THIRD: Location Assistance Options */}
-            <div className="space-y-3 pt-1">
-              <label className="gb-label text-xs">Choose Location Assistance</label>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleAutofillLocation}
-                  disabled={locationFetch === "FETCHING"}
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-gb-green bg-green-50 hover:bg-green-100 active:bg-green-200 border border-green-200 px-4 py-2.5 rounded-xl transition-colors shrink-0 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-                  id="use-my-location-btn"
-                >
-                  {locationFetch === "FETCHING" ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Navigation size={14} />
-                  )}
-                  {locationFetch === "FETCHING"
-                    ? "Detecting location…"
-                    : "📍 Use My Current Location"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setInitialLinkForMap("");
-                    setShowMapModal(true);
+                  type="url"
+                  value={pastedLinkInput}
+                  onChange={(e) => {
+                    setPastedLinkInput(e.target.value);
+                    if (pastedLinkError) setPastedLinkError("");
                   }}
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-gb-charcoal bg-white hover:bg-gray-50 active:bg-gray-100 border border-gray-300 px-4 py-2.5 rounded-xl transition-colors shrink-0 shadow-2xs cursor-pointer"
-                  id="select-location-map-btn"
-                >
-                  <span>🗺 Select Location on Map</span>
-                </button>
-              </div>
-
-              {/* Paste Location Link Option */}
-              <div className="bg-gray-50/90 border border-gray-200/90 rounded-2xl p-3.5 space-y-2">
-                <label htmlFor="checkout_location_link_input" className="text-xs font-bold text-gb-charcoal flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <LinkIcon size={14} className="text-gb-green" />
-                    <span>Have a location link? Paste it here</span>
-                  </span>
-                  <span className="text-[11px] text-gray-400 font-normal">Google Maps link</span>
-                </label>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    id="checkout_location_link_input"
-                    type="url"
-                    value={pastedLinkInput}
-                    onChange={(e) => {
-                      setPastedLinkInput(e.target.value);
-                      if (pastedLinkError) setPastedLinkError("");
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleFindLocationFromCheckoutLink();
-                      }
-                    }}
-                    placeholder="Paste Google Maps location link (e.g. https://maps.app.goo.gl/...)"
-                    className="flex-1 text-xs py-2 px-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:border-gb-green text-gb-charcoal shadow-2xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleFindLocationFromCheckoutLink}
-                    disabled={pastedLinkLoading || !pastedLinkInput.trim()}
-                    className="px-3.5 py-2 text-xs font-bold text-white bg-gb-green hover:bg-gb-green-dark rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    {pastedLinkLoading ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
-                    <span>{pastedLinkLoading ? "Finding…" : "Find Location"}</span>
-                  </button>
-                </div>
-
-                {pastedLinkError && (
-                  <p className="text-xs text-rose-600 font-medium flex items-center gap-1 pt-0.5">
-                    <AlertTriangle size={13} className="shrink-0" />
-                    <span>{pastedLinkError}</span>
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* GPS feedback note with Clear action */}
-            {locationNote && (
-              <div
-                className={`text-xs px-3 py-2.5 rounded-xl border flex items-center justify-between gap-2 flex-wrap ${
-                  locationFetch === "FILLED"
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : "bg-amber-50 border-amber-100 text-amber-800"
-                }`}
-                role="status"
-              >
-                <div className="flex items-center gap-2">
-                  {locationFetch === "FILLED" ? (
-                    <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-                  ) : (
-                    <AlertTriangle size={14} className="text-amber-500 shrink-0" />
-                  )}
-                  <span>{locationNote}</span>
-                </div>
+                  placeholder="Paste Google Maps location link (e.g. https://maps.app.goo.gl/...)"
+                  className="gb-input text-xs py-2 bg-white flex-1"
+                />
                 <button
                   type="button"
-                  onClick={handleClearLocation}
-                  className="text-[11px] font-bold underline hover:no-underline text-gray-600 hover:text-gray-900 shrink-0"
+                  onClick={handleFindLocationFromCheckoutLink}
+                  disabled={pastedLinkLoading || !pastedLinkInput.trim()}
+                  className="px-3.5 py-2 rounded-xl bg-gb-green text-white text-xs font-bold hover:bg-gb-green-dark transition-colors disabled:opacity-50 flex items-center gap-1.5 shrink-0"
                 >
-                  ✕ Clear Location
+                  {pastedLinkLoading ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Search size={13} />
+                  )}
+                  <span>Find Location</span>
                 </button>
               </div>
-            )}
+              {pastedLinkError && (
+                <p className="text-[11px] text-red-600 font-medium">{pastedLinkError}</p>
+              )}
+            </div>
 
-            {/* 4. FOURTH: Delivery Availability Status Banner */}
+            {/* Live PIN Code Status Banner */}
             {form.pincode.trim().length === 6 && (
               <div
-                className={`rounded-xl px-4 py-3 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
+                className={`p-3.5 rounded-xl border flex items-start gap-2.5 transition-all text-xs ${
                   isPinApproved
                     ? "bg-emerald-50 border-emerald-200 text-emerald-800"
                     : "bg-red-50 border-red-200 text-red-800"
                 }`}
                 role="status"
-                aria-live="polite"
               >
-                <div className="flex items-start sm:items-center gap-2.5">
-                  {isPinApproved ? (
-                    <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5 sm:mt-0" />
-                  ) : (
-                    <XCircle size={18} className="text-red-500 shrink-0 mt-0.5 sm:mt-0" />
-                  )}
-                  <div>
-                    <p className="text-sm font-bold">
-                      {isPinApproved
-                        ? `✓ Delivery available to ${approvedArea?.area_name ?? (form.city || "this area")}`
-                        : `✕ We currently don't deliver to PIN code ${form.pincode}`}
-                    </p>
-                    {isPinApproved ? (
-                      <p className="text-xs font-medium opacity-80">
-                        PIN Code: <span className="font-mono">{form.pincode}</span>
+                {isPinApproved ? (
+                  <>
+                    <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-emerald-900">
+                        ✓ Delivery available to {matchedDeliveryArea?.area_name || form.city || "your area"}
                       </p>
-                    ) : (
-                      <p className="text-xs opacity-80">
-                        Please select an active delivery area from the dropdown above or enter an eligible PIN code.
+                      <p className="text-emerald-700 text-[11px] mt-0.5">
+                        PIN Code: <span className="font-mono font-bold">{form.pincode}</span>
                       </p>
-                    )}
-                  </div>
-                </div>
-
-                {!isPinApproved && (
-                  <button
-                    type="button"
-                    onClick={handleClearLocation}
-                    className="inline-flex items-center justify-center gap-1.5 text-xs font-bold bg-white text-red-700 hover:bg-red-50 border border-red-200 px-3.5 py-2 rounded-xl shadow-xs transition-colors shrink-0"
-                  >
-                    ✕ Clear &amp; Select Manually
-                  </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <XCircle size={18} className="text-red-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-red-900">
+                        ✕ Delivery currently unavailable in PIN {form.pincode}
+                      </p>
+                      <p className="text-red-700 text-[11px] mt-0.5">
+                        Please select an active delivery area from the dropdown above.
+                      </p>
+                    </div>
+                  </>
                 )}
               </div>
             )}
           </div>
 
-          {/* ── Section 2: Contact & Address ── */}
-          <div className="bg-white rounded-2xl border border-gb-border p-6 shadow-sm">
-            <h2 className="font-semibold text-gb-charcoal text-base mb-5">
-              Contact &amp; Address Details
+          {/* ── Section 2: Contact & Address Details ── */}
+          <div className="bg-white rounded-2xl border border-gb-border p-6 shadow-sm space-y-5">
+            <h2 className="font-bold text-gb-charcoal text-base border-b border-gb-border pb-4">
+              Contact & Address Details
             </h2>
 
-            {/* Saved Addresses for Logged-In User */}
-            {user && savedAddresses.length > 0 && (
-              <div className="mb-6 space-y-3 border-b border-gray-100 pb-5">
-                <div className="flex items-center justify-between">
-                  <label className="gb-label mb-0">Saved Addresses</label>
-                  <span className="text-xs text-gray-400 font-normal">
-                    {savedAddresses.length} address{savedAddresses.length !== 1 ? "es" : ""} saved
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {savedAddresses.map((addr) => {
-                    const isSelected = selectedAddressId === addr.id;
-                    return (
-                      <button
-                        key={addr.id}
-                        type="button"
-                        onClick={() => handleSelectSavedAddress(addr)}
-                        className={`p-3.5 rounded-xl border text-left transition-all relative ${
-                          isSelected
-                            ? "border-gb-green bg-green-50/50 shadow-2xs ring-1 ring-gb-green/20"
-                            : "border-gray-200 bg-white hover:border-gray-300"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <span className="text-[10px] font-extrabold text-gb-green uppercase tracking-wider bg-white px-2 py-0.5 rounded border border-green-200">
-                            {addr.label}
-                          </span>
-                          {isSelected && <CheckCircle2 size={15} className="text-gb-green shrink-0" />}
-                        </div>
-                        <p className="text-xs font-bold text-gb-charcoal">{addr.full_name}</p>
-                        <p className="text-[11px] text-gray-500 font-mono mt-0.5">{addr.phone}</p>
-                        <p className="text-xs text-gray-600 line-clamp-2 mt-1">{addr.address_line}</p>
-                        <p className="text-xs font-semibold text-gb-charcoal mt-1">
-                          {addr.city} — <span className="font-mono">{addr.pincode}</span>
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             <div className="space-y-4">
-              {/* Name & Phone */}
+              {/* Full Name & Phone Number */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="customer_name" className="gb-label">
                     Full Name <span className="text-red-400">*</span>
                   </label>
                   <input
+                    type="text"
                     id="customer_name"
                     name="customer_name"
-                    type="text"
                     value={form.customer_name}
                     onChange={handleChange}
-                    placeholder="Your full name"
-                    className={`gb-input ${errors.customer_name ? "!border-red-400" : ""}`}
+                    placeholder="Enter your full name"
                     autoComplete="name"
-                    required
+                    className={`gb-input ${errors.customer_name ? "border-red-400 bg-red-50/50" : ""}`}
+                    aria-invalid={Boolean(errors.customer_name)}
                   />
                   {errors.customer_name && (
                     <p className="text-red-500 text-xs mt-1">{errors.customer_name}</p>
@@ -690,15 +660,15 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
                     Phone Number <span className="text-red-400">*</span>
                   </label>
                   <input
+                    type="tel"
                     id="phone"
                     name="phone"
-                    type="tel"
                     value={form.phone}
                     onChange={handleChange}
                     placeholder="10-digit mobile number"
-                    className={`gb-input ${errors.phone ? "!border-red-400" : ""}`}
                     autoComplete="tel"
-                    required
+                    className={`gb-input ${errors.phone ? "border-red-400 bg-red-50/50" : ""}`}
+                    aria-invalid={Boolean(errors.phone)}
                   />
                   {errors.phone && (
                     <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
@@ -706,28 +676,27 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
                 </div>
               </div>
 
-              {/* Email */}
+              {/* Email Address */}
               <div>
                 <label htmlFor="email" className="gb-label">
-                  Email Address{" "}
-                  <span className="text-gray-400 font-normal">(optional)</span>
+                  Email Address <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <input
+                  type="email"
                   id="email"
                   name="email"
-                  type="email"
                   value={form.email}
                   onChange={handleChange}
-                  placeholder="your@email.com"
-                  className={`gb-input ${errors.email ? "!border-red-400" : ""}`}
+                  placeholder="For digital invoices and updates"
                   autoComplete="email"
+                  className={`gb-input ${errors.email ? "border-red-400 bg-red-50/50" : ""}`}
                 />
                 {errors.email && (
                   <p className="text-red-500 text-xs mt-1">{errors.email}</p>
                 )}
               </div>
 
-              {/* Full Delivery Address */}
+              {/* Delivery Address */}
               <div>
                 <label htmlFor="address" className="gb-label">
                   Delivery Address <span className="text-red-400">*</span>
@@ -737,44 +706,107 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
                   name="address"
                   value={form.address}
                   onChange={handleChange}
-                  placeholder="House/flat no., street name, building, landmark…"
+                  placeholder="House/flat number, building name, street, landmark"
                   rows={3}
-                  className={`gb-input resize-none ${errors.address ? "!border-red-400" : ""}`}
-                  autoComplete="street-address"
-                  required
+                  className={`gb-input resize-none ${errors.address ? "border-red-400 bg-red-50/50" : ""}`}
+                  aria-invalid={Boolean(errors.address)}
                 />
                 {errors.address && (
                   <p className="text-red-500 text-xs mt-1">{errors.address}</p>
                 )}
               </div>
 
-              {/* Delivery Notes */}
+              {/* Special Delivery Instructions */}
               <div>
                 <label htmlFor="notes" className="gb-label">
-                  Special Delivery Instructions{" "}
-                  <span className="text-gray-400 font-normal">(optional)</span>
+                  Special Delivery Instructions <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
-                <textarea
+                <input
+                  type="text"
                   id="notes"
                   name="notes"
                   value={form.notes}
                   onChange={handleChange}
                   placeholder="Gate code, drop at front door, call upon arrival, etc."
-                  rows={2}
-                  className="gb-input resize-none"
+                  className="gb-input"
                 />
               </div>
             </div>
           </div>
 
-          {/* Cash on Delivery Notice */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <p className="text-amber-800 text-sm font-medium mb-1">
-              💰 Cash on Delivery
-            </p>
-            <p className="text-amber-700 text-xs leading-relaxed">
-              We currently accept Cash on Delivery. Pay when your fresh basket arrives at your door.
-            </p>
+          {/* ── Section 3: Payment Method Selection ── */}
+          <div className="bg-white rounded-2xl border border-gb-border p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-gb-border pb-3">
+              <h2 className="font-bold text-gb-charcoal text-base flex items-center gap-2">
+                <CreditCard size={18} className="text-gb-green" />
+                <span>Select Payment Method</span>
+              </h2>
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1">
+                <Lock size={11} /> 256-Bit SSL Encrypted
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+              {/* Option 1: Razorpay Online Payment */}
+              <label
+                className={`flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                  paymentMethod === "razorpay"
+                    ? "border-gb-green bg-emerald-50/40 shadow-xs"
+                    : "border-gray-200 hover:border-gray-300 bg-white"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="radio"
+                      name="payment_method"
+                      value="razorpay"
+                      checked={paymentMethod === "razorpay"}
+                      onChange={() => setPaymentMethod("razorpay")}
+                      className="accent-gb-green w-4 h-4 cursor-pointer"
+                    />
+                    <span className="font-bold text-sm text-gb-charcoal">
+                      Pay Online (Razorpay)
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-600 text-white">
+                    RECOMMENDED
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 pl-6 leading-relaxed">
+                  UPI (GPay, PhonePe, Paytm), Credit/Debit Cards & Net Banking.
+                </p>
+              </label>
+
+              {/* Option 2: Cash on Delivery */}
+              <label
+                className={`flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                  paymentMethod === "cod"
+                    ? "border-gb-green bg-emerald-50/40 shadow-xs"
+                    : "border-gray-200 hover:border-gray-300 bg-white"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="radio"
+                      name="payment_method"
+                      value="cod"
+                      checked={paymentMethod === "cod"}
+                      onChange={() => setPaymentMethod("cod")}
+                      className="accent-gb-green w-4 h-4 cursor-pointer"
+                    />
+                    <span className="font-bold text-sm text-gb-charcoal">
+                      Cash on Delivery (COD)
+                    </span>
+                  </div>
+                  <Banknote size={16} className="text-gray-400" />
+                </div>
+                <p className="text-xs text-gray-500 pl-6 leading-relaxed">
+                  Pay with cash when your fresh grocery order arrives at your door.
+                </p>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -785,19 +817,34 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
               Order Summary
             </h2>
 
-            {/* Cart Items */}
-            <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+            {/* Cart Items with Product Image Thumbnails */}
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-1 divide-y divide-gray-100">
               {items.map((item) => (
-                <div key={item.variantId} className="flex justify-between gap-3 text-sm">
+                <div key={item.variantId} className="flex items-center gap-3 pt-3 first:pt-0 text-sm">
+                  {/* Product Thumbnail */}
+                  <div className="relative w-12 h-12 rounded-xl bg-[#FAFAF5] border border-gray-200/80 shrink-0 overflow-hidden flex items-center justify-center p-1 shadow-2xs">
+                    {item.imageUrl ? (
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.productName}
+                        fill
+                        sizes="48px"
+                        className="object-contain p-0.5 mix-blend-multiply select-none"
+                      />
+                    ) : (
+                      <ShoppingBag size={18} className="text-gray-300" />
+                    )}
+                  </div>
+
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gb-charcoal truncate">
+                    <p className="font-bold text-gb-charcoal text-xs sm:text-sm truncate">
                       {item.productName}
                     </p>
-                    <p className="text-gray-400 text-xs">
-                      {item.variantLabel} × {item.quantity}
+                    <p className="text-gray-400 text-xs mt-0.5">
+                      {item.variantLabel} × <span className="font-semibold text-gray-700">{item.quantity}</span>
                     </p>
                   </div>
-                  <span className="font-medium text-gb-charcoal shrink-0">
+                  <span className="font-bold text-gb-charcoal text-xs sm:text-sm shrink-0">
                     {formatPrice(item.price * item.quantity)}
                   </span>
                 </div>
@@ -849,11 +896,11 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
               </div>
             )}
 
-            {/* Place Order Button */}
+            {/* Place Order / Razorpay Payment Button */}
             <button
               type="submit"
               disabled={!isPinApproved || loading}
-              className={`btn-primary w-full justify-center py-3.5 text-sm font-bold transition-all shadow-md ${
+              className={`btn-primary w-full justify-center py-3.5 text-sm font-bold transition-all shadow-md flex items-center gap-2 ${
                 !isPinApproved || loading
                   ? "opacity-50 cursor-not-allowed saturate-0"
                   : "hover:shadow-lg"
@@ -864,10 +911,24 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
               {loading ? (
                 <>
                   <Loader2 size={18} className="animate-spin" aria-hidden="true" />
-                  Placing Order…
+                  <span>
+                    {loadingStatus === "CONFIRMING"
+                      ? "Confirming Your Order…"
+                      : loadingStatus === "OPENING"
+                      ? "Opening Razorpay Gateway…"
+                      : "Placing Your Order…"}
+                  </span>
+                </>
+              ) : paymentMethod === "razorpay" ? (
+                <>
+                  <Lock size={15} />
+                  <span>PAY {formatPrice(total)} ONLINE (UPI / CARDS)</span>
                 </>
               ) : (
-                "Place Order"
+                <>
+                  <Banknote size={16} />
+                  <span>PLACE ORDER (CASH ON DELIVERY)</span>
+                </>
               )}
             </button>
 
@@ -891,7 +952,6 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onSuccess={() => {
-          // Re-fetch user data on modal success
           const supabase = createClient();
           supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u));
         }}

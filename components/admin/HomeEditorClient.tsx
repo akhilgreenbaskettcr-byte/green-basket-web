@@ -48,14 +48,14 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
       initialSettings["same_day_cutoff_time"] ?? "1:00 PM",
     same_day_message:
       initialSettings["same_day_message"] ??
-      "Order before 1PM for same day delivery.",
+      "Order before 1PM for next day delivery.",
     delivery_banner_tag:
-      initialSettings["delivery_banner_tag"] ?? "SAME DAY DELIVERY",
+      initialSettings["delivery_banner_tag"] ?? "NEXT DAY DELIVERY",
     delivery_banner_headline:
-      initialSettings["delivery_banner_headline"] ?? "Order before 1:00 PM,\nget it today.",
+      initialSettings["delivery_banner_headline"] ?? "Order before 1:00 PM,\nfor next day delivery.",
     delivery_banner_description:
       initialSettings["delivery_banner_description"] ??
-      "Freshly cut, hygienically packed, and delivered straight to your kitchen — the same day you order.",
+      "Freshly cut, hygienically packed, and delivered straight to your kitchen — next day fresh.",
     delivery_banner_btn_text:
       initialSettings["delivery_banner_btn_text"] ?? "Start Shopping",
     delivery_banner_btn_url:
@@ -442,7 +442,7 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
                     type="text"
                     value={values["delivery_banner_tag"]}
                     onChange={(e) => handleChange("delivery_banner_tag", e.target.value)}
-                    placeholder="SAME DAY DELIVERY"
+                    placeholder="NEXT DAY DELIVERY"
                     className="gb-input font-bold"
                   />
                 </div>
@@ -464,7 +464,7 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
                   value={values["delivery_banner_headline"]}
                   onChange={(e) => handleChange("delivery_banner_headline", e.target.value)}
                   rows={2}
-                  placeholder="Order before 1:00 PM,&#10;get it today."
+                  placeholder="Order before 1:00 PM,&#10;for next day delivery."
                   className="gb-input font-bold resize-none"
                 />
               </div>
