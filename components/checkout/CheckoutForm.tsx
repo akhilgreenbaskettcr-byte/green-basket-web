@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -64,6 +64,7 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
   const [serverError, setServerError] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "cod">("razorpay");
+  const isOrderSuccessRef = useRef(false);
 
   // Auth & Saved Addresses state
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -349,8 +350,10 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
         });
 
         if (result.success) {
+          isOrderSuccessRef.current = true;
           clearCart();
-          router.push(`/order-success?order=${result.orderNumber}`);
+          window.location.href = `/order-success?order=${result.orderNumber}`;
+          return;
         } else {
           setServerError(result.error);
           setLoading(false);
@@ -454,8 +457,10 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
             });
 
             if (result.success) {
+              isOrderSuccessRef.current = true;
               clearCart();
-              router.push(`/order-success?order=${result.orderNumber}`);
+              window.location.href = `/order-success?order=${result.orderNumber}`;
+              return;
             } else {
               setServerError(result.error);
               setLoading(false);
@@ -486,10 +491,10 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
   };
 
   useEffect(() => {
-    if (mounted && items.length === 0) {
+    if (mounted && items.length === 0 && !isOrderSuccessRef.current && !loading) {
       router.push("/cart");
     }
-  }, [mounted, items.length, router]);
+  }, [mounted, items.length, router, loading]);
 
   if (!mounted || items.length === 0) return null;
 

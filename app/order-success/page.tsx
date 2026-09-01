@@ -3,11 +3,11 @@ import Link from "next/link";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle2, ShoppingBag, ArrowRight, Truck, Phone, MessageCircle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Order Placed — Green Basket",
-  description: "Your order has been placed successfully.",
+  title: "Order Confirmed — Green Basket TCR",
+  description: "Your grocery order has been placed and confirmed successfully.",
 };
 
 interface Props {
@@ -21,45 +21,84 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
     <>
       <AnnouncementBar />
       <Header />
-      <main id="main-content" className="min-h-screen bg-gb-cream flex items-center justify-center py-20">
-        <div className="gb-container">
-          <div className="max-w-lg mx-auto text-center">
-            {/* Success icon */}
-            <div
-              className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-6"
-              style={{ backgroundColor: "#e8f5ee" }}
-              aria-hidden="true"
-            >
-              <CheckCircle size={48} style={{ color: "#245B35" }} />
+      <main id="main-content" className="min-h-screen bg-[#FBFBFA] flex items-center justify-center py-12 md:py-20">
+        <div className="gb-container max-w-xl mx-auto px-4">
+          <div className="bg-white rounded-3xl border border-gray-200/90 p-8 sm:p-10 text-center shadow-lg shadow-emerald-950/5 relative overflow-hidden">
+            
+            {/* Top decorative accent */}
+            <div className="absolute top-0 left-0 right-0 h-2 bg-linear-to-r from-gb-green via-emerald-400 to-gb-olive" />
+
+            {/* Glowing Success Badge */}
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center mx-auto mb-6 shadow-md text-gb-green">
+              <CheckCircle2 size={44} className="stroke-[2.2] animate-bounce" />
             </div>
 
-            <h1 className="text-3xl font-bold text-gb-charcoal mb-3">
-              Order Placed!
+            {/* Title */}
+            <span className="inline-block px-3 py-1 rounded-full bg-emerald-100/80 text-gb-green text-xs font-bold uppercase tracking-wider mb-2">
+              Payment & Order Confirmed
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-gb-charcoal tracking-tight mb-2 uppercase">
+              Thank You For Your Order!
             </h1>
+            <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto leading-relaxed mb-6">
+              We have received your order and our team has started preparing your fresh ingredients with hygienic food-grade care.
+            </p>
 
+            {/* Order Number Box */}
             {order && (
-              <div className="bg-white rounded-2xl border border-gb-border px-6 py-4 mb-6 inline-block">
-                <p className="text-sm text-gray-500 mb-1">Your Order Number</p>
-                <p className="text-2xl font-bold text-gb-charcoal tracking-wider">
-                  {order}
+              <div className="bg-[#FAFAF5] rounded-2xl border border-emerald-200/80 p-4 mb-6 inline-block w-full max-w-md">
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Order Reference Number
                 </p>
+                <p className="text-xl sm:text-2xl font-black text-gb-green font-mono tracking-wider">
+                  #{order}
+                </p>
+                <div className="flex items-center justify-center gap-1.5 text-xs text-emerald-800 font-semibold mt-2 pt-2 border-t border-emerald-100">
+                  <Truck size={14} className="text-gb-green" />
+                  <span>Scheduled for Next-Day Delivery in Thrissur</span>
+                </div>
               </div>
             )}
 
-            <p className="text-gray-500 text-base leading-relaxed mb-8">
-              Thank you for your order! We&apos;ve received it and will begin
-              preparing your fresh groceries shortly. You&apos;ll receive your
-              delivery today if ordered before 1 PM.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/categories" className="btn-primary">
-                Continue Shopping
+            {/* Quick Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+              <Link
+                href="/categories"
+                className="btn-primary inline-flex items-center justify-center gap-2 py-3 px-6 text-xs sm:text-sm font-bold uppercase tracking-wide"
+              >
+                <ShoppingBag size={16} />
+                <span>Continue Shopping</span>
               </Link>
-              <Link href="/account" className="btn-ghost">
-                View My Orders
+              <Link
+                href="/account"
+                className="btn-secondary inline-flex items-center justify-center gap-2 py-3 px-6 text-xs sm:text-sm font-bold uppercase tracking-wide"
+              >
+                <span>View Order History</span>
+                <ArrowRight size={16} />
               </Link>
             </div>
+
+            {/* Support Footer */}
+            <div className="pt-6 border-t border-gray-100 text-xs text-gray-500 space-y-2">
+              <p className="font-medium text-gray-600">Need help or want to update your delivery instructions?</p>
+              <div className="flex items-center justify-center gap-4 text-gb-green font-bold flex-wrap">
+                <a href="tel:+919048178886" className="inline-flex items-center gap-1 hover:underline">
+                  <Phone size={13} />
+                  <span>+91 90481 78886</span>
+                </a>
+                <span className="text-gray-300">•</span>
+                <a
+                  href="https://wa.me/919048178886?text=Hi%20Green%20Basket,%20regarding%20my%20order"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-emerald-600 hover:underline"
+                >
+                  <MessageCircle size={13} />
+                  <span>WhatsApp Support</span>
+                </a>
+              </div>
+            </div>
+
           </div>
         </div>
       </main>
