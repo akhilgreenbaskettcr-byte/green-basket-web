@@ -7,6 +7,7 @@ import { PwaRegister } from "@/components/pwa/PwaRegister";
 import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
 import { BrandPreIntro } from "@/components/layout/BrandPreIntro";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { GoogleAnalytics } from "@/components/seo/GoogleAnalytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -147,6 +148,7 @@ export default function RootLayout({
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
         <JsonLd />
+        <GoogleAnalytics />
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <BrandPreIntro />
