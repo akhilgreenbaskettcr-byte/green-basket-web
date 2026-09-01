@@ -116,48 +116,54 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
           {mode === "signup" && (
             <div>
               <label className="gb-label text-xs">Full Name</label>
-              <div className="relative">
+              <div className="relative flex items-center">
+                <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center pointer-events-none text-gray-400">
+                  <User size={16} />
+                </div>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="John Doe"
-                  className="gb-input pl-9 text-xs"
+                  className="gb-input !pl-10 text-xs"
                   required
                 />
-                <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
             </div>
           )}
 
           <div>
             <label className="gb-label text-xs">Email Address</label>
-            <div className="relative">
+            <div className="relative flex items-center">
+              <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center pointer-events-none text-gray-400">
+                <Mail size={16} />
+              </div>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="hello@example.com"
-                className="gb-input pl-9 text-xs"
+                className="gb-input !pl-10 text-xs"
                 required
               />
-              <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
           </div>
 
           <div>
             <label className="gb-label text-xs">Password</label>
-            <div className="relative">
+            <div className="relative flex items-center">
+              <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center pointer-events-none text-gray-400">
+                <Lock size={16} />
+              </div>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="gb-input pl-9 text-xs"
+                className="gb-input !pl-10 text-xs"
                 required
                 minLength={6}
               />
-              <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
           </div>
 

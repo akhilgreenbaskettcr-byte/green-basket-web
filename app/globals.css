@@ -439,6 +439,11 @@ input[type="search"]::-webkit-search-cancel-button {
   outline: none;
 }
 
+.gb-input-has-icon,
+.gb-input.has-icon {
+  padding-left: 2.75rem !important;
+}
+
 .gb-input:focus {
   border-color: #245B35;
   box-shadow: 0 0 0 3px rgba(36, 91, 53, 0.1);

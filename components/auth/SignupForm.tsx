@@ -97,10 +97,10 @@ function SignupFormInner() {
   };
 
   return (
-    <div className="w-full max-w-md bg-white rounded-3xl border border-gb-border p-8 shadow-sm space-y-6">
-      <div className="text-center space-y-2">
+    <div className="w-full max-w-md bg-white rounded-3xl border border-gb-border p-5 sm:p-8 shadow-sm space-y-4 sm:space-y-6">
+      <div className="text-center space-y-1.5">
         <Logo href="/" size="md" />
-        <h1 className="text-2xl font-black text-gb-charcoal tracking-tight pt-2">
+        <h1 className="text-xl sm:text-2xl font-black text-gb-charcoal tracking-tight pt-1 sm:pt-2">
           Create an Account
         </h1>
         <p className="text-xs text-gray-500">
@@ -108,74 +108,82 @@ function SignupFormInner() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
         <div>
           <label htmlFor="name" className="gb-label">Full Name</label>
-          <div className="relative">
+          <div className="relative flex items-center">
+            <div className="absolute left-0 top-0 bottom-0 w-11 flex items-center justify-center pointer-events-none text-gray-400">
+              <User size={18} />
+            </div>
             <input
               id="name"
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="John Doe"
-              className="gb-input pl-10"
+              className="gb-input !pl-11"
               required
               autoComplete="name"
             />
-            <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
         </div>
 
         <div>
           <label htmlFor="email" className="gb-label">Email Address</label>
-          <div className="relative">
+          <div className="relative flex items-center">
+            <div className="absolute left-0 top-0 bottom-0 w-11 flex items-center justify-center pointer-events-none text-gray-400">
+              <Mail size={18} />
+            </div>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="hello@example.com"
-              className="gb-input pl-10"
+              className="gb-input !pl-11"
               required
               autoComplete="email"
             />
-            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
         </div>
 
         <div>
           <label htmlFor="password" className="gb-label">Password (min 6 characters)</label>
-          <div className="relative">
+          <div className="relative flex items-center">
+            <div className="absolute left-0 top-0 bottom-0 w-11 flex items-center justify-center pointer-events-none text-gray-400">
+              <Lock size={18} />
+            </div>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="gb-input pl-10"
+              className="gb-input !pl-11"
               required
               minLength={6}
               autoComplete="new-password"
             />
-            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
         </div>
 
         <div>
           <label htmlFor="confirmPassword" className="gb-label">Confirm Password</label>
-          <div className="relative">
+          <div className="relative flex items-center">
+            <div className="absolute left-0 top-0 bottom-0 w-11 flex items-center justify-center pointer-events-none text-gray-400">
+              <Lock size={18} />
+            </div>
             <input
               id="confirmPassword"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
-              className="gb-input pl-10"
+              className="gb-input !pl-11"
               required
               minLength={6}
               autoComplete="new-password"
             />
-            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
         </div>
 
@@ -201,7 +209,7 @@ function SignupFormInner() {
         <button
           type="submit"
           disabled={loading}
-          className="btn-primary w-full justify-center py-3 text-sm font-bold mt-2"
+          className="btn-primary w-full justify-center py-2.5 sm:py-3 text-sm font-bold mt-1 sm:mt-2"
           id="customer-signup-submit"
         >
           {loading ? (
@@ -217,7 +225,7 @@ function SignupFormInner() {
         </button>
       </form>
 
-      <div className="text-center border-t border-gb-border pt-4 text-xs text-gray-500 space-y-2">
+      <div className="text-center border-t border-gb-border pt-3 sm:pt-4 text-xs text-gray-500 space-y-1.5 sm:space-y-2">
         <p>
           Already have an account?{" "}
           <Link
