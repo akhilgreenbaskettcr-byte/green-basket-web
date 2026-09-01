@@ -4,6 +4,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CheckCircle2, ShoppingBag, ArrowRight, Truck, Phone, MessageCircle } from "lucide-react";
+import { OrderSuccessTracker } from "@/components/order/OrderSuccessTracker";
 
 export const metadata: Metadata = {
   title: "Order Confirmed — Green Basket TCR",
@@ -19,6 +20,7 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
 
   return (
     <>
+      <OrderSuccessTracker orderNumber={order} />
       <AnnouncementBar />
       <Header />
       <main id="main-content" className="min-h-screen bg-[#FBFBFA] flex items-center justify-center py-12 md:py-20">

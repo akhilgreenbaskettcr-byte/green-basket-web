@@ -7,6 +7,7 @@ import { PwaRegister } from "@/components/pwa/PwaRegister";
 import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GoogleAnalytics } from "@/components/seo/GoogleAnalytics";
+import { AnalyticsTracker } from "@/components/seo/AnalyticsTracker";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -153,6 +154,7 @@ export default function RootLayout({
         <GoogleAnalytics />
       </head>
       <body className="antialiased" suppressHydrationWarning>
+        <AnalyticsTracker />
         {children}
         <CartSlideOver />
         <CartToast />

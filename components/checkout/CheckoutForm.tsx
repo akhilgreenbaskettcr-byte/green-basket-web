@@ -12,6 +12,7 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { MapPickerModal } from "@/components/checkout/MapPickerModal";
 import { extractCoordinatesFromUrl } from "@/lib/location-parser";
 import { loadRazorpayScript } from "@/lib/razorpay";
+import { trackBeginCheckout } from "@/lib/analytics";
 import {
   Loader2,
   MapPin,
@@ -128,6 +129,11 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
   // Fetch logged in user & their saved addresses
   useEffect(() => {
     setMounted(true);
+
+    if (items && items.length > 0) {
+      trackBeginCheckout(items, subtotal());
+    }
+
     const supabase = createClient();
 
     async function loadUserData() {
@@ -166,7 +172,7 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
     }
 
     loadUserData();
-  }, []);
+  }, [items, subtotal]);
 
   const applySavedAddress = (addr: SavedAddress) => {
     setForm((prev) => ({

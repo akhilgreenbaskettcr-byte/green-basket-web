@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useCartStore } from "@/lib/store/cart";
 import { formatPrice } from "@/lib/utils";
 import type { ProductWithVariants, ProductVariant } from "@/types/database";
+import { trackViewItem, trackAddToCart } from "@/lib/analytics";
 import {
   ShoppingCart,
   Check,
@@ -38,8 +39,30 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const addItemSilent = useCartStore((s) => s.addItemSilent);
   const closeCart = useCartStore((s) => s.closeCart);
 
+  // Track product view in Google Analytics
+  useEffect(() => {
+    if (product) {
+      trackViewItem({
+        id: product.id,
+        name: product.name,
+        price: selectedVariant?.price || 0,
+        category: product.categories?.name,
+        variant: selectedVariant?.label,
+      });
+    }
+  }, [product, selectedVariant]);
+
   const handleAddToCart = () => {
     if (!selectedVariant) return;
+
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: selectedVariant.price,
+      quantity,
+      category: product.categories?.name,
+      variant: selectedVariant.label,
+    });
 
     addItem(
       {
@@ -63,6 +86,15 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   const handleBuyNow = () => {
     if (!selectedVariant) return;
+
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: selectedVariant.price,
+      quantity,
+      category: product.categories?.name,
+      variant: selectedVariant.label,
+    });
 
     // Use silent add — keeps cart drawer closed (cart drawer sets isOpen:true on normal addItem)
     closeCart();
