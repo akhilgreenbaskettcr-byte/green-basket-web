@@ -12,7 +12,7 @@ import {
   Eye,
   LayoutTemplate,
   Bell,
-  Sparkles,
+  Leaf,
   ExternalLink,
   Image as ImageIcon,
   Layers,
@@ -170,7 +170,7 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
           <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-6 shadow-sm">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <Sparkles size={18} className="text-gb-green" />
+                <Leaf size={18} className="text-gb-green" />
                 <h2 className="text-base font-bold text-gray-900">
                   1. Hero Banner Photography (Up to 3 Images)
                 </h2>

@@ -15,7 +15,6 @@ import {
   Leaf,
   ShieldCheck,
   Truck,
-  Sparkles,
   ChevronDown,
   Info,
   Package,
@@ -101,8 +100,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               {isVegetable ? "Farm Fresh" : "100% Organic & Pure"}
             </span>
             {product.is_featured && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500 text-white rounded-full text-[10px] sm:text-xs font-extrabold uppercase tracking-wider shadow-xs">
-                <Sparkles size={11} /> Bestseller
+              <span className="inline-flex items-center px-2.5 py-1 bg-amber-500 text-white rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-xs">
+                Bestseller
               </span>
             )}
           </div>
@@ -336,7 +335,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             <details className="group border-b border-gray-200/80 py-3 sm:py-3.5 transition-colors">
               <summary className="flex items-center justify-between cursor-pointer text-xs sm:text-sm font-bold text-gb-charcoal list-none select-none">
                 <span className="flex items-center gap-2.5">
-                  <Sparkles size={15} className="text-gb-green" />
+                  <Leaf size={15} className="text-gb-green" />
                   Benefits & Uses
                 </span>
                 <ChevronDown

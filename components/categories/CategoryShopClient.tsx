@@ -6,7 +6,6 @@ import { ProductCardClient } from "@/components/products/ProductCardClient";
 import {
   Search,
   ArrowUpDown,
-  Sparkles,
   ShieldCheck,
   Truck,
   Leaf,

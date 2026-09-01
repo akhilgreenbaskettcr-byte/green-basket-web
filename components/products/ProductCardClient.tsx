@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useCartStore } from "@/lib/store/cart";
 import { formatPrice } from "@/lib/utils";
 import type { ProductWithVariants, ProductVariant } from "@/types/database";
-import { ShoppingCart, Check, Leaf, Sparkles } from "lucide-react";
+import { ShoppingCart, Check, Leaf } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProductCardClientProps {
@@ -61,8 +61,8 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
         {/* Floating Brand Badge */}
         <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1 pointer-events-none">
           {product.is_featured && (
-            <span className="bg-amber-500 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-2xs flex items-center gap-1">
-              <Sparkles size={9} /> Bestseller
+            <span className="bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-2xs">
+              Bestseller
             </span>
           )}
           <span className="bg-white/90 backdrop-blur-xs text-gb-green text-[9px] font-bold px-2 py-0.5 rounded-full shadow-2xs border border-gray-100 flex items-center gap-1">

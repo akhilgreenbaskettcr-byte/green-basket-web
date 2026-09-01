@@ -7,7 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ProductDetailClient } from "@/components/products/ProductDetailClient";
 import { ProductCardClient } from "@/components/products/ProductCardClient";
 import { getProductBySlug, getProductsByCategory } from "@/lib/supabase/queries";
-import { ChevronRight, Home, Sparkles } from "lucide-react";
+import { ChevronRight, Home, Leaf } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -125,7 +125,7 @@ export default async function ProductPage({ params }: Props) {
               <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-8 gap-2">
                 <div>
                   <span className="text-xs font-bold tracking-wider uppercase text-gb-olive flex items-center gap-1.5 mb-1 font-mono">
-                    <Sparkles size={14} className="text-amber-500" /> Discover More
+                    <Leaf size={14} className="text-gb-olive" /> Discover More
                   </span>
                   <h2 className="text-2xl sm:text-3xl font-extrabold text-gb-charcoal tracking-tight">
                     You Might Also Like

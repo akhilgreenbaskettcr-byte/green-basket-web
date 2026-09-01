@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Download, X, Share2, PlusSquare, Sparkles } from "lucide-react";
+import { Download, X, Share2, PlusSquare } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -105,8 +105,8 @@ export function PwaInstallPrompt() {
                 <h4 className="font-extrabold text-sm text-gb-charcoal tracking-tight">
                   Green Basket TCR
                 </h4>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-gb-green flex items-center gap-0.5">
-                  <Sparkles size={10} /> App
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-gb-green">
+                  App
                 </span>
               </div>
               <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">

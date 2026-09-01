@@ -17,7 +17,6 @@ import {
   Check,
   ChevronRight,
   Leaf,
-  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { formatPrice } from "@/lib/utils";
@@ -638,7 +637,7 @@ export function SearchBar() {
                         className="flex items-center gap-3 p-3 rounded-2xl border border-gray-200/80 bg-gray-50/60 hover:bg-emerald-50/60 hover:border-emerald-200 transition-all group"
                       >
                         <div className="w-9 h-9 rounded-xl bg-emerald-100/70 text-gb-green flex items-center justify-center shrink-0 border border-emerald-200/60 group-hover:bg-gb-green group-hover:text-white transition-colors">
-                          <Sparkles size={16} />
+                          <Leaf size={16} />
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-bold text-gb-charcoal group-hover:text-gb-green transition-colors truncate">
