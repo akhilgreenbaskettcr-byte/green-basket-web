@@ -126,15 +126,15 @@ export function UserNavIcon() {
     );
   }
 
-  // Guest Login Button — icon + text style (matches reference design)
+  // Guest Login Button — icon + text style on desktop, icon only on mobile
   return (
     <Link
       href="/login"
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-gb-green font-semibold text-sm transition-colors hover:bg-green-50 shrink-0 border border-transparent hover:border-green-200"
-      aria-label="Sign In"
+      className="flex items-center justify-center p-2 md:px-3 md:py-1.5 rounded-full text-gb-green font-semibold text-sm transition-colors hover:bg-green-50 shrink-0 border border-transparent hover:border-green-200"
+      aria-label="Login"
     >
-      <User size={17} strokeWidth={1.8} />
-      <span>Login</span>
+      <User size={18} strokeWidth={1.8} />
+      <span className="hidden md:inline">Login</span>
     </Link>
   );
 }

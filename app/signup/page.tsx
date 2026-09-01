@@ -15,7 +15,7 @@ export default function SignupPage() {
     <>
       <AnnouncementBar />
       <Header />
-      <main id="main-content" className="min-h-screen bg-gb-cream flex items-center justify-center p-4 py-12">
+      <main id="main-content" className="bg-gb-cream flex justify-center p-4 pt-6 pb-6 sm:pt-10 sm:pb-10">
         <Suspense fallback={<div className="p-8 text-center text-xs text-gray-500">Loading…</div>}>
           <SignupForm />
         </Suspense>
