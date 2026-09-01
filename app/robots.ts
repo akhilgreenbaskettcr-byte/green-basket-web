@@ -1,7 +1,11 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://greenbaskettcr.com";
+  const rawUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const BASE_URL =
+    rawUrl && !rawUrl.includes("localhost")
+      ? rawUrl.replace(/\/$/, "")
+      : "https://www.greenbaskettcr.com";
 
   return {
     rules: [

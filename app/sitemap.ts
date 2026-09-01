@@ -5,7 +5,12 @@ export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://greenbaskettcr.com";
+  // Always use the official production domain in production/Search Console
+  const rawUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const BASE_URL =
+    rawUrl && !rawUrl.includes("localhost")
+      ? rawUrl.replace(/\/$/, "")
+      : "https://www.greenbaskettcr.com";
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${BASE_URL}/`, lastModified: new Date(), changeFrequency: "daily", priority: 1.0 },
