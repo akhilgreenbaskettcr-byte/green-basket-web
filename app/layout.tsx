@@ -5,7 +5,6 @@ import { CartSlideOver } from "@/components/cart/CartSlideOver";
 import { CartToast } from "@/components/cart/CartToast";
 import { PwaRegister } from "@/components/pwa/PwaRegister";
 import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
-import { BrandPreIntro } from "@/components/layout/BrandPreIntro";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { GoogleAnalytics } from "@/components/seo/GoogleAnalytics";
 
@@ -130,6 +129,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  verification: {
+    google: "dmrz4vzzOBgzO5kdlvnQuWOIBI19CB-Xka2ulE0DzEs",
+  },
   other: {
     "geo.region": "IN-KL",
     "geo.placename": "Thrissur",
@@ -151,7 +153,6 @@ export default function RootLayout({
         <GoogleAnalytics />
       </head>
       <body className="antialiased" suppressHydrationWarning>
-        <BrandPreIntro />
         {children}
         <CartSlideOver />
         <CartToast />
