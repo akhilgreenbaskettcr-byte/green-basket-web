@@ -3,6 +3,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/home/HeroSection";
+import { FreshnessBanner } from "@/components/home/FreshnessBanner";
 import { CategorySection } from "@/components/home/CategorySection";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { WhyGreenBasket } from "@/components/home/WhyGreenBasket";
@@ -75,6 +76,7 @@ export default async function HomePage() {
       <Header />
       <main id="main-content">
         <HeroSection settings={settings} />
+        <FreshnessBanner />
         <CategorySection categories={categories} />
         <FeaturedProducts products={featuredProducts} />
         <WhyGreenBasket settings={settings} />
