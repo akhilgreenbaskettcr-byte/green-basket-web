@@ -176,6 +176,16 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
                 className="gb-input"
               />
             </div>
+
+            <div className="pt-4 border-t border-gray-100">
+              <ImageUpload
+                label="Farm-to-Door Freshness Banner Image"
+                value={values["freshness_banner_image"] || ""}
+                onChange={(url) => handleChange("freshness_banner_image", url)}
+                bucket="site-assets"
+                helperText="Upload transparent PNG or photo of your fresh vegetable basket (shows on the homepage Freshness Promise card)"
+              />
+            </div>
           </div>
         </div>
       )}

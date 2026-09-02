@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/home-editor", label: "Home Page Editor", icon: LayoutTemplate },
+  { href: "/admin/home-editor", label: "Banners & Homepage", icon: LayoutTemplate },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: Tags },
   { href: "/admin/delivery-areas", label: "Delivery Areas", icon: MapPin },

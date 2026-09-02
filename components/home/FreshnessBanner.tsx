@@ -1,78 +1,165 @@
 import Link from "next/link";
-import { Sparkles, Clock, Truck, ShieldCheck, ArrowRight, Sun, Leaf } from "lucide-react";
+import Image from "next/image";
+import {
+  Leaf,
+  Clock3,
+  Truck,
+  ShieldCheck,
+  ArrowRight,
+} from "lucide-react";
+import type { SiteSettings } from "@/types/database";
 
-export function FreshnessBanner() {
+interface FreshnessBannerProps {
+  settings?: SiteSettings;
+}
+
+const BENEFITS = [
+  {
+    icon: Leaf,
+    title: "Fresh Harvest",
+    subtitle: "Direct from farms",
+  },
+  {
+    icon: Clock3,
+    title: "1 PM Cutoff",
+    subtitle: "Daily fresh dispatch",
+  },
+  {
+    icon: Truck,
+    title: "Doorstep Delivery",
+    subtitle: "Next morning fresh",
+  },
+  {
+    icon: ShieldCheck,
+    title: "100% Quality",
+    subtitle: "Clean & hygienic",
+  },
+];
+
+export function FreshnessBanner({ settings = {} }: FreshnessBannerProps) {
+  // Read uploaded banner image from Supabase site settings
+  const imageUrl =
+    settings["freshness_banner_image"]?.trim() ||
+    settings["farm_to_door_image_url"]?.trim() ||
+    "";
+
   return (
-    <section className="py-4 sm:py-6 bg-gradient-to-b from-white via-emerald-50/40 to-white" aria-label="Farm to Door Freshness Promise">
+    <section
+      className="py-2.5 sm:py-4 md:py-6 overflow-hidden"
+      aria-label="Farm to Door Freshness Guarantee"
+    >
       <div className="gb-container">
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#12311c] via-[#245B35] to-[#1c472a] text-white p-5 sm:p-8 md:p-10 shadow-xl border border-emerald-700/30">
-          {/* Ambient Glow / Organic Pattern */}
-          <div className="absolute -right-12 -top-12 w-64 h-64 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
-          <div className="absolute -left-12 -bottom-12 w-64 h-64 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center">
-            {/* Top Eye-Catching Pill Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-emerald-200 text-xs sm:text-sm font-bold uppercase tracking-wider mb-3.5 shadow-sm">
-              <Sparkles size={15} className="text-amber-300 animate-pulse" />
-              <span>Pure Farm-To-Door Harvest</span>
+        {/* Main Card Container */}
+        <div
+          className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-sm transition-shadow ${
+            imageUrl ? "bg-[#f3faf4]" : "border border-emerald-100/80 bg-[#f3faf4]"
+          }`}
+        >
+          {/* ── DESKTOP BACKGROUND IMAGE (Scaled to eliminate any baked-in white canvas borders) ── */}
+          {imageUrl ? (
+            <div className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+              <Image
+                src={imageUrl}
+                alt="No day-old storage — just pure farm-to-door freshness"
+                fill
+                sizes="(max-width: 1400px) 95vw, 1400px"
+                className="object-cover object-right select-none scale-[1.045] origin-center"
+                priority={false}
+                unoptimized={imageUrl.startsWith("data:")}
+              />
             </div>
-
-            {/* Main Headline */}
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight sm:leading-snug mb-3">
-              No day-old storage —{" "}
-              <span className="text-emerald-300 underline decoration-emerald-400/50 decoration-wavy underline-offset-4">
-                just pure farm-to-door freshness.
-              </span>
-            </h2>
-
-            {/* Subtext */}
-            <p className="text-emerald-100/90 text-xs sm:text-sm md:text-base leading-relaxed max-w-2xl mx-auto mb-6">
-              Order by <span className="font-extrabold text-amber-300 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-300/30">1 PM today</span> to enjoy crisp, freshly harvested vegetables and premium quality fruits delivered straight to your doorstep tomorrow morning.
-            </p>
-
-            {/* 4 Trust Feature Badges */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 w-full max-w-3xl mb-6">
-              <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-xs rounded-xl p-2.5 border border-white/10 text-left">
-                <Leaf size={16} className="text-emerald-300 shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-white leading-tight">Fresh Harvest</p>
-                  <p className="text-[10px] text-emerald-200/70 leading-tight">Direct from farms</p>
-                </div>
+          ) : (
+            /* Ambient Leaves if no image */
+            <div className="hidden lg:block absolute inset-0 pointer-events-none">
+              <div className="absolute top-4 right-[42%] text-emerald-600/15">
+                <Leaf size={32} className="rotate-45" />
               </div>
-
-              <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-xs rounded-xl p-2.5 border border-white/10 text-left">
-                <Clock size={16} className="text-amber-300 shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-white leading-tight">1 PM Cutoff</p>
-                  <p className="text-[10px] text-emerald-200/70 leading-tight">Daily fresh dispatch</p>
-                </div>
+              <div className="absolute bottom-6 left-3 text-emerald-600/15">
+                <Leaf size={38} className="-rotate-12" />
               </div>
-
-              <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-xs rounded-xl p-2.5 border border-white/10 text-left">
-                <Truck size={16} className="text-emerald-300 shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-white leading-tight">Doorstep Delivery</p>
-                  <p className="text-[10px] text-emerald-200/70 leading-tight">Next morning fresh</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-xs rounded-xl p-2.5 border border-white/10 text-left">
-                <ShieldCheck size={16} className="text-amber-300 shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-white leading-tight">100% Quality</p>
-                  <p className="text-[10px] text-emerald-200/70 leading-tight">Clean & hygienic</p>
-                </div>
+              <div className="absolute bottom-4 right-[38%] text-emerald-600/15">
+                <Leaf size={26} className="rotate-90" />
               </div>
             </div>
+          )}
 
-            {/* Quick Action Button */}
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-2 bg-white hover:bg-emerald-50 text-gb-green font-extrabold text-xs sm:text-sm px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
-            >
-              <span>Order Tomorrow's Fresh Basket</span>
-              <ArrowRight size={16} />
-            </Link>
+          {/* Foreground Content */}
+          <div className="w-full grid grid-cols-1 lg:grid-cols-12 items-center gap-5 lg:gap-8 relative z-10 p-5 sm:p-7 md:p-8 lg:p-10 xl:p-12">
+            
+            {/* ── Left Content Column (Desktop: 7 cols ~ 58%) ── */}
+            <div className="lg:col-span-7 xl:col-span-7 flex flex-col justify-center">
+              
+              {/* 1. Eyebrow Pill */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs border border-emerald-600/25 text-emerald-800 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider w-fit mb-3 sm:mb-3.5 shadow-2xs">
+                <Leaf size={13} className="text-emerald-700 shrink-0" />
+                <span>Pure Farm-To-Door Harvest</span>
+              </div>
+
+              {/* 2. Main Headline (Compact & Sleek) */}
+              <h2 className="text-2xl sm:text-3xl md:text-[2.2rem] lg:text-[2.35rem] xl:text-[2.6rem] font-black tracking-tight leading-[1.12] mb-3 text-[#111827]">
+                <span className="block">No day-old storage—</span>
+                <span className="text-[#1c532b] flex items-center gap-1.5 sm:gap-2 flex-wrap mt-0.5">
+                  <span>just pure farm-to-door</span>
+                  <span className="inline-flex items-center">
+                    <span>freshness.</span>
+                    <Leaf
+                      size={26}
+                      className="text-[#1c532b] fill-[#1c532b] inline-block ml-1 rotate-12 shrink-0"
+                    />
+                  </span>
+                </span>
+              </h2>
+
+              {/* 3. Subtitle Description */}
+              <p className="text-gray-700 text-xs sm:text-sm md:text-[14.5px] leading-relaxed max-w-xl mb-4 sm:mb-6 font-medium">
+                Order by{" "}
+                <strong className="text-gray-900 font-bold bg-white/70 px-1 py-0.5 rounded text-[#1c532b]">
+                  1 PM today
+                </strong>{" "}
+                to enjoy crisp, freshly harvested vegetables and premium quality
+                fruits delivered straight to your doorstep tomorrow morning.
+              </p>
+
+              {/* 4. Four Compact Trust Feature Cards (2x2 Grid on mobile, 4-col row on desktop) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mb-5 sm:mb-6 max-w-2xl">
+                {BENEFITS.map(({ icon: Icon, title, subtitle }) => (
+                  <div
+                    key={title}
+                    className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-emerald-100 shadow-2xs flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xs"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-50 flex items-center justify-center text-[#1c532b] mb-1.5 shrink-0">
+                      <Icon size={14} />
+                    </div>
+                    <div>
+                      <p className="text-[11.5px] sm:text-xs font-bold text-gray-900 leading-tight">
+                        {title}
+                      </p>
+                      <p className="text-[9.5px] sm:text-[10px] text-gray-500 leading-tight mt-0.5">
+                        {subtitle}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* 5. Primary CTA Button */}
+              <div className="w-full sm:w-auto">
+                <Link
+                  href="/products"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1c532b] hover:bg-[#153e20] text-white font-bold text-xs sm:text-sm px-6 sm:px-7 py-3 sm:py-3.5 rounded-full shadow-md hover:shadow-lg transition-all hover:scale-102 group"
+                >
+                  <span>Order Tomorrow's Fresh Basket</span>
+                  <ArrowRight
+                    size={15}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
+                </Link>
+              </div>
+            </div>
+
+            {/* ── Right Column: Spacer to let the background basket artwork show on desktop ── */}
+            <div className="hidden lg:block lg:col-span-5 xl:col-span-5 min-h-[300px] xl:min-h-[340px] pointer-events-none" />
+
           </div>
         </div>
       </div>

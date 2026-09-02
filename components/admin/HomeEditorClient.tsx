@@ -61,6 +61,14 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
     delivery_banner_btn_url:
       initialSettings["delivery_banner_btn_url"] ?? "/categories",
     delivery_banner_image_url: initialDeliveryBanner,
+    freshness_banner_image:
+      initialSettings["freshness_banner_image"] ||
+      initialSettings["farm_to_door_image_url"] ||
+      "",
+    farm_to_door_image_url:
+      initialSettings["farm_to_door_image_url"] ||
+      initialSettings["freshness_banner_image"] ||
+      "",
     why_card_1_image: initialSettings["why_card_1_image"] ?? "",
     why_card_2_image: initialSettings["why_card_2_image"] ?? "",
     why_card_3_image: initialSettings["why_card_3_image"] ?? "",
@@ -291,12 +299,37 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
             </div>
           </div>
 
-          {/* Section 2: Why Choose Us — 4 Card Illustration Images */}
+          {/* Section 2: Farm-to-Door Freshness Banner Image */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-5 shadow-sm">
+            <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+              <Leaf size={18} className="text-gb-green" />
+              <h2 className="text-base font-bold text-gray-900">
+                2. Farm-to-Door Freshness Banner (Full Artwork Image)
+              </h2>
+            </div>
+            <p className="text-xs text-gray-500">
+              Upload your campaign banner image (the wide graphic with fresh harvest basket and farm badge). This covers the entire Farm-to-Door promise section on the homepage.
+            </p>
+            <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-200/70 space-y-2">
+              <ImageUpload
+                label="Farm-to-Door Artwork Banner Image"
+                value={values["freshness_banner_image"] || values["farm_to_door_image_url"] || ""}
+                onChange={(url) => {
+                  handleChange("freshness_banner_image", url);
+                  handleChange("farm_to_door_image_url", url);
+                }}
+                folder="banners"
+                helperText="Upload wide high-resolution campaign banner (PNG, WebP, JPG)."
+              />
+            </div>
+          </div>
+
+          {/* Section 3: Why Choose Us — 4 Card Illustration Images */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-6 shadow-sm">
             <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
               <HeartHandshake size={18} className="text-gb-green" />
               <h2 className="text-base font-bold text-gray-900">
-                2. "Why Choose Us" Card Bottom Illustrations (4 Slots)
+                3. "Why Choose Us" Card Bottom Illustrations (4 Slots)
               </h2>
             </div>
             <p className="text-xs text-gray-500">
@@ -354,12 +387,12 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
             </div>
           </div>
 
-          {/* Section 3: How It Works — Step Node Icons / Illustrations */}
+          {/* Section 4: How It Works — Step Node Icons / Illustrations */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-6 shadow-sm">
             <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
               <Workflow size={18} className="text-gb-green" />
               <h2 className="text-base font-bold text-gray-900">
-                3. "How It Works" Step Icons / Illustrations (4 Slots)
+                4. "How It Works" Step Icons / Illustrations (4 Slots)
               </h2>
             </div>
             <p className="text-xs text-gray-500">
@@ -417,12 +450,12 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
             </div>
           </div>
 
-          {/* Section 4: Same-Day Delivery Poster Banner */}
+          {/* Section 5: Same-Day Delivery Poster Banner */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-6 shadow-sm">
             <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
               <ImageIcon size={18} className="text-gb-green" />
               <h2 className="text-base font-bold text-gray-900">
-                4. Same-Day Delivery Poster Section
+                5. Same-Day Delivery Poster Section
               </h2>
             </div>
 
@@ -482,12 +515,12 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
             </div>
           </div>
 
-          {/* Section 5: Announcement Bar */}
+          {/* Section 6: Announcement Bar */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-4 shadow-sm">
             <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
               <Bell size={18} className="text-gb-green" />
               <h2 className="text-base font-bold text-gray-900">
-                5. Top Announcement Strip
+                6. Top Announcement Strip
               </h2>
             </div>
 
@@ -516,6 +549,12 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
               <div className="flex justify-between items-center py-1 border-b border-gray-200/50">
                 <span className="text-gray-500">Hero Slider:</span>
                 <span className="font-bold text-emerald-700">{activeHeroCount} Image(s)</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-gray-200/50">
+                <span className="text-gray-500">Farm-to-Door Banner:</span>
+                <span className={`font-bold ${(values["freshness_banner_image"] || values["farm_to_door_image_url"]) ? "text-emerald-700" : "text-gray-400"}`}>
+                  {(values["freshness_banner_image"] || values["farm_to_door_image_url"]) ? "Custom Uploaded" : "Default"}
+                </span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-gray-200/50">
                 <span className="text-gray-500">Why Choose Us Cards:</span>

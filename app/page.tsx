@@ -76,7 +76,7 @@ export default async function HomePage() {
       <Header />
       <main id="main-content">
         <HeroSection settings={settings} />
-        <FreshnessBanner />
+        <FreshnessBanner settings={settings} />
         <CategorySection categories={categories} />
         <FeaturedProducts products={featuredProducts} />
         <WhyGreenBasket settings={settings} />
