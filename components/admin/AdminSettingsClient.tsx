@@ -41,6 +41,10 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
       hero_description:
         "From freshly cut vegetables to aromatic powders and pure oils — everything your kitchen needs, made easy.",
       hero_image_url: "/images/hero-vegetables.jpg",
+      delivery_fee: "40",
+      free_delivery_above: "0",
+      same_day_cutoff_time: "1:00 PM",
+      same_day_message: "Order before 1PM for next day delivery.",
     };
     settings.forEach(({ key, value }) => {
       if (value !== undefined && value !== null) initial[key] = value;
@@ -242,8 +246,11 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
               <label className="gb-label">Standard Delivery Fee (₹)</label>
               <input
                 type="number"
-                value={values["delivery_fee"] || "40"}
+                min="0"
+                step="1"
+                value={values["delivery_fee"] ?? ""}
                 onChange={(e) => handleChange("delivery_fee", e.target.value)}
+                placeholder="0"
                 className="gb-input"
               />
             </div>
@@ -251,8 +258,11 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
               <label className="gb-label">Free Delivery Threshold (₹)</label>
               <input
                 type="number"
-                value={values["free_delivery_above"] || "500"}
+                min="0"
+                step="1"
+                value={values["free_delivery_above"] ?? ""}
                 onChange={(e) => handleChange("free_delivery_above", e.target.value)}
+                placeholder="0 for none"
                 className="gb-input"
               />
             </div>
@@ -260,7 +270,7 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
               <label className="gb-label">Same-Day Cutoff Time</label>
               <input
                 type="text"
-                value={values["same_day_cutoff_time"] || "1:00 PM"}
+                value={values["same_day_cutoff_time"] ?? ""}
                 onChange={(e) => handleChange("same_day_cutoff_time", e.target.value)}
                 placeholder="1:00 PM"
                 className="gb-input"
@@ -270,7 +280,7 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
               <label className="gb-label">Delivery Notice Message</label>
               <input
                 type="text"
-                value={values["same_day_message"] || ""}
+                value={values["same_day_message"] ?? ""}
                 onChange={(e) => handleChange("same_day_message", e.target.value)}
                 placeholder="Order before 1PM for next day delivery."
                 className="gb-input"

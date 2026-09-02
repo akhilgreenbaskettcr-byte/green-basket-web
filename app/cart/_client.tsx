@@ -7,9 +7,11 @@ import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { formatPrice } from "@/lib/utils";
 
-const DELIVERY_FEE = 40;
+interface CartPageContentProps {
+  defaultDeliveryFee?: number;
+}
 
-export default function CartPageContent() {
+export default function CartPageContent({ defaultDeliveryFee = 40 }: CartPageContentProps) {
   const [mounted, setMounted] = useState(false);
   const { items, removeItem, updateQuantity, subtotal, itemCount } = useCartStore();
 
@@ -18,7 +20,7 @@ export default function CartPageContent() {
   }, []);
 
   const sub = subtotal();
-  const delivery = DELIVERY_FEE;
+  const delivery = Math.max(0, defaultDeliveryFee);
   const total = sub + delivery;
   const count = itemCount();
 
@@ -133,7 +135,11 @@ export default function CartPageContent() {
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Delivery</span>
                     <span className="font-medium text-gb-charcoal">
-                      {formatPrice(delivery)}
+                      {delivery === 0 ? (
+                        <span className="text-emerald-700 font-bold">FREE</span>
+                      ) : (
+                        formatPrice(delivery)
+                      )}
                     </span>
                   </div>
                 </div>

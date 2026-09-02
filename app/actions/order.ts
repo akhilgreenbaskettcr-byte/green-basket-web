@@ -76,7 +76,7 @@ export async function createOrder(
     formattedNotes = `[PAYMENT: Cash on Delivery] ${formattedNotes}`.trim();
   }
 
-  const orderStatus = data.payment_method === "razorpay" ? "confirmed" : "pending";
+  const orderStatus = "pending";
   const orderId = crypto.randomUUID();
 
   // Create order in DB using explicit UUID

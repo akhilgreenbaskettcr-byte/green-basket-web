@@ -51,11 +51,12 @@ interface FormErrors {
 
 interface CheckoutFormProps {
   deliveryAreas?: DeliveryArea[];
+  defaultDeliveryFee?: number;
 }
 
 type LocationFetchStatus = "IDLE" | "FETCHING" | "FILLED" | "DENIED" | "ERROR";
 
-export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
+export function CheckoutForm({ deliveryAreas = [], defaultDeliveryFee = 40 }: CheckoutFormProps) {
   const router = useRouter();
   const { items, subtotal, clearCart } = useCartStore();
   const [mounted, setMounted] = useState(false);
@@ -292,7 +293,7 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
   const isPinApproved = Boolean(matchedDeliveryArea);
 
   const sub = subtotal();
-  const delivery = DELIVERY_FEE;
+  const delivery = Math.max(0, defaultDeliveryFee);
   const total = sub + delivery;
 
   const handleChange = (
@@ -870,7 +871,11 @@ export function CheckoutForm({ deliveryAreas = [] }: CheckoutFormProps) {
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Delivery</span>
                 <span className="font-medium text-gb-charcoal">
-                  {formatPrice(delivery)}
+                  {delivery === 0 ? (
+                    <span className="text-emerald-700 font-bold">FREE</span>
+                  ) : (
+                    formatPrice(delivery)
+                  )}
                 </span>
               </div>
             </div>
