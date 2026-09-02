@@ -22,7 +22,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://greenbaskettcr.com";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.greenbaskettcr.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -150,6 +150,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         <JsonLd />
         <GoogleAnalytics />
       </head>
