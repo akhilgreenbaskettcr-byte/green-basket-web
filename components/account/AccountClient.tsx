@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { formatPrice, formatOrderStatus } from "@/lib/utils";
 import {
@@ -22,10 +23,24 @@ import {
 } from "lucide-react";
 import type { Order, SavedAddress } from "@/types/database";
 
+interface TrackedOrderItem {
+  id: string;
+  product_id?: string | null;
+  product_name_snapshot: string;
+  variant_label_snapshot: string;
+  unit_price: number;
+  quantity: number;
+  line_total: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  products?: any;
+}
+
 type TrackedOrder = Pick<
   Order,
-  "id" | "order_number" | "status" | "total" | "created_at" | "customer_name" | "city" | "delivery_fee" | "pincode" | "address"
->;
+  "id" | "order_number" | "status" | "total" | "created_at" | "customer_name" | "city" | "delivery_fee" | "pincode" | "address" | "notes"
+> & {
+  order_items?: TrackedOrderItem[];
+};
 
 export function AccountClient() {
   const router = useRouter();
@@ -33,6 +48,7 @@ export function AccountClient() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const [productImageMap, setProductImageMap] = useState<Record<string, string>>({});
 
   // Dashboard active tab: "orders" | "addresses" | "track"
   const [activeTab, setActiveTab] = useState<"orders" | "addresses" | "track">("orders");
@@ -73,14 +89,36 @@ export function AccountClient() {
       setUser(currentUser);
       setLoadingUser(false);
 
+      // Load all product images for 100% reliable thumbnail fallback
+      const { data: prods } = await supabase
+        .from("products")
+        .select("id, name, image_url");
+
+      if (prods) {
+        const pMap: Record<string, string> = {};
+        prods.forEach((p: { id: string; name: string; image_url: string | null }) => {
+          if (p.image_url) {
+            pMap[p.id] = p.image_url;
+            pMap[p.name.trim().toLowerCase()] = p.image_url;
+          }
+        });
+        setProductImageMap(pMap);
+      }
+
       if (currentUser) {
         // Load User Orders
         setLoadingOrders(true);
         const { data: ordersData } = await supabase
           .from("orders")
-          .select("id, order_number, status, total, created_at, customer_name, city, delivery_fee, pincode, address")
+          .select(`
+            id, order_number, status, total, created_at, customer_name, city, delivery_fee, pincode, address, notes,
+            order_items (
+              id, product_id, product_name_snapshot, variant_label_snapshot, unit_price, quantity, line_total,
+              products (image_url)
+            )
+          `)
           .order("created_at", { ascending: false });
-        setMyOrders((ordersData as TrackedOrder[]) || []);
+        setMyOrders((ordersData as unknown as TrackedOrder[]) || []);
         setLoadingOrders(false);
 
         // Load Saved Addresses
@@ -98,13 +136,13 @@ export function AccountClient() {
 
     loadUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
-      if (!session?.user) {
+      if (event === "SIGNED_OUT" || !session?.user) {
         setActiveTab("track");
         setMyOrders([]);
         setAddresses([]);
-      } else {
+      } else if (event === "SIGNED_IN") {
         loadUser();
       }
     });
@@ -189,7 +227,13 @@ export function AccountClient() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error: dbError } = await (supabase as any)
         .from("orders")
-        .select("id, order_number, status, total, created_at, customer_name, city, delivery_fee, pincode, address")
+        .select(`
+          id, order_number, status, total, created_at, customer_name, city, delivery_fee, pincode, address, notes,
+          order_items (
+            id, product_name_snapshot, variant_label_snapshot, unit_price, quantity, line_total,
+            products (image_url)
+          )
+        `)
         .or(`order_number.ilike.%${trimmed}%,phone.eq.${trimmed}`)
         .order("created_at", { ascending: false });
 
@@ -200,6 +244,30 @@ export function AccountClient() {
         setTrackedOrders((data as TrackedOrder[]) || []);
       }
     });
+  };
+
+  const resolveItemImage = (item: any): string | null => {
+    // 1. Direct joined product object
+    if (item.products) {
+      if (Array.isArray(item.products) && item.products[0]?.image_url) {
+        return item.products[0].image_url;
+      }
+      if (typeof item.products === "object" && item.products.image_url) {
+        return item.products.image_url;
+      }
+    }
+    // 2. Direct product_id lookup in pre-fetched map
+    if (item.product_id && productImageMap[item.product_id]) {
+      return productImageMap[item.product_id];
+    }
+    // 3. Fallback lookup by product name snapshot (e.g. "Mix Fruits Cut")
+    if (item.product_name_snapshot) {
+      const cleanKey = item.product_name_snapshot.trim().toLowerCase();
+      if (productImageMap[cleanKey]) {
+        return productImageMap[cleanKey];
+      }
+    }
+    return null;
   };
 
   if (loadingUser) {
@@ -227,16 +295,16 @@ export function AccountClient() {
               <h2 className="text-xl font-bold text-gb-charcoal">
                 Hello, {user.user_metadata?.full_name || user.email?.split("@")[0] || "Customer"}
               </h2>
-              <p className="text-xs text-gray-500 font-mono mt-0.5">{user.email}</p>
+              <p className="text-xs text-gray-400 font-mono mt-0.5">{user.email || user.phone || "Registered User"}</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-red-600 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 px-4 py-2.5 rounded-xl transition-colors shrink-0"
+            className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-red-600 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 px-4 py-2.5 rounded-xl transition-all self-start sm:self-center"
           >
-            <LogOut size={15} />
+            <LogOut size={14} />
             Sign Out
           </button>
         </div>
@@ -270,32 +338,32 @@ export function AccountClient() {
       )}
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-gb-border pb-1 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-gray-200 pb-3 overflow-x-auto no-scrollbar">
         {user && (
           <>
             <button
               type="button"
               onClick={() => setActiveTab("orders")}
-              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-colors shrink-0 ${
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 activeTab === "orders"
-                  ? "bg-gb-green text-white shadow-2xs"
-                  : "text-gray-600 hover:bg-gray-100"
+                  ? "bg-gb-green text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
               }`}
             >
-              <ShoppingBag size={15} />
+              <ShoppingBag size={14} />
               My Orders ({myOrders.length})
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab("addresses")}
-              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-colors shrink-0 ${
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 activeTab === "addresses"
-                  ? "bg-gb-green text-white shadow-2xs"
-                  : "text-gray-600 hover:bg-gray-100"
+                  ? "bg-gb-green text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
               }`}
             >
-              <MapPin size={15} />
+              <MapPin size={14} />
               Saved Addresses ({addresses.length})
             </button>
           </>
@@ -304,13 +372,13 @@ export function AccountClient() {
         <button
           type="button"
           onClick={() => setActiveTab("track")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-colors shrink-0 ${
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
             activeTab === "track"
-              ? "bg-gb-green text-white shadow-2xs"
-              : "text-gray-600 hover:bg-gray-100"
+              ? "bg-gb-green text-white shadow-xs"
+              : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
           }`}
         >
-          <Search size={15} />
+          <Search size={14} />
           Track Order
         </button>
       </div>
@@ -319,8 +387,8 @@ export function AccountClient() {
       {user && activeTab === "orders" && (
         <div className="space-y-4">
           {loadingOrders ? (
-            <div className="bg-white rounded-3xl border border-gb-border p-8 text-center text-xs text-gray-500">
-              <Loader2 size={20} className="animate-spin mx-auto text-gb-green mb-2" />
+            <div className="bg-white rounded-3xl border border-gb-border p-12 text-center text-xs text-gray-500">
+              <Loader2 size={24} className="animate-spin mx-auto text-gb-green mb-2" />
               Fetching your order history…
             </div>
           ) : myOrders.length === 0 ? (
@@ -381,10 +449,66 @@ export function AccountClient() {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                  {/* Ordered Items with Product Image Thumbnails */}
+                  {order.order_items && order.order_items.length > 0 && (
+                    <div className="pt-3 border-t border-gray-100 space-y-2">
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                        Ordered Items ({order.order_items.reduce((s, i) => s + (i.quantity || 1), 0)})
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {order.order_items.map((item) => {
+                          const itemImg = resolveItemImage(item);
+                          return (
+                            <div
+                              key={item.id}
+                              className="flex items-center gap-3 bg-[#FAF8F2] p-2 rounded-2xl border border-[#EAE3D2]/70"
+                            >
+                              <div className="relative w-11 h-11 rounded-xl bg-white border border-gray-200/80 shrink-0 overflow-hidden flex items-center justify-center p-0.5">
+                                {itemImg ? (
+                                  <Image
+                                    src={itemImg}
+                                    alt={item.product_name_snapshot}
+                                    fill
+                                    sizes="44px"
+                                    className="object-contain mix-blend-multiply"
+                                  />
+                                ) : (
+                                  <ShoppingBag size={18} className="text-gray-300" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0 text-xs">
+                                <p className="font-bold text-gb-charcoal truncate">
+                                  {item.product_name_snapshot}
+                                </p>
+                                <p className="text-gray-500 text-[11px] mt-0.5">
+                                  {item.variant_label_snapshot} ×{" "}
+                                  <span className="font-bold text-gb-charcoal">
+                                    {item.quantity}
+                                  </span>
+                                </p>
+                              </div>
+                              <span className="font-extrabold text-gb-charcoal text-xs shrink-0 pr-1">
+                                {formatPrice(item.line_total)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
                     <span className="truncate max-w-xs">{order.address}</span>
-                    <span className="font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-100">
-                      Cash on Delivery
+                    <span
+                      className={`font-medium px-2.5 py-0.5 rounded border text-[11px] ${
+                        order.notes?.includes("PAID ONLINE") || order.notes?.includes("Razorpay")
+                          ? "text-blue-700 bg-blue-50 border-blue-100"
+                          : "text-emerald-700 bg-emerald-50 border-emerald-100"
+                      }`}
+                    >
+                      {order.notes?.includes("PAID ONLINE") || order.notes?.includes("Razorpay")
+                        ? "💳 Paid Online (Razorpay)"
+                        : "💵 Cash on Delivery"}
                     </span>
                   </div>
                 </div>
@@ -489,10 +613,11 @@ export function AccountClient() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Order number or phone number"
-                  className="gb-input pl-10"
+                  className="gb-input !pl-11 pr-4 py-3"
+                  style={{ paddingLeft: "2.75rem" }}
                   required
                 />
-                <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
               <button type="submit" disabled={isPending} className="btn-primary shrink-0 justify-center py-3">
                 {isPending ? (
@@ -560,6 +685,54 @@ export function AccountClient() {
                           </p>
                         </div>
                       </div>
+
+                      {/* Ordered Items with Product Image Thumbnails */}
+                      {order.order_items && order.order_items.length > 0 && (
+                        <div className="pt-3 border-t border-gray-100 space-y-2">
+                          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                            Ordered Items ({order.order_items.reduce((s, i) => s + (i.quantity || 1), 0)})
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {order.order_items.map((item) => {
+                              const itemImg = resolveItemImage(item);
+                              return (
+                                <div
+                                  key={item.id}
+                                  className="flex items-center gap-3 bg-[#FAF8F2] p-2 rounded-2xl border border-[#EAE3D2]/70"
+                                >
+                                  <div className="relative w-11 h-11 rounded-xl bg-white border border-gray-200/80 shrink-0 overflow-hidden flex items-center justify-center p-0.5">
+                                    {itemImg ? (
+                                      <Image
+                                        src={itemImg}
+                                        alt={item.product_name_snapshot}
+                                        fill
+                                        sizes="44px"
+                                        className="object-contain mix-blend-multiply"
+                                      />
+                                    ) : (
+                                      <ShoppingBag size={18} className="text-gray-300" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0 text-xs">
+                                    <p className="font-bold text-gb-charcoal truncate">
+                                      {item.product_name_snapshot}
+                                    </p>
+                                    <p className="text-gray-500 text-[11px] mt-0.5">
+                                      {item.variant_label_snapshot} ×{" "}
+                                      <span className="font-bold text-gb-charcoal">
+                                        {item.quantity}
+                                      </span>
+                                    </p>
+                                  </div>
+                                  <span className="font-extrabold text-gb-charcoal text-xs shrink-0 pr-1">
+                                    {formatPrice(item.line_total)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
                         <span className="text-xs text-gray-500">Total Amount</span>

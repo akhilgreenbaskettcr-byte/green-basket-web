@@ -83,13 +83,13 @@ export function CartSlideOver() {
               <p className="text-xs text-gray-400 max-w-xs leading-relaxed">
                 Add fresh cut vegetables, stone-ground powders, or cold-pressed oils to get started.
               </p>
-              <button
-                type="button"
+              <Link
+                href="/products"
                 onClick={closeCart}
-                className="btn-primary text-xs px-6 py-2.5 mt-2"
+                className="btn-primary text-xs px-6 py-2.5 mt-2 inline-flex items-center justify-center gap-1.5"
               >
                 START SHOPPING
-              </button>
+              </Link>
             </div>
           ) : (
             items.map((item) => (

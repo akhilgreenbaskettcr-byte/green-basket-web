@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+import { updateOrderStatus } from "@/app/actions/order";
 import type { OrderStatus } from "@/types/database";
 
 const STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
@@ -29,11 +29,7 @@ export function OrderStatusUpdater({ orderId, currentStatus }: OrderStatusUpdate
     setStatus(newStatus);
 
     startTransition(async () => {
-      const supabase = createClient();
-      await supabase
-        .from("orders")
-        .update({ status: newStatus })
-        .eq("id", orderId);
+      await updateOrderStatus(orderId, newStatus);
       router.refresh();
     });
   };

@@ -4,6 +4,7 @@
  * Since the publishable key format differs from JWT anon keys,
  * we use explicit type assertions in our query functions.
  */
+import { cache } from "react";
 import { createClient } from "@/utils/supabase/server";
 import type {
   Category,
@@ -17,7 +18,7 @@ import type {
 // ============================================================
 // SITE SETTINGS
 // ============================================================
-export async function getSiteSettings(): Promise<SiteSettings> {
+export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   try {
     const supabase = await createClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,12 +34,12 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     console.error("Exception fetching site settings:", err);
     return {};
   }
-}
+});
 
 // ============================================================
 // CATEGORIES
 // ============================================================
-export async function getActiveCategories(): Promise<Category[]> {
+export const getActiveCategories = cache(async (): Promise<Category[]> => {
   try {
     const supabase = await createClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,7 +58,7 @@ export async function getActiveCategories(): Promise<Category[]> {
     console.error("Exception fetching categories:", err);
     return [];
   }
-}
+});
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
   try {
@@ -81,6 +82,36 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 // ============================================================
 // PRODUCTS
 // ============================================================
+export const getAllActiveProducts = cache(async (): Promise<ProductWithVariants[]> => {
+  try {
+    const supabase = await createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+      .from("products")
+      .select(`
+        id, category_id, name, slug, description, image_url,
+        is_active, is_featured, sort_order, benefits, ingredients,
+        storage_info, created_at, updated_at,
+        categories:category_id(id, name, slug),
+        product_variants(
+          id, product_id, label, price, compare_price, sku,
+          stock_quantity, is_available, sort_order, created_at, updated_at
+        )
+      `)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching all products:", error);
+      return [];
+    }
+    return (data as ProductWithVariants[]) ?? [];
+  } catch (err) {
+    console.error("Exception fetching all products:", err);
+    return [];
+  }
+});
+
 export async function getProductsByCategory(categoryId: string): Promise<ProductWithVariants[]> {
   try {
     const supabase = await createClient();

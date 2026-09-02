@@ -10,9 +10,9 @@ import { createClient } from "@/utils/supabase/client";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
+  { href: "/products", label: "Shop All" },
   { href: "/categories", label: "Categories" },
   { href: "/about", label: "About Us" },
-  { href: "/how-it-works", label: "How It Works" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -115,6 +115,7 @@ export function MobileMenu() {
                     <li key={href}>
                       <Link
                         href={href}
+                        prefetch={true}
                         onClick={() => setOpen(false)}
                         className={cn(
                           "flex items-center justify-between px-3 py-3 rounded-xl text-sm font-semibold transition-colors",

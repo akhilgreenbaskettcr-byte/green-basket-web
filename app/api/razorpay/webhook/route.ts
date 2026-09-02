@@ -135,21 +135,25 @@ export async function POST(req: NextRequest) {
         }
 
         // Trigger Brevo SMTP notification
-        sendOrderEmails({
-          orderNumber,
-          customerName,
-          phone,
-          email,
-          address,
-          city,
-          pincode,
-          notes: deliveryNotes,
-          paymentMethod: "razorpay",
-          items: parsedItems,
-          subtotal,
-          deliveryFee,
-          total,
-        }).catch((e) => console.error("[Webhook Email Error]:", e));
+        try {
+          await sendOrderEmails({
+            orderNumber,
+            customerName,
+            phone,
+            email,
+            address,
+            city,
+            pincode,
+            notes: deliveryNotes,
+            paymentMethod: "razorpay",
+            items: parsedItems,
+            subtotal,
+            deliveryFee,
+            total,
+          });
+        } catch (e) {
+          console.error("[Webhook Email Error]:", e);
+        }
       }
     }
 

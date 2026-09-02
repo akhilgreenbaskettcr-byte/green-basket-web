@@ -3,7 +3,8 @@
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import crypto from "crypto";
-import { sendOrderEmails } from "@/lib/email";
+import { sendOrderEmails, sendDeliveryConfirmationEmail } from "@/lib/email";
+import type { OrderStatus } from "@/types/database";
 
 const isUUID = (str: string | undefined | null): boolean => {
   if (!str) return false;
@@ -29,6 +30,7 @@ const CheckoutSchema = z.object({
       variantLabel: z.string(),
       price: z.number().positive(),
       quantity: z.number().int().positive(),
+      imageUrl: z.string().optional().nullable(),
     })
   ).min(1, "Cart is empty"),
   subtotal: z.number().nonnegative(),
@@ -128,22 +130,75 @@ export async function createOrder(
     console.error("Order items error:", itemsError);
   }
 
-  // Trigger Brevo SMTP email notifications asynchronously (non-blocking)
-  sendOrderEmails({
-    orderNumber,
-    customerName: data.customer_name,
-    phone: data.phone,
-    email: data.email,
-    address: data.address,
-    city: data.city,
-    pincode: data.pincode,
-    notes: data.notes,
-    paymentMethod: data.payment_method,
-    items: data.items,
-    subtotal: data.subtotal,
-    deliveryFee: data.deliveryFee,
-    total: data.total,
-  }).catch((err) => console.error("Email notification failed:", err));
+  // Trigger Brevo SMTP email notifications synchronously before response
+  try {
+    await sendOrderEmails({
+      orderNumber,
+      customerName: data.customer_name,
+      phone: data.phone,
+      email: data.email,
+      address: data.address,
+      city: data.city,
+      pincode: data.pincode,
+      notes: data.notes,
+      paymentMethod: data.payment_method,
+      items: data.items,
+      subtotal: data.subtotal,
+      deliveryFee: data.deliveryFee,
+      total: data.total,
+    });
+  } catch (err) {
+    console.error("Email notification failed:", err);
+  }
 
   return { success: true, orderNumber };
+}
+
+export async function updateOrderStatus(orderId: string, newStatus: OrderStatus) {
+  try {
+    const supabase = await createClient();
+
+    // 1. Update order status in DB and fetch order details for delivery email
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update({ status: newStatus })
+      .eq("id", orderId)
+      .select(`
+        id, order_number, customer_name, email, total,
+        order_items (
+          product_name_snapshot, variant_label_snapshot, quantity,
+          products (image_url)
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error("Failed to update order status:", error);
+      return { success: false, error: error.message };
+    }
+
+    // 2. If status is updated to 'delivered' and customer entered an email, send Delivery Email!
+    if (newStatus === "delivered" && order?.email) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const formattedItems = ((order as any).order_items || []).map((i: any) => ({
+        productName: i.product_name_snapshot,
+        variantLabel: i.variant_label_snapshot,
+        quantity: i.quantity,
+        imageUrl: i.products?.image_url || null,
+      }));
+
+      sendDeliveryConfirmationEmail({
+        orderNumber: order.order_number,
+        customerName: order.customer_name,
+        email: order.email,
+        total: order.total,
+        items: formattedItems,
+      }).catch((err) => console.error("Failed to send delivery email:", err));
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("updateOrderStatus exception:", err);
+    return { success: false, error: err.message || "Failed to update status" };
+  }
 }

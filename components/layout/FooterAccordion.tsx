@@ -96,18 +96,18 @@ export function FooterAccordion({
                 </Link>
               </li>
               <li>
+                <Link href="/products" className="text-gray-600 hover:text-gb-green transition-colors">
+                  SHOP ALL PRODUCTS
+                </Link>
+              </li>
+              <li>
                 <Link href="/categories" className="text-gray-600 hover:text-gb-green transition-colors">
-                  ALL PRODUCTS
+                  CATEGORIES
                 </Link>
               </li>
               <li>
                 <Link href="/about" className="text-gray-600 hover:text-gb-green transition-colors">
                   ABOUT US
-                </Link>
-              </li>
-              <li>
-                <Link href="/how-it-works" className="text-gray-600 hover:text-gb-green transition-colors">
-                  HOW IT WORKS
                 </Link>
               </li>
               <li>

@@ -173,18 +173,18 @@ export async function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/products" className="text-gray-600 hover:text-gb-green transition-colors block hover:translate-x-1 transition-transform uppercase">
+                  Shop All Products
+                </Link>
+              </li>
+              <li>
                 <Link href="/categories" className="text-gray-600 hover:text-gb-green transition-colors block hover:translate-x-1 transition-transform uppercase">
-                  All Products
+                  Categories
                 </Link>
               </li>
               <li>
                 <Link href="/about" className="text-gray-600 hover:text-gb-green transition-colors block hover:translate-x-1 transition-transform uppercase">
                   About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/how-it-works" className="text-gray-600 hover:text-gb-green transition-colors block hover:translate-x-1 transition-transform uppercase">
-                  How It Works
                 </Link>
               </li>
               <li>

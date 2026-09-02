@@ -21,6 +21,7 @@ import {
   Filter,
   Check,
   XCircle,
+  Trash2,
 } from "lucide-react";
 import type { Product, ProductVariant, Category } from "@/types/database";
 
@@ -95,6 +96,29 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
           prev.map((p) => (p.id === productId ? { ...p, is_featured: !currentFeatured } : p))
         );
         showToast(`Product ${!currentFeatured ? "added to" : "removed from"} Featured`);
+      }
+    });
+  };
+
+  // Delete Product
+  const handleDeleteProduct = async (productId: string, productName: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    startTransition(async () => {
+      const supabase = createClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("products")
+        .delete()
+        .eq("id", productId);
+
+      if (error) {
+        alert("Failed to delete product: " + error.message);
+      } else {
+        setProducts((prev) => prev.filter((p) => p.id !== productId));
+        showToast(`Product "${productName}" deleted`);
       }
     });
   };
@@ -225,13 +249,14 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
           {/* Search bar (5 cols) */}
           <div className="lg:col-span-4 relative">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by title, slug, code..."
-              className="gb-input pl-10 text-xs py-2.5 bg-gray-50/70"
+              className="gb-input has-icon !pl-10 text-xs py-2.5 bg-gray-50/70"
+              style={{ paddingLeft: "2.5rem" }}
             />
           </div>
 
@@ -348,8 +373,154 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
         </div>
       </div>
 
-      {/* Table Card */}
-      <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs">
+      {/* Mobile Products Card List (< md) */}
+      <div className="md:hidden space-y-3">
+        {filtered.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-gray-200 p-8 text-center text-gray-400">
+            <Package size={36} className="mx-auto mb-2 text-gray-300" />
+            <p className="text-sm font-bold text-gray-700">No products match your filters</p>
+            <p className="text-xs text-gray-400 mt-1">Try clearing search terms or resetting filters</p>
+          </div>
+        ) : (
+          filtered.map((product, index) => {
+            const minPrice =
+              product.product_variants.length > 0
+                ? Math.min(...product.product_variants.map((v) => v.price))
+                : null;
+            const totalStock = product.product_variants.reduce(
+              (sum, v) => sum + v.stock_quantity,
+              0
+            );
+            const productCode = `GB-${String(index + 101).padStart(3, "0")}`;
+
+            return (
+              <div
+                key={product.id}
+                className="bg-white rounded-2xl border border-gray-200 p-4 shadow-2xs space-y-3"
+              >
+                {/* Product Info Row */}
+                <div className="flex gap-3 items-start">
+                  <div className="w-14 h-14 rounded-xl bg-gray-50 relative overflow-hidden shrink-0 border border-gray-200 p-1">
+                    {product.image_url ? (
+                      <Image
+                        src={product.image_url}
+                        alt={product.name}
+                        fill
+                        sizes="56px"
+                        className="object-contain p-1"
+                        unoptimized={product.image_url.startsWith("data:")}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300">
+                        <ImageIcon size={18} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-mono text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                        {productCode}
+                      </span>
+                      <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {product.categories?.name ?? "General"}
+                      </span>
+                    </div>
+
+                    <h4 className="text-sm font-bold text-gray-900 truncate mt-1">
+                      {product.name}
+                    </h4>
+
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs font-black text-gb-green font-mono">
+                        {minPrice !== null ? formatPrice(minPrice) : "—"}
+                      </span>
+                      <span className="text-gray-300">•</span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                          totalStock > 0
+                            ? "text-emerald-700 bg-emerald-50"
+                            : "text-red-700 bg-red-50"
+                        }`}
+                      >
+                        {totalStock > 0 ? `${totalStock} in stock` : "Out of stock"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Variants row */}
+                {product.product_variants.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {product.product_variants.map((v) => (
+                      <span
+                        key={v.id}
+                        className="text-[10px] font-semibold bg-gray-50 text-gray-600 border border-gray-200/60 px-2 py-0.5 rounded-md"
+                      >
+                        {v.label}: {formatPrice(v.price)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Action buttons footer */}
+                <div className="pt-2.5 border-t border-gray-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleActive(product.id, product.is_active)}
+                      disabled={isPending}
+                      className={`text-[10px] font-bold px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ${
+                        product.is_active
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${product.is_active ? "bg-green-600" : "bg-gray-400"}`} />
+                      {product.is_active ? "Active" : "Draft"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFeatured(product.id, product.is_featured)}
+                      disabled={isPending}
+                      className={`p-1.5 rounded-lg border text-xs ${
+                        product.is_featured
+                          ? "text-amber-500 border-amber-200 bg-amber-50"
+                          : "text-gray-400 border-gray-200 bg-gray-50"
+                      }`}
+                      title="Toggle featured"
+                    >
+                      <Star size={13} className={product.is_featured ? "fill-amber-400" : ""} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <Link
+                      href={`/admin/products/${product.id}`}
+                      className="text-xs font-bold text-gb-green bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      <Edit3 size={13} /> Edit
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteProduct(product.id, product.name)}
+                      disabled={isPending}
+                      className="p-1.5 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                      title="Delete Product"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop Table Card (>= md) */}
+      <div className="hidden md:block bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left" aria-label="Products catalogue">
             <thead>
@@ -508,28 +679,30 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                           }`}
                           title="Click to toggle status"
                         >
-                          {product.is_active ? <Check size={12} /> : <XCircle size={12} />}
+                          <span className={`w-1.5 h-1.5 rounded-full ${product.is_active ? "bg-green-600" : "bg-gray-400"}`} />
                           {product.is_active ? "Active" : "Draft"}
                         </button>
                       </td>
 
                       {/* Actions */}
                       <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5">
                           <Link
-                            href={`/products/${product.slug}`}
-                            target="_blank"
-                            className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                            title="View live product"
+                            href={`/admin/products/${product.id}`}
+                            className="p-1.5 text-gray-500 hover:text-gb-green hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Edit product"
                           >
-                            <ExternalLink size={15} />
+                            <Edit3 size={15} />
                           </Link>
-                          <Link
-                            href={`/admin/products/${product.slug}`}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-gb-green bg-green-50 hover:bg-green-100 px-3.5 py-2 rounded-xl transition-colors shadow-2xs"
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteProduct(product.id, product.name)}
+                            disabled={isPending}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete product"
                           >
-                            <Edit3 size={13} /> Edit
-                          </Link>
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       </td>
                     </tr>

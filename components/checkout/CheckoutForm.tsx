@@ -52,11 +52,16 @@ interface FormErrors {
 interface CheckoutFormProps {
   deliveryAreas?: DeliveryArea[];
   defaultDeliveryFee?: number;
+  enableCod?: boolean;
 }
 
 type LocationFetchStatus = "IDLE" | "FETCHING" | "FILLED" | "DENIED" | "ERROR";
 
-export function CheckoutForm({ deliveryAreas = [], defaultDeliveryFee = 40 }: CheckoutFormProps) {
+export function CheckoutForm({
+  deliveryAreas = [],
+  defaultDeliveryFee = 40,
+  enableCod = true,
+}: CheckoutFormProps) {
   const router = useRouter();
   const { items, subtotal, clearCart } = useCartStore();
   const [mounted, setMounted] = useState(false);
@@ -349,6 +354,7 @@ export function CheckoutForm({ deliveryAreas = [], defaultDeliveryFee = 40 }: Ch
             variantLabel: item.variantLabel,
             price: item.price,
             quantity: item.quantity,
+            imageUrl: item.imageUrl,
           })),
           subtotal: sub,
           deliveryFee: delivery,
@@ -399,6 +405,7 @@ export function CheckoutForm({ deliveryAreas = [], defaultDeliveryFee = 40 }: Ch
             variantLabel: i.variantLabel,
             price: i.price,
             quantity: i.quantity,
+            imageUrl: i.imageUrl,
           })),
           subtotal: sub,
           deliveryFee: delivery,
@@ -422,7 +429,7 @@ export function CheckoutForm({ deliveryAreas = [], defaultDeliveryFee = 40 }: Ch
         currency: rzpOrderData.currency || "INR",
         name: "Green Basket TCR",
         description: "Fresh Kerala Kitchen Groceries",
-        image: "/images/logo/Green-basket-logo.png",
+        image: "https://www.greenbaskettcr.com/images/logo/Green-basket-logo.png",
         order_id: rzpOrderData.orderId,
         prefill: {
           name: form.customer_name,
@@ -456,6 +463,7 @@ export function CheckoutForm({ deliveryAreas = [], defaultDeliveryFee = 40 }: Ch
                 variantLabel: item.variantLabel,
                 price: item.price,
                 quantity: item.quantity,
+                imageUrl: item.imageUrl,
               })),
               subtotal: sub,
               deliveryFee: delivery,
@@ -465,7 +473,7 @@ export function CheckoutForm({ deliveryAreas = [], defaultDeliveryFee = 40 }: Ch
             if (result.success) {
               isOrderSuccessRef.current = true;
               clearCart();
-              window.location.href = `/order-success?order=${result.orderNumber}`;
+              router.replace(`/order-success?order=${result.orderNumber}`);
               return;
             } else {
               setServerError(result.error);
@@ -501,6 +509,26 @@ export function CheckoutForm({ deliveryAreas = [], defaultDeliveryFee = 40 }: Ch
       router.push("/cart");
     }
   }, [mounted, items.length, router, loading]);
+
+  if (isOrderSuccessRef.current || loadingStatus === "CONFIRMING") {
+    return (
+      <div className="bg-white rounded-3xl border border-gray-200/90 p-8 sm:p-12 max-w-lg mx-auto text-center space-y-5 shadow-lg shadow-emerald-950/5">
+        <div className="w-20 h-20 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center mx-auto text-gb-green shadow-xs">
+          <CheckCircle2 size={42} className="animate-pulse" />
+        </div>
+        <div>
+          <span className="inline-block px-3 py-1 rounded-full bg-emerald-100/80 text-gb-green text-xs font-bold uppercase tracking-wider mb-2">
+            Payment Verified
+          </span>
+          <h2 className="text-2xl font-black text-gb-charcoal">Order Confirmed!</h2>
+          <p className="text-xs sm:text-sm text-gray-500 mt-2">
+            Finalizing your order reference and generating your receipt…
+          </p>
+        </div>
+        <div className="w-7 h-7 border-3 border-gb-green border-t-transparent rounded-full animate-spin mx-auto mt-4" />
+      </div>
+    );
+  }
 
   if (!mounted || items.length === 0) return null;
 
@@ -789,34 +817,36 @@ export function CheckoutForm({ deliveryAreas = [], defaultDeliveryFee = 40 }: Ch
                 </p>
               </label>
 
-              {/* Option 2: Cash on Delivery */}
-              <label
-                className={`flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                  paymentMethod === "cod"
-                    ? "border-gb-green bg-emerald-50/40 shadow-xs"
-                    : "border-gray-200 hover:border-gray-300 bg-white"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2.5">
-                    <input
-                      type="radio"
-                      name="payment_method"
-                      value="cod"
-                      checked={paymentMethod === "cod"}
-                      onChange={() => setPaymentMethod("cod")}
-                      className="accent-gb-green w-4 h-4 cursor-pointer"
-                    />
-                    <span className="font-bold text-sm text-gb-charcoal">
-                      Cash on Delivery (COD)
-                    </span>
+              {/* Option 2: Cash on Delivery (only if enabled in store settings) */}
+              {enableCod && (
+                <label
+                  className={`flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                    paymentMethod === "cod"
+                      ? "border-gb-green bg-emerald-50/40 shadow-xs"
+                      : "border-gray-200 hover:border-gray-300 bg-white"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <input
+                        type="radio"
+                        name="payment_method"
+                        value="cod"
+                        checked={paymentMethod === "cod"}
+                        onChange={() => setPaymentMethod("cod")}
+                        className="accent-gb-green w-4 h-4 cursor-pointer"
+                      />
+                      <span className="font-bold text-sm text-gb-charcoal">
+                        Cash on Delivery (COD)
+                      </span>
+                    </div>
+                    <Banknote size={16} className="text-gray-400" />
                   </div>
-                  <Banknote size={16} className="text-gray-400" />
-                </div>
-                <p className="text-xs text-gray-500 pl-6 leading-relaxed">
-                  Pay with cash when your fresh grocery order arrives at your door.
-                </p>
-              </label>
+                  <p className="text-xs text-gray-500 pl-6 leading-relaxed">
+                    Pay with cash when your fresh grocery order arrives at your door.
+                  </p>
+                </label>
+              )}
             </div>
           </div>
         </div>
@@ -923,9 +953,7 @@ export function CheckoutForm({ deliveryAreas = [], defaultDeliveryFee = 40 }: Ch
                 <>
                   <Loader2 size={18} className="animate-spin" aria-hidden="true" />
                   <span>
-                    {loadingStatus === "CONFIRMING"
-                      ? "Confirming Your Order…"
-                      : loadingStatus === "OPENING"
+                    {loadingStatus === "OPENING"
                       ? "Opening Razorpay Gateway…"
                       : "Placing Your Order…"}
                   </span>

@@ -29,6 +29,7 @@ export default async function CheckoutPage() {
     settings["delivery_fee"] !== undefined && settings["delivery_fee"] !== ""
       ? Math.max(0, Number(settings["delivery_fee"]))
       : 40;
+  const isCodEnabled = settings["enable_cod"] !== "false";
 
   return (
     <>
@@ -42,6 +43,7 @@ export default async function CheckoutPage() {
           <CheckoutForm
             deliveryAreas={(deliveryAreas as DeliveryArea[]) ?? []}
             defaultDeliveryFee={configuredDeliveryFee}
+            enableCod={isCodEnabled}
           />
         </div>
       </main>

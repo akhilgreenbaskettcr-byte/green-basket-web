@@ -107,13 +107,14 @@ export function CategoryShopClient({
       <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
         {/* Search */}
         <div className="relative w-full sm:w-72">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={`Search in ${currentCategory.name}...`}
-            className="gb-input pl-9 text-xs py-2 bg-gray-50/60"
+            className="gb-input has-icon !pl-10 text-xs py-2 bg-gray-50/60"
+            style={{ paddingLeft: "2.5rem" }}
           />
         </div>
 
@@ -134,7 +135,8 @@ export function CategoryShopClient({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="gb-input pl-8 pr-8 text-xs py-2 bg-gray-50/60 font-semibold"
+              className="gb-input has-icon !pl-9 pr-8 text-xs py-2 bg-gray-50/60 font-semibold"
+              style={{ paddingLeft: "2.35rem" }}
             >
               <option value="featured">Featured First</option>
               <option value="price_asc">Price: Low to High</option>

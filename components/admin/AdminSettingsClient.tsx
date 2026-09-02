@@ -45,6 +45,7 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
       free_delivery_above: "0",
       same_day_cutoff_time: "1:00 PM",
       same_day_message: "Order before 1PM for next day delivery.",
+      enable_cod: "true",
     };
     settings.forEach(({ key, value }) => {
       if (value !== undefined && value !== null) initial[key] = value;
@@ -285,6 +286,29 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
                 placeholder="Order before 1PM for next day delivery."
                 className="gb-input"
               />
+            </div>
+
+            {/* Cash on Delivery (COD) Switch */}
+            <div className="sm:col-span-2 pt-4 border-t border-gray-100 flex items-center justify-between">
+              <div>
+                <label className="text-sm font-bold text-gb-charcoal block">
+                  Enable Cash on Delivery (COD)
+                </label>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Allow customers to pay with cash at their doorstep upon delivery.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={values["enable_cod"] !== "false"}
+                  onChange={(e) =>
+                    handleChange("enable_cod", e.target.checked ? "true" : "false")
+                  }
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gb-green"></div>
+              </label>
             </div>
           </div>
         </div>

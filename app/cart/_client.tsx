@@ -37,7 +37,7 @@ export default function CartPageContent({ defaultDeliveryFee = 40 }: CartPageCon
       <div className="gb-container py-10 md:py-14">
         {/* Back link */}
         <Link
-          href="/categories"
+          href="/products"
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gb-green transition-colors mb-6"
         >
           <ArrowLeft size={15} aria-hidden="true" />
@@ -68,7 +68,7 @@ export default function CartPageContent({ defaultDeliveryFee = 40 }: CartPageCon
             <p className="text-gray-400 text-sm mb-8">
               Add some fresh products to get started.
             </p>
-            <Link href="/categories" className="btn-primary">
+            <Link href="/products" className="btn-primary">
               Browse Products
             </Link>
           </div>

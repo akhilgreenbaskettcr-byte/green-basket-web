@@ -55,14 +55,14 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
         aria-label={`View ${product.name}`}
       >
         {/* Floating Brand Badge */}
-        <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1 pointer-events-none">
+        <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-10 flex flex-wrap items-center gap-1 pointer-events-none max-w-[85%]">
           {product.is_featured && (
-            <span className="bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-2xs">
+            <span className="bg-amber-500 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs">
               Bestseller
             </span>
           )}
-          <span className="bg-white/90 backdrop-blur-xs text-gb-green text-[9px] font-bold px-2 py-0.5 rounded-full shadow-2xs border border-gray-100 flex items-center gap-1">
-            <Leaf size={9} /> {isVegetables ? "Freshly Cut" : "100% Pure"}
+          <span className="bg-white/95 backdrop-blur-xs text-gb-green text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs border border-gray-100 flex items-center gap-1">
+            <Leaf size={8} className="shrink-0" /> {isVegetables ? "Freshly Cut" : "100% Pure"}
           </span>
         </div>
 
