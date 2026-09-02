@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { CheckCircle2, ShoppingBag, ArrowRight, Truck, Phone, MessageCircle } from "lucide-react";
+import { CheckCircle2, ShoppingBag, ArrowRight, Truck, Phone, MessageCircle, ShieldCheck } from "lucide-react";
 import { OrderSuccessTracker } from "@/components/order/OrderSuccessTracker";
 
 export const metadata: Metadata = {
@@ -48,7 +48,7 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
 
             {/* Order Number Box */}
             {order && (
-              <div className="bg-[#FAFAF5] rounded-2xl border border-emerald-200/80 p-4 mb-6 inline-block w-full max-w-md">
+              <div className="bg-[#FAFAF5] rounded-2xl border border-emerald-200/80 p-4 mb-5 inline-block w-full max-w-md">
                 <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
                   Order Reference Number
                 </p>
@@ -61,6 +61,17 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
                 </div>
               </div>
             )}
+
+            {/* Delivery Inspection & Verification Reminder */}
+            <div className="bg-emerald-50/70 rounded-2xl border border-emerald-200/80 p-4 mb-6 text-left space-y-1 max-w-md mx-auto">
+              <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs">
+                <ShieldCheck size={16} className="text-emerald-700 shrink-0" />
+                <span>Delivery Inspection Policy</span>
+              </div>
+              <p className="text-[11.5px] text-gray-600 leading-relaxed">
+                <strong>On-the-Spot Inspection:</strong> Please open and inspect your package in the presence of our delivery executive before they leave. Claims regarding missing items, incorrect items, or external damage cannot be accepted once the delivery executive leaves your premises.
+              </p>
+            </div>
 
             {/* Quick Actions */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">

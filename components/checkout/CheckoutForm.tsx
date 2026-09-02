@@ -937,6 +937,17 @@ export function CheckoutForm({
               </div>
             )}
 
+            {/* Delivery Inspection & Verification Policy Notice */}
+            <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-3.5 space-y-1 text-left">
+              <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-xs">
+                <ShieldCheck size={14} className="text-emerald-700 shrink-0" />
+                <span>Delivery Inspection Policy</span>
+              </div>
+              <p className="text-[11px] text-gray-600 leading-relaxed">
+                <strong>On-the-Spot Inspection:</strong> Please inspect your items in the presence of the delivery executive. Claims for missing or damaged items cannot be accepted once the executive leaves your premises.
+              </p>
+            </div>
+
             {/* Place Order / Razorpay Payment Button */}
             <button
               type="submit"

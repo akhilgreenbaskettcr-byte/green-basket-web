@@ -36,13 +36,28 @@ export async function updateSession(request: NextRequest) {
   const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
   const isAdminLoginRoute = request.nextUrl.pathname === "/admin/login";
 
-  if (isAdminRoute && !isAdminLoginRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/admin/login";
-    return NextResponse.redirect(url);
+  if (isAdminRoute && !isAdminLoginRoute) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/login";
+      return NextResponse.redirect(url);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profile } = await (supabase as any)
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if ((profile as { role: string } | null)?.role !== "admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/login";
+      return NextResponse.redirect(url);
+    }
   }
 
-  // If logged in and trying to access admin login, check role then redirect
+  // If logged in as admin and trying to access admin login, redirect to /admin
   if (isAdminLoginRoute && user) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: profile } = await (supabase as any)

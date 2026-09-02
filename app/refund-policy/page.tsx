@@ -108,14 +108,58 @@ export default async function RefundPolicyPage() {
               </ul>
             </section>
 
-            {/* Section 2 */}
+            {/* Section 2: Delivery Inspection & Verification Policy */}
+            <section className="space-y-4">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gb-green" />
+                2. Delivery Inspection & Verification Policy
+              </h2>
+              <div className="bg-emerald-50/70 border-2 border-emerald-200/80 rounded-2xl p-5 sm:p-6 space-y-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle size={22} className="text-emerald-700 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-bold text-emerald-950 uppercase tracking-wide">
+                      Mandatory Handover Inspection
+                    </h3>
+                    <p className="text-xs text-emerald-800/90 mt-0.5">
+                      Because our products consist of freshly cut perishable produce, please observe our verification policy:
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-2">
+                  <div className="bg-white p-4 rounded-xl border border-emerald-100/90 shadow-2xs space-y-1.5">
+                    <p className="text-xs font-black text-gray-900 uppercase">1. On-the-Spot Inspection</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      Customers are required to open and inspect their package in the presence of the delivery executive before they leave.
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-emerald-100/90 shadow-2xs space-y-1.5">
+                    <p className="text-xs font-black text-gray-900 uppercase">2. Finality of Delivery</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      We will not accept any claims, complaints, or requests for returns regarding incorrect items, missing items, or external package damage once the delivery executive has left your premises.
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-emerald-100/90 shadow-2xs space-y-1.5">
+                    <p className="text-xs font-black text-gray-900 uppercase">3. Immediate Resolution</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      If you notice any discrepancies or issues during this inspection at the time of delivery, please report it immediately to the delivery person and contact our support team.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 3: Eligibility for Returns & Refunds */}
             <section className="space-y-3">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-gb-green" />
-                2. Eligibility for Returns & Refunds
+                3. Eligibility for Returns & Refunds
               </h2>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                We accept refund and replacement requests under the following valid scenarios:
+                When reported during the mandatory on-the-spot delivery inspection or within our freshness guarantee framework, we accept refund and replacement requests under:
               </p>
               <ul className="list-disc pl-5 space-y-1.5 text-xs sm:text-sm text-gray-600 leading-relaxed">
                 <li><strong>Quality Discrepancy:</strong> The delivered fresh cut produce or fruits are spoiled, damaged, or substandard upon delivery.</li>
@@ -126,7 +170,7 @@ export default async function RefundPolicyPage() {
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200/80 flex items-start gap-3">
                 <AlertTriangle size={18} className="text-amber-700 shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-900 leading-relaxed">
-                  <strong>Reporting Window:</strong> Because our products are perishable fresh items with no preservatives, please report any quality issue within <strong>24 hours of delivery</strong> along with a quick photo of the issue via WhatsApp or Email.
+                  <strong>Freshness Guarantee:</strong> For internal quality concerns that cannot be diagnosed on external inspection, please report with photos to WhatsApp (<strong>{phone}</strong>) within <strong>24 hours of delivery</strong>.
                 </p>
               </div>
             </section>

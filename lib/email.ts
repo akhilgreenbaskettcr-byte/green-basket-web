@@ -194,8 +194,18 @@ export async function sendOrderEmails(order: OrderEmailPayload) {
               </table>
             </div>
 
+            <!-- Delivery Inspection & Verification Policy Notice -->
+            <div style="margin-top: 16px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px 16px; text-align: left;">
+              <p style="margin: 0; font-size: 12px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">
+                📦 Delivery Inspection Policy
+              </p>
+              <p style="margin: 4px 0 0 0; font-size: 11px; color: #374151; line-height: 1.5;">
+                <strong>On-the-Spot Inspection:</strong> Please open and inspect your package in the presence of the delivery executive before they leave. Claims regarding missing items, incorrect items, or package damage cannot be accepted once the delivery executive has left your premises.
+              </p>
+            </div>
+
             <!-- Footer info -->
-            <div style="text-align: center; border-top: 1px solid #f3f4f6; padding-top: 16px;">
+            <div style="text-align: center; border-top: 1px solid #f3f4f6; padding-top: 16px; margin-top: 20px;">
               <p style="margin: 0; font-size: 11px; color: #9ca3af;">
                 Green Basket TCR • Near Ayyanthole Ground, Thrissur, Kerala - 680003
               </p>

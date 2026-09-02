@@ -146,25 +146,33 @@ export default async function TermsAndConditionsPage() {
               </p>
             </section>
 
-            {/* Section 5 */}
+            {/* Section 5: Delivery Inspection & Handover Protocol */}
             <section className="space-y-3">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-gb-green" />
-                5. Intellectual Property
+                5. Delivery Inspection & Handover Policy
               </h2>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                The Green Basket TCR brand name, logo, graphic designs, product photography, text content, and website software are the exclusive intellectual property of Green Basket TCR. Unauthorized reproduction, scraping, or commercial misuse is strictly prohibited.
-              </p>
+              <div className="bg-emerald-50/70 p-4 sm:p-5 rounded-2xl border border-emerald-200/80 space-y-2.5 text-xs sm:text-sm">
+                <p className="text-gray-700 leading-relaxed">
+                  <strong>On-the-Spot Inspection:</strong> Customers are required to open and inspect their package in the presence of the delivery executive before they leave.
+                </p>
+                <p className="text-gray-700 leading-relaxed">
+                  <strong>Finality of Delivery:</strong> We will not accept any claims, complaints, or requests for returns regarding incorrect items, missing items, or external package damage once the delivery executive has left your premises.
+                </p>
+                <p className="text-gray-700 leading-relaxed">
+                  <strong>Immediate Resolution:</strong> If you notice any discrepancies or issues during this inspection at the time of delivery, please report it immediately to the delivery person and contact our customer support team.
+                </p>
+              </div>
             </section>
 
             {/* Section 6 */}
             <section className="space-y-3">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-gb-green" />
-                6. Governing Law & Dispute Resolution
+                6. Intellectual Property
               </h2>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                These terms are governed by and construed in accordance with the laws of the Republic of India. Any disputes arising out of or related to our services shall be subject to the exclusive jurisdiction of the competent courts in <strong>Thrissur, Kerala, India</strong>.
+                The Green Basket TCR brand name, logo, graphic designs, product photography, text content, and website software are the exclusive intellectual property of Green Basket TCR. Unauthorized reproduction, scraping, or commercial misuse is strictly prohibited.
               </p>
             </section>
 
@@ -172,7 +180,18 @@ export default async function TermsAndConditionsPage() {
             <section className="space-y-3">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-gb-green" />
-                7. Contact Information
+                7. Governing Law & Dispute Resolution
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                These terms are governed by and construed in accordance with the laws of the Republic of India. Any disputes arising out of or related to our services shall be subject to the exclusive jurisdiction of the competent courts in <strong>Thrissur, Kerala, India</strong>.
+              </p>
+            </section>
+
+            {/* Section 8 */}
+            <section className="space-y-3">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gb-green" />
+                8. Contact Information
               </h2>
               <div className="bg-gray-50 p-4 sm:p-5 rounded-2xl border border-gray-200/80 space-y-1.5 text-xs sm:text-sm">
                 <p className="font-bold text-gray-900">Green Basket TCR</p>

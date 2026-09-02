@@ -157,11 +157,55 @@ export default async function ShippingPolicyPage() {
               </p>
             </section>
 
-            {/* Section 5 */}
+            {/* Section 5: Delivery Inspection & Verification Policy */}
+            <section className="space-y-4">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gb-green" />
+                5. Delivery Inspection & Verification Policy
+              </h2>
+              <div className="bg-emerald-50/70 border-2 border-emerald-200/80 rounded-2xl p-5 sm:p-6 space-y-4">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck size={22} className="text-emerald-700 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-bold text-emerald-950 uppercase tracking-wide">
+                      Mandatory Delivery Handover Protocol
+                    </h3>
+                    <p className="text-xs text-emerald-800/90 mt-0.5">
+                      To ensure total transparency and protect fresh food standards, please note our handover guidelines:
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-2">
+                  <div className="bg-white p-4 rounded-xl border border-emerald-100/90 shadow-2xs space-y-1.5">
+                    <p className="text-xs font-black text-gray-900 uppercase">1. On-the-Spot Inspection</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      Customers are required to open and inspect their package in the presence of the delivery executive before they leave.
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-emerald-100/90 shadow-2xs space-y-1.5">
+                    <p className="text-xs font-black text-gray-900 uppercase">2. Finality of Delivery</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      We will not accept any claims, complaints, or requests for returns regarding incorrect items, missing items, or external package damage once the delivery executive has left your premises.
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-emerald-100/90 shadow-2xs space-y-1.5">
+                    <p className="text-xs font-black text-gray-900 uppercase">3. Immediate Resolution</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      If you notice any discrepancies or issues during this inspection at the time of delivery, please report it immediately to the delivery person and contact our support team.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 6 */}
             <section className="space-y-3">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-gb-green" />
-                5. Order Tracking & Delivery Support
+                6. Order Tracking & Delivery Support
               </h2>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                 Upon placing your order, you will receive an instant order confirmation SMS/WhatsApp with your tracking reference. Our delivery executive may call you upon arrival at your location.
