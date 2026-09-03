@@ -14,8 +14,10 @@ import {
   User,
   Clock,
   Mail,
+  Printer,
 } from "lucide-react";
 import type { Order, OrderStatus } from "@/types/database";
+import { ThermalReceiptModal } from "@/components/admin/ThermalReceiptModal";
 
 export type AdminOrderWithItems = Order & {
   order_items?: {
@@ -46,6 +48,7 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<AdminOrderWithItems | null>(null);
+  const [receiptOrder, setReceiptOrder] = useState<AdminOrderWithItems | null>(null);
 
   const filtered = orders.filter((order) => {
     const matchesSearch =
@@ -173,11 +176,20 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <OrderStatusUpdater
                       orderId={order.id}
                       currentStatus={order.status as OrderStatus}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setReceiptOrder(order)}
+                      className="text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1"
+                      title="Print Thermal Bill (58mm)"
+                    >
+                      <Printer size={13} className="text-gray-700" />
+                      <span>Bill</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setSelectedOrder(order)}
@@ -291,14 +303,26 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                         />
                       </td>
 
-                      {/* View details button */}
+                      {/* View details & Print Bill */}
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="text-xs font-semibold text-gb-green bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors"
-                        >
-                          Inspect
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setReceiptOrder(order)}
+                            className="text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-gray-900 px-2.5 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-2xs"
+                            title="Print Thermal Bill (58mm)"
+                          >
+                            <Printer size={13} className="text-gray-700" />
+                            <span>Bill</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOrder(order)}
+                            className="text-xs font-semibold text-gb-green bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            Inspect
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -325,12 +349,23 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                   {selectedOrder.order_number}
                 </h3>
               </div>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors text-gray-500"
-              >
-                <X size={16} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setReceiptOrder(selectedOrder)}
+                  className="text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-2xs"
+                  title="Print Thermal Bill (58mm)"
+                >
+                  <Printer size={14} className="text-gray-700" />
+                  <span>Print Bill</span>
+                </button>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors text-gray-500"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Customer information card */}
@@ -462,6 +497,12 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
           </div>
         </div>
       )}
+
+      {/* Thermal Receipt Modal (58mm ATPOS) */}
+      <ThermalReceiptModal
+        order={receiptOrder}
+        onClose={() => setReceiptOrder(null)}
+      />
     </div>
   );
 }
