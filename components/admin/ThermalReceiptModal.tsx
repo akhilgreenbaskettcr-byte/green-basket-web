@@ -27,17 +27,27 @@ export function ThermalReceiptModal({
   const year = orderDate.getFullYear();
   const formattedDate = `${day}-${month}-${year}`;
 
-  const formattedTime = orderDate.toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
+  const formattedTime = orderDate
+    .toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
+    .toUpperCase();
 
   // Determine Payment Mode
   const isOnlinePaid =
     order.notes?.toLowerCase().includes("paid online") ||
     order.notes?.toLowerCase().includes("razorpay");
   const paymentModeText = isOnlinePaid ? "online" : "cash";
+
+  // Clean customer note by stripping system payment tags
+  const customerNote = order.notes
+    ? order.notes
+        .replace(/\[PAID ONLINE.*?\]/gi, "")
+        .replace(/\[PAYMENT:.*?\]/gi, "")
+        .trim()
+    : "";
 
   // Format decimal amounts
   const formatAmt = (num: number) => `₹${Number(num || 0).toFixed(2)}`;
@@ -77,7 +87,7 @@ export function ThermalReceiptModal({
       width: 58mm;
       max-width: 58mm;
       margin: 0 auto;
-      padding: 4mm 3mm 8mm 3mm;
+      padding: 3mm 2mm 6mm 2mm;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", Courier, monospace;
       font-size: 11px;
       line-height: 1.25;
@@ -107,18 +117,18 @@ export function ThermalReceiptModal({
       margin-bottom: 3px;
     }
     .line-solid {
-      border-bottom: 1px solid #000;
-      margin: 4px 0;
+      border-bottom: 1.2px solid #000;
+      margin: 3.5px 0;
     }
     .line-dashed {
-      border-bottom: 1px dashed #000;
-      margin: 5px 0;
+      border-bottom: 1.5px dashed #000;
+      margin: 4.5px 0;
     }
     .meta-row {
       display: flex;
       justify-content: space-between;
       font-size: 10.5px;
-      margin: 2px 0;
+      margin: 1.5px 0;
     }
     .items-table {
       width: 100%;
@@ -128,7 +138,7 @@ export function ThermalReceiptModal({
     .items-table th {
       font-size: 10.5px;
       font-weight: 700;
-      padding: 3px 0;
+      padding: 2.5px 0;
       text-align: left;
     }
     .items-table th.qty, .items-table td.qty {
@@ -146,12 +156,12 @@ export function ThermalReceiptModal({
       white-space: nowrap;
     }
     .items-table td {
-      font-size: 10px;
+      font-size: 10.5px;
       vertical-align: top;
-      padding: 2.5px 0;
+      padding: 2px 0;
     }
     .item-name {
-      font-weight: 600;
+      font-weight: 700;
       line-height: 1.15;
     }
     .item-variant {
@@ -163,28 +173,28 @@ export function ThermalReceiptModal({
       display: flex;
       justify-content: space-between;
       font-size: 11px;
-      margin: 2.5px 0;
+      margin: 2px 0;
     }
     .grand-total {
       font-size: 13px;
       font-weight: 800;
-      margin: 3px 0;
+      margin: 2.5px 0;
     }
     .customer-box {
       font-size: 9.5px;
       line-height: 1.3;
-      margin: 4px 0;
+      margin: 3px 0;
     }
     .footer-note {
       text-align: center;
       font-size: 11.5px;
       font-weight: 600;
-      margin-top: 6px;
+      margin-top: 5px;
     }
     .branding {
       text-align: center;
       font-size: 10px;
-      margin-top: 5px;
+      margin-top: 4px;
       letter-spacing: 0.3px;
     }
   </style>
@@ -270,7 +280,7 @@ export function ThermalReceiptModal({
     <div><strong>Customer:</strong> ${order.customer_name}</div>
     <div><strong>Phone:</strong> ${order.phone}</div>
     <div><strong>Address:</strong> ${order.address}, ${order.city} - ${order.pincode}</div>
-    ${order.notes ? `<div><strong>Note:</strong> ${order.notes}</div>` : ""}
+    ${customerNote ? `<div><strong>Note:</strong> ${customerNote}</div>` : ""}
   </div>
   `
       : ""
@@ -489,9 +499,9 @@ export function ThermalReceiptModal({
                     <strong className="font-bold">Address:</strong>{" "}
                     {order.address}, {order.city} - {order.pincode}
                   </div>
-                  {order.notes && (
+                  {customerNote && (
                     <div>
-                      <strong className="font-bold">Note:</strong> {order.notes}
+                      <strong className="font-bold">Note:</strong> {customerNote}
                     </div>
                   )}
                 </div>
