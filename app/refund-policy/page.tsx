@@ -100,7 +100,7 @@ export default async function RefundPolicyPage() {
               </h2>
               <ul className="list-disc pl-5 space-y-2 text-xs sm:text-sm text-gray-600 leading-relaxed">
                 <li>
-                  <strong>Before Preparation & Dispatch:</strong> You can cancel your order free of charge before our preparation kitchen starts cutting and packaging your fresh produce. Simply call or WhatsApp us at <strong>{phone}</strong> with your Order ID.
+                  <strong>Before Preparation & Dispatch:</strong> You can cancel your order free of charge before our preparation team starts cutting and packaging your fresh produce. Simply call or WhatsApp us at <strong>{phone}</strong> with your Order ID.
                 </li>
                 <li>
                   <strong>After Dispatch:</strong> Due to the perishable nature of freshly cut vegetables, grated coconut, and cold food preparations, orders that have already been dispatched out for delivery cannot be cancelled mid-transit.

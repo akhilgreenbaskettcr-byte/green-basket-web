@@ -16,6 +16,16 @@ export function PwaInstallPrompt() {
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
+    // 1. Check if user already dismissed permanently
+    try {
+      if (
+        localStorage.getItem("gb_pwa_prompt_dismissed") ||
+        sessionStorage.getItem("gb_pwa_prompt_dismissed")
+      ) {
+        return;
+      }
+    } catch {}
+
     // Check if already in standalone mode
     const isRunningStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
@@ -25,13 +35,6 @@ export function PwaInstallPrompt() {
     setIsStandalone(isRunningStandalone);
     if (isRunningStandalone) return;
 
-    // Check if user dismissed recently (wait 5 days before showing again)
-    const lastDismissed = localStorage.getItem("gb_pwa_prompt_dismissed");
-    if (lastDismissed) {
-      const daysSinceDismiss = (Date.now() - parseInt(lastDismissed, 10)) / (1000 * 60 * 60 * 24);
-      if (daysSinceDismiss < 5) return;
-    }
-
     // Detect iOS Safari
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
@@ -39,8 +42,13 @@ export function PwaInstallPrompt() {
 
     if (isIosDevice && isSafari) {
       setIsIos(true);
-      // Small delay before showing iOS install banner
-      const timer = setTimeout(() => setShowPrompt(true), 3000);
+      const timer = setTimeout(() => {
+        try {
+          if (!localStorage.getItem("gb_pwa_prompt_dismissed")) {
+            setShowPrompt(true);
+          }
+        } catch {}
+      }, 5000);
       return () => clearTimeout(timer);
     }
 
@@ -48,7 +56,14 @@ export function PwaInstallPrompt() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowPrompt(true);
+
+      try {
+        if (!localStorage.getItem("gb_pwa_prompt_dismissed")) {
+          setShowPrompt(true);
+        }
+      } catch {
+        setShowPrompt(true);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -67,6 +82,9 @@ export function PwaInstallPrompt() {
       if (choice.outcome === "accepted") {
         console.log("[PWA] User accepted installation");
         setShowPrompt(false);
+        try {
+          localStorage.setItem("gb_pwa_prompt_dismissed", "true");
+        } catch {}
       }
       setDeferredPrompt(null);
     } catch (err) {
@@ -76,7 +94,10 @@ export function PwaInstallPrompt() {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem("gb_pwa_prompt_dismissed", Date.now().toString());
+    try {
+      localStorage.setItem("gb_pwa_prompt_dismissed", "true");
+      sessionStorage.setItem("gb_pwa_prompt_dismissed", "true");
+    } catch {}
   };
 
   if (!showPrompt || isStandalone) return null;

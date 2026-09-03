@@ -4,7 +4,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { getSiteSettings } from "@/lib/supabase/queries";
-import { Truck, Clock, MapPin, ShieldCheck, HelpCircle } from "lucide-react";
+import { Truck, Clock, MapPin, ShieldCheck, HelpCircle, Phone, Mail } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -88,7 +88,7 @@ export default async function ShippingPolicyPage() {
                 </div>
                 <h2 className="text-xs font-bold uppercase tracking-wider text-gray-700">FREE SHIPPING</h2>
                 <p className="text-xs text-gray-600 font-semibold">On orders above ₹500</p>
-                <p className="text-[11px] text-gray-400">₹40 delivery fee for smaller orders</p>
+                <p className="text-[11px] text-gray-400">Available across Thrissur</p>
               </div>
             </div>
 
@@ -129,20 +129,16 @@ export default async function ShippingPolicyPage() {
             <section className="space-y-3">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-gb-green" />
-                3. Shipping Fees & Delivery Charges
+                3. Shipping & Free Delivery
               </h2>
               <div className="bg-[#FAFAF5] p-4 sm:p-5 rounded-2xl border border-gray-200/80 space-y-2 text-xs sm:text-sm">
-                <div className="flex justify-between items-center py-1 border-b border-gray-200/60">
+                <div className="flex justify-between items-center py-1">
                   <span className="font-semibold text-gray-800">Orders of ₹500 and above:</span>
                   <span className="font-bold text-gb-green uppercase">FREE SHIPPING (₹0)</span>
                 </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="font-semibold text-gray-800">Orders under ₹500:</span>
-                  <span className="font-bold text-gray-900">₹40 Standard Delivery Charge</span>
-                </div>
               </div>
               <p className="text-[11px] text-gray-500">
-                Delivery charges (if applicable) are shown transparently at checkout before you make any payment. No hidden handling or packaging surcharges.
+                Any applicable delivery charges are calculated transparently at checkout before payment. No hidden handling or packaging surcharges.
               </p>
             </section>
 
@@ -208,19 +204,31 @@ export default async function ShippingPolicyPage() {
                 6. Order Tracking & Delivery Support
               </h2>
               <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                Upon placing your order, you will receive an instant order confirmation SMS/WhatsApp with your tracking reference. Our delivery executive may call you upon arrival at your location.
+                Upon placing your order, you will receive an instant order confirmation Email/WhatsApp with your tracking reference. Our delivery executive may call you upon arrival at your location.
               </p>
-              <div className="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-100 flex items-center justify-between gap-4 flex-wrap">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-bold text-gb-green uppercase">HAVE QUESTIONS REGARDING YOUR DISPATCH?</p>
-                  <p className="text-[11px] text-gray-600">Contact our dispatch concierge directly:</p>
+              <div className="bg-emerald-50/70 p-4 sm:p-5 rounded-2xl border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-gb-green uppercase tracking-wide">
+                    HAVE QUESTIONS REGARDING YOUR DISPATCH?
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    Contact our dispatch concierge directly:
+                  </p>
                 </div>
-                <div className="flex items-center gap-3 text-xs font-bold">
-                  <a href={`tel:${phone.replace(/[^0-9+]/g, "")}`} className="btn-primary text-xs px-4 py-2">
-                    Call {phone}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4 text-xs font-bold w-full sm:w-auto">
+                  <a
+                    href={`tel:${phone.replace(/[^0-9+]/g, "")}`}
+                    className="btn-primary text-xs px-4 py-2.5 inline-flex items-center justify-center gap-2 whitespace-nowrap shadow-xs"
+                  >
+                    <Phone size={14} />
+                    <span>Call {phone}</span>
                   </a>
-                  <a href={`mailto:${email}`} className="text-gb-green hover:underline">
-                    {email}
+                  <a
+                    href={`mailto:${email}`}
+                    className="inline-flex items-center justify-center sm:justify-start gap-1.5 text-gb-green hover:underline break-all sm:break-normal py-1"
+                  >
+                    <Mail size={14} className="shrink-0" />
+                    <span>{email}</span>
                   </a>
                 </div>
               </div>

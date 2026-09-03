@@ -130,7 +130,7 @@ export default async function PrivacyPolicyPage() {
               </h2>
               <ul className="list-disc pl-5 space-y-1.5 text-xs sm:text-sm text-gray-600 leading-relaxed">
                 <li>To process, hygienically pack, and deliver your grocery orders to your address.</li>
-                <li>To send live order dispatch updates and digital invoices via SMS, WhatsApp, or Email.</li>
+                <li>To send live order dispatch updates and digital invoices via WhatsApp or Email.</li>
                 <li>To resolve customer service inquiries, handle refunds, and coordinate deliveries.</li>
                 <li>To improve store navigation, website speed, and product recommendations.</li>
               </ul>
