@@ -11,6 +11,11 @@ import {
   Truck,
   PhoneCall,
   Save,
+  KeyRound,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +35,7 @@ const TABS = [
   { id: "branding", label: "Branding & Store", icon: Store },
   { id: "delivery", label: "Delivery & Ordering", icon: Truck },
   { id: "contact", label: "Contact & Social", icon: PhoneCall },
+  { id: "security", label: "Security", icon: ShieldCheck },
 ];
 
 export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
@@ -56,6 +62,43 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+
+  // Change Password state
+  const [pwForm, setPwForm] = useState({ newPassword: "", confirmPassword: "" });
+  const [pwShowNew, setPwShowNew] = useState(false);
+  const [pwShowConfirm, setPwShowConfirm] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwSuccess, setPwSuccess] = useState("");
+  const [pwError, setPwError] = useState("");
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError("");
+    setPwSuccess("");
+
+    if (pwForm.newPassword.length < 8) {
+      setPwError("Password must be at least 8 characters.");
+      return;
+    }
+    if (pwForm.newPassword !== pwForm.confirmPassword) {
+      setPwError("Passwords do not match.");
+      return;
+    }
+
+    setPwLoading(true);
+    const supabase = createClient();
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: pwForm.newPassword,
+    });
+    setPwLoading(false);
+
+    if (updateError) {
+      setPwError(updateError.message || "Failed to update password.");
+    } else {
+      setPwSuccess("Admin password updated successfully!");
+      setPwForm({ newPassword: "", confirmPassword: "" });
+    }
+  };
 
   const handleChange = (key: string, val: string) => {
     setValues((prev) => ({ ...prev, [key]: val }));
@@ -90,6 +133,7 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
   };
 
   return (
+    <>
     <form onSubmit={handleSave} className="space-y-6 max-w-4xl">
       {/* Tabs navigation */}
       <div className="flex border-b border-gray-200 bg-white rounded-2xl p-1.5 shadow-sm overflow-x-auto gap-1">
@@ -407,33 +451,132 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex items-center justify-between pt-2">
-        <div className="text-xs text-gray-500">
-          {saved && (
-            <span className="inline-flex items-center gap-1 text-green-700 font-medium">
-              <Check size={14} /> Changes saved successfully!
-            </span>
-          )}
+      {/* Actions — only show when not on security tab */}
+      {activeTab !== "security" && (
+        <div className="flex items-center justify-between pt-2">
+          <div className="text-xs text-gray-500">
+            {saved && (
+              <span className="inline-flex items-center gap-1 text-green-700 font-medium">
+                <Check size={14} /> Changes saved successfully!
+              </span>
+            )}
+          </div>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="btn-primary shadow-md hover:shadow-lg transition-all"
+          >
+            {isPending ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Saving…
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                Save All Settings
+              </>
+            )}
+          </button>
         </div>
-        <button
-          type="submit"
-          disabled={isPending}
-          className="btn-primary shadow-md hover:shadow-lg transition-all"
-        >
-          {isPending ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              Saving…
-            </>
-          ) : (
-            <>
-              <Save size={16} />
-              Save All Settings
-            </>
-          )}
-        </button>
-      </div>
+      )}
     </form>
+
+    {/* Security Tab — Change Admin Password (outside form, uses its own submit) */}
+    {activeTab === "security" && (
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 md:p-8 max-w-md">
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-gb-green flex items-center justify-center">
+            <KeyRound size={16} />
+          </div>
+          <h2 className="text-base font-bold text-gray-900">Change Admin Password</h2>
+        </div>
+        <p className="text-xs text-gray-500 mb-6">
+          Update the password for this admin account. Takes effect on next login.
+        </p>
+
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          {/* New Password */}
+          <div>
+            <label className="gb-label text-xs">New Password</label>
+            <div className="relative">
+              <input
+                type={pwShowNew ? "text" : "password"}
+                value={pwForm.newPassword}
+                onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
+                placeholder="Min. 8 characters"
+                className="gb-input text-sm pr-10"
+                required
+                minLength={8}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setPwShowNew(!pwShowNew)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+                aria-label={pwShowNew ? "Hide password" : "Show password"}
+              >
+                {pwShowNew ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="gb-label text-xs">Confirm New Password</label>
+            <div className="relative">
+              <input
+                type={pwShowConfirm ? "text" : "password"}
+                value={pwForm.confirmPassword}
+                onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
+                placeholder="Re-enter new password"
+                className="gb-input text-sm pr-10"
+                required
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setPwShowConfirm(!pwShowConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+                aria-label={pwShowConfirm ? "Hide password" : "Show password"}
+              >
+                {pwShowConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Feedback */}
+          {pwError && (
+            <div className="flex items-center gap-2 bg-red-50 text-red-600 text-xs p-3 rounded-xl border border-red-200">
+              <AlertCircle size={14} className="shrink-0" />
+              {pwError}
+            </div>
+          )}
+          {pwSuccess && (
+            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs p-3 rounded-xl border border-emerald-200">
+              <Check size={14} className="shrink-0" />
+              {pwSuccess}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={pwLoading}
+            className="btn-primary w-full justify-center py-2.5 shadow-md"
+          >
+            {pwLoading ? (
+              <>
+                <Loader2 size={15} className="animate-spin" /> Updating Password…
+              </>
+            ) : (
+              <>
+                <KeyRound size={15} /> Update Admin Password
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+    )}
+    </>
   );
 }
