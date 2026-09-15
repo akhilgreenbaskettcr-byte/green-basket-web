@@ -13,22 +13,38 @@ import {
   Settings,
   MapPin,
   ExternalLink,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
+// Admin-only items (hidden from staff)
+const ADMIN_ONLY_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/home-editor", label: "Banners & Homepage", icon: LayoutTemplate },
+  { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/settings", label: "Store Settings", icon: Settings },
+  { href: "/admin/staff", label: "Staff Management", icon: UserCog },
+];
+
+// Items visible to both admin and staff
+const SHARED_ITEMS = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: Tags },
   { href: "/admin/delivery-areas", label: "Delivery Areas", icon: MapPin },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-  { href: "/admin/customers", label: "Customers", icon: Users },
-  { href: "/admin/settings", label: "Store Settings", icon: Settings },
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  role: "admin" | "staff";
+}
+
+export function AdminSidebar({ role }: AdminSidebarProps) {
   const pathname = usePathname();
+
+  const navItems =
+    role === "admin"
+      ? [ADMIN_ONLY_ITEMS[0], ADMIN_ONLY_ITEMS[1], ...SHARED_ITEMS, ...ADMIN_ONLY_ITEMS.slice(2)]
+      : SHARED_ITEMS;
 
   return (
     <aside
@@ -37,7 +53,7 @@ export function AdminSidebar() {
     >
       {/* Logo Card Header */}
       <div className="p-5 border-b border-white/10">
-        <Link href="/admin" className="block group">
+        <Link href={role === "admin" ? "/admin" : "/admin/orders"} className="block group">
           <div className="bg-white rounded-2xl p-2.5 shadow-sm flex items-center justify-center transition-transform group-hover:scale-[1.02]">
             <Image
               src="/images/logo/Green-basket-logo.png"
@@ -51,18 +67,23 @@ export function AdminSidebar() {
         </Link>
         <div className="flex items-center justify-between mt-3 px-1">
           <span className="text-[10px] font-bold text-white/60 tracking-wider uppercase font-mono">
-            Admin Workspace
+            {role === "admin" ? "Admin Workspace" : "Staff Workspace"}
           </span>
-          <span className="text-[10px] bg-white/20 text-emerald-100 font-semibold px-2 py-0.5 rounded-full">
-            Live
+          <span className={cn(
+            "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+            role === "admin"
+              ? "bg-white/20 text-emerald-100"
+              : "bg-amber-400/30 text-amber-100"
+          )}>
+            {role === "admin" ? "Admin" : "Staff"}
           </span>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
-        {NAV_ITEMS.map((item) => {
-          const isActive = item.exact
+        {navItems.map((item) => {
+          const isActive = (item as { exact?: boolean }).exact
             ? pathname === item.href
             : pathname.startsWith(item.href);
           const Icon = item.icon;

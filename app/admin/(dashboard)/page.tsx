@@ -73,6 +73,23 @@ async function getDashboardStats(supabase: Awaited<ReturnType<typeof createClien
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
+
+  // Staff cannot see the revenue dashboard — redirect to orders
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profile } = await (supabase as any)
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (profile?.role === "staff") {
+      const { redirect } = await import("next/navigation");
+      redirect("/admin/orders");
+    }
+  }
+
   const stats = await getDashboardStats(supabase);
 
   const STAT_CARDS = [

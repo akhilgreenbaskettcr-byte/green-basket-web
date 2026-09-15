@@ -14,7 +14,7 @@ export interface Database {
           id: string;
           email: string;
           full_name: string | null;
-          role: "admin" | "customer";
+          role: "admin" | "customer" | "staff";
           phone: string | null;
           created_at: string;
           updated_at: string;
@@ -23,7 +23,7 @@ export interface Database {
           id: string;
           email: string;
           full_name?: string | null;
-          role?: "admin" | "customer";
+          role?: "admin" | "customer" | "staff";
           phone?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -31,7 +31,7 @@ export interface Database {
         Update: {
           email?: string;
           full_name?: string | null;
-          role?: "admin" | "customer";
+          role?: "admin" | "customer" | "staff";
           phone?: string | null;
           updated_at?: string;
         };

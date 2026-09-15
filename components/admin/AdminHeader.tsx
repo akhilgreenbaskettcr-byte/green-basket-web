@@ -20,35 +20,49 @@ import {
   ChevronRight,
   Store,
   Grid,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
 
-const NAV_ITEMS = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/home-editor", label: "Banners & Homepage", icon: LayoutTemplate },
-  { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/categories", label: "Categories", icon: Tags },
-  { href: "/admin/delivery-areas", label: "Delivery Areas", icon: MapPin },
-  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-  { href: "/admin/customers", label: "Customers", icon: Users },
-  { href: "/admin/settings", label: "Store Settings", icon: Settings },
+const ALL_NAV_ITEMS = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true, adminOnly: true },
+  { href: "/admin/home-editor", label: "Banners & Homepage", icon: LayoutTemplate, adminOnly: true },
+  { href: "/admin/products", label: "Products", icon: Package, adminOnly: false },
+  { href: "/admin/categories", label: "Categories", icon: Tags, adminOnly: false },
+  { href: "/admin/delivery-areas", label: "Delivery Areas", icon: MapPin, adminOnly: false },
+  { href: "/admin/orders", label: "Orders", icon: ShoppingBag, adminOnly: false },
+  { href: "/admin/customers", label: "Customers", icon: Users, adminOnly: true },
+  { href: "/admin/settings", label: "Store Settings", icon: Settings, adminOnly: true },
+  { href: "/admin/staff", label: "Staff Management", icon: UserCog, adminOnly: true },
 ];
 
-const BOTTOM_NAV_ITEMS = [
+const BOTTOM_NAV_ADMIN = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
+const BOTTOM_NAV_STAFF = [
+  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/delivery-areas", label: "Delivery", icon: MapPin },
+  { href: "/admin/categories", label: "Categories", icon: Tags },
+];
+
 interface AdminHeaderProps {
   userEmail?: string;
+  role: "admin" | "staff";
+  userName?: string;
 }
 
-export function AdminHeader({ userEmail }: AdminHeaderProps) {
+export function AdminHeader({ userEmail, role, userName }: AdminHeaderProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const pathname = usePathname();
+
+  const navItems = ALL_NAV_ITEMS.filter((item) => role === "admin" || !item.adminOnly);
+  const bottomNavItems = role === "admin" ? BOTTOM_NAV_ADMIN : BOTTOM_NAV_STAFF;
 
   return (
     <>
@@ -74,7 +88,7 @@ export function AdminHeader({ userEmail }: AdminHeaderProps) {
           </div>
         </div>
 
-        {/* Right: Quick Links & Sign Out */}
+        {/* Right: Role badge, email & Sign Out */}
         <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/"
@@ -87,9 +101,17 @@ export function AdminHeader({ userEmail }: AdminHeaderProps) {
             <ExternalLink size={12} className="opacity-60" />
           </Link>
 
-          {userEmail && (
-            <span className="hidden md:inline-block text-xs text-gray-500 font-medium truncate max-w-[180px]">
-              {userEmail}
+          <span className={`hidden md:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            role === "admin"
+              ? "bg-emerald-100 text-gb-green"
+              : "bg-amber-100 text-amber-700"
+          }`}>
+            {role === "admin" ? "Admin" : "Staff"}
+          </span>
+
+          {(userName || userEmail) && (
+            <span className="hidden md:inline-block text-xs text-gray-500 font-medium truncate max-w-[160px]">
+              {userName || userEmail}
             </span>
           )}
 
@@ -140,7 +162,7 @@ export function AdminHeader({ userEmail }: AdminHeaderProps) {
 
               {/* Navigation Links */}
               <nav className="p-3 space-y-1">
-                {NAV_ITEMS.map((item) => {
+                {navItems.map((item) => {
                   const isActive = item.exact
                     ? pathname === item.href
                     : pathname.startsWith(item.href);
@@ -199,8 +221,8 @@ export function AdminHeader({ userEmail }: AdminHeaderProps) {
         aria-label="Mobile Admin Navigation"
         className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 py-1 px-2 flex items-center justify-around shadow-lg"
       >
-        {BOTTOM_NAV_ITEMS.map((item) => {
-          const isActive = item.exact
+        {bottomNavItems.map((item) => {
+          const isActive = (item as { exact?: boolean; href: string }).exact
             ? pathname === item.href
             : pathname.startsWith(item.href);
           const Icon = item.icon;

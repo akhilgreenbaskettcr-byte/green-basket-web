@@ -20,23 +20,25 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/admin/login");
   }
 
-  // Verify admin role from profiles table
+  // Verify admin or staff role from profiles table
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: profile } = await (supabase as any)
     .from("profiles")
-    .select("role")
+    .select("role, full_name")
     .eq("id", user.id)
-    .single() as { data: Pick<Profile, "role"> | null };
+    .single() as { data: Pick<Profile, "role" | "full_name"> | null };
 
-  if (profile?.role !== "admin") {
+  if (profile?.role !== "admin" && profile?.role !== "staff") {
     redirect("/admin/login");
   }
 
+  const role = profile.role as "admin" | "staff";
+
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
+      <AdminSidebar role={role} />
       <div className="flex-1 flex flex-col min-w-0">
-        <AdminHeader userEmail={user.email} />
+        <AdminHeader userEmail={user.email} role={role} userName={profile.full_name ?? undefined} />
         <main className="flex-1 p-3 sm:p-6 lg:p-8 pb-24 sm:pb-24 lg:pb-8 overflow-auto">
           {children}
         </main>
