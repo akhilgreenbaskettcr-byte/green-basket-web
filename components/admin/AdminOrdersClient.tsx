@@ -185,10 +185,10 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                       type="button"
                       onClick={() => setReceiptOrder(order)}
                       className="text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1"
-                      title="Print Thermal Bill (58mm)"
+                      title="Print Farm Order Slip (58mm)"
                     >
                       <Printer size={13} className="text-gray-700" />
-                      <span>Bill</span>
+                      <span>Slip</span>
                     </button>
                     <button
                       type="button"
@@ -310,10 +310,10 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                             type="button"
                             onClick={() => setReceiptOrder(order)}
                             className="text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-gray-900 px-2.5 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-2xs"
-                            title="Print Thermal Bill (58mm)"
+                            title="Print Farm Order Slip (58mm)"
                           >
                             <Printer size={13} className="text-gray-700" />
-                            <span>Bill</span>
+                            <span>Slip</span>
                           </button>
                           <button
                             type="button"
@@ -354,10 +354,10 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                   type="button"
                   onClick={() => setReceiptOrder(selectedOrder)}
                   className="text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-2xs"
-                  title="Print Thermal Bill (58mm)"
+                  title="Print Farm Order Slip (58mm)"
                 >
                   <Printer size={14} className="text-gray-700" />
-                  <span>Print Bill</span>
+                  <span>Print Slip</span>
                 </button>
                 <button
                   onClick={() => setSelectedOrder(null)}

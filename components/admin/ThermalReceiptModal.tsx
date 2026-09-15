@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Printer, X, Check, MapPin } from "lucide-react";
+import { Printer, X } from "lucide-react";
 import type { AdminOrderWithItems } from "@/components/admin/AdminOrdersClient";
 
 interface ThermalReceiptModalProps {
@@ -13,9 +13,7 @@ interface ThermalReceiptModalProps {
 export function ThermalReceiptModal({
   order,
   onClose,
-  storePhone = "7012909264",
 }: ThermalReceiptModalProps) {
-  const [includeAddress, setIncludeAddress] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
 
   if (!order) return null;
@@ -39,9 +37,9 @@ export function ThermalReceiptModal({
   const isOnlinePaid =
     order.notes?.toLowerCase().includes("paid online") ||
     order.notes?.toLowerCase().includes("razorpay");
-  const paymentModeText = isOnlinePaid ? "online" : "cash";
+  const paymentModeText = isOnlinePaid ? "Online (Paid)" : "Cash on Delivery";
 
-  // Clean customer note by stripping system payment tags
+  // Clean customer note if any (strip system payment tags)
   const customerNote = order.notes
     ? order.notes
         .replace(/\[PAID ONLINE.*?\]/gi, "")
@@ -49,8 +47,12 @@ export function ThermalReceiptModal({
         .trim()
     : "";
 
-  // Format decimal amounts
-  const formatAmt = (num: number) => `₹${Number(num || 0).toFixed(2)}`;
+  // Calculate total quantities
+  const totalQty = (order.order_items || []).reduce(
+    (sum, item) => sum + (item.quantity || 1),
+    0
+  );
+  const totalItemsCount = order.order_items?.length || 0;
 
   const handlePrint = () => {
     setIsPrinting(true);
@@ -60,7 +62,7 @@ export function ThermalReceiptModal({
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Receipt-${order.order_number}</title>
+  <title>Order-${order.order_number}</title>
   <style>
     @page {
       size: 58mm auto;
@@ -100,8 +102,8 @@ export function ThermalReceiptModal({
     .bold {
       font-weight: 700;
     }
-    .bill-no {
-      font-size: 13px;
+    .order-no {
+      font-size: 12.5px;
       font-weight: 800;
       margin-bottom: 2px;
       letter-spacing: 0.2px;
@@ -110,11 +112,6 @@ export function ThermalReceiptModal({
       font-size: 14px;
       font-weight: 800;
       letter-spacing: 0.2px;
-    }
-    .store-phone {
-      font-size: 11px;
-      font-weight: 700;
-      margin-bottom: 3px;
     }
     .line-solid {
       border-bottom: 1.2px solid #000;
@@ -136,74 +133,63 @@ export function ThermalReceiptModal({
       margin: 2px 0;
     }
     .items-table th {
-      font-size: 10.5px;
-      font-weight: 700;
-      padding: 2.5px 0;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 0;
       text-align: left;
     }
     .items-table th.qty, .items-table td.qty {
-      text-align: center;
-      width: 12%;
-    }
-    .items-table th.rate, .items-table td.rate {
-      text-align: right;
-      width: 25%;
-      white-space: nowrap;
-    }
-    .items-table th.amt, .items-table td.amt {
       text-align: right;
       width: 25%;
       white-space: nowrap;
     }
     .items-table td {
-      font-size: 10.5px;
+      font-size: 11px;
       vertical-align: top;
-      padding: 2px 0;
+      padding: 2.5px 0;
     }
     .item-name {
       font-weight: 700;
-      line-height: 1.15;
+      line-height: 1.2;
     }
     .item-variant {
-      font-size: 9px;
+      font-size: 9.5px;
+      font-weight: 600;
       color: #222;
       display: block;
+      margin-top: 1px;
     }
-    .total-row {
+    .summary-row {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
+      font-size: 10.5px;
+      font-weight: 700;
       margin: 2px 0;
     }
-    .grand-total {
-      font-size: 13px;
-      font-weight: 800;
-      margin: 2.5px 0;
-    }
     .customer-box {
-      font-size: 9.5px;
-      line-height: 1.3;
+      font-size: 11px;
+      line-height: 1.35;
       margin: 3px 0;
     }
     .footer-note {
       text-align: center;
-      font-size: 11.5px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
       margin-top: 5px;
     }
     .branding {
       text-align: center;
       font-size: 10px;
-      margin-top: 4px;
-      letter-spacing: 0.3px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
     }
   </style>
 </head>
 <body>
   <div class="center">
-    <div class="bill-no">Bill No: ${order.order_number}</div>
+    <div class="order-no">Order Number: ${order.order_number}</div>
     <div class="store-name">Green Basket Tcr</div>
-    <div class="store-phone">PHONE: ${storePhone}</div>
   </div>
 
   <div class="line-solid"></div>
@@ -211,9 +197,6 @@ export function ThermalReceiptModal({
   <div class="meta-row">
     <span>Date: ${formattedDate}</span>
     <span>Time: ${formattedTime}</span>
-  </div>
-  <div class="meta-row">
-    <span>Order Type: sale</span>
   </div>
 
   <div class="line-solid"></div>
@@ -223,8 +206,6 @@ export function ThermalReceiptModal({
       <tr>
         <th>Item</th>
         <th class="qty">Qty</th>
-        <th class="rate">Rate</th>
-        <th class="amt">Amt</th>
       </tr>
     </thead>
     <tbody>
@@ -240,9 +221,7 @@ export function ThermalReceiptModal({
                 : ""
             }
           </td>
-          <td class="qty">${item.quantity}</td>
-          <td class="rate">${formatAmt(item.unit_price)}</td>
-          <td class="amt">${formatAmt(item.line_total)}</td>
+          <td class="qty bold">${item.quantity}</td>
         </tr>
       `
         )
@@ -252,44 +231,23 @@ export function ThermalReceiptModal({
 
   <div class="line-solid"></div>
 
-  <div class="total-row">
-    <span>Sub Total</span>
-    <span class="bold">${formatAmt(order.subtotal)}</span>
-  </div>
-  <div class="total-row">
-    <span>Delivery Charge</span>
-    <span>${formatAmt(order.delivery_fee)}</span>
+  <div class="summary-row">
+    <span>Items: ${totalItemsCount}</span>
+    <span>Total Qty: ${totalQty}</span>
   </div>
 
   <div class="line-solid"></div>
 
-  <div class="total-row grand-total">
-    <span>Grand Total</span>
-    <span>${formatAmt(order.total)}</span>
-  </div>
-  <div class="total-row">
-    <span>Payment Mode</span>
-    <span class="bold" style="text-transform: lowercase;">${paymentModeText}</span>
-  </div>
-
-  ${
-    includeAddress
-      ? `
-  <div class="line-solid"></div>
   <div class="customer-box">
-    <div><strong>Customer:</strong> ${order.customer_name}</div>
-    <div><strong>Phone:</strong> ${order.phone}</div>
-    <div><strong>Address:</strong> ${order.address}, ${order.city} - ${order.pincode}</div>
-    ${customerNote ? `<div><strong>Note:</strong> ${customerNote}</div>` : ""}
+    <div><strong>Payment Mode:</strong> ${paymentModeText}</div>
+    <div style="margin-top: 2px;"><strong>Customer:</strong> ${order.customer_name}</div>
+    ${customerNote ? `<div style="margin-top: 2px;"><strong>Note:</strong> ${customerNote}</div>` : ""}
   </div>
-  `
-      : ""
-  }
 
   <div class="line-dashed"></div>
 
   <div class="footer-note">Thank you. Visit Again!</div>
-  <div class="branding">Powered by GINGR POS</div>
+  <div class="branding">Green Basket TCR</div>
 </body>
 </html>
 `;
@@ -342,11 +300,11 @@ export function ThermalReceiptModal({
         <div className="flex items-center justify-between border-b border-gray-100 pb-3 shrink-0">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-gb-green">
-              ATPOS 58mm Thermal Print
+              Farm & Packing Order Slip (58mm)
             </span>
             <h3 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
               <Printer size={18} className="text-gb-green" />
-              Bill #{order.order_number}
+              Order #{order.order_number}
             </h3>
           </div>
 
@@ -357,7 +315,7 @@ export function ThermalReceiptModal({
               className="btn-primary text-xs py-2 px-4 shadow-sm flex items-center gap-1.5"
             >
               <Printer size={14} />
-              <span>{isPrinting ? "Printing..." : "Print Bill"}</span>
+              <span>{isPrinting ? "Printing..." : "Print Slip"}</span>
             </button>
             <button
               onClick={onClose}
@@ -368,22 +326,8 @@ export function ThermalReceiptModal({
           </div>
         </div>
 
-        {/* Options Toolbar */}
-        <div className="py-2.5 px-3 bg-gray-50 rounded-xl border border-gray-100 my-3 flex items-center justify-between text-xs shrink-0">
-          <label className="flex items-center gap-2 text-gray-700 cursor-pointer select-none font-medium">
-            <input
-              type="checkbox"
-              checked={includeAddress}
-              onChange={(e) => setIncludeAddress(e.target.checked)}
-              className="w-4 h-4 rounded text-gb-green focus:ring-gb-green accent-[#245B35]"
-            />
-            <span>Include Customer & Delivery Address on Bill</span>
-          </label>
-          <span className="text-[10px] text-gray-400 font-mono">58mm Roll</span>
-        </div>
-
         {/* Realistic Thermal Receipt Paper Scroll Preview */}
-        <div className="flex-1 overflow-y-auto py-2 px-1 flex justify-center bg-gray-100/70 rounded-2xl border border-gray-200/80">
+        <div className="flex-1 overflow-y-auto py-2 px-1 flex justify-center bg-gray-100/70 rounded-2xl border border-gray-200/80 my-3">
           <div
             id="thermal-receipt-preview"
             className="w-[280px] bg-white text-black p-4 shadow-md border border-gray-200/80 font-mono text-[11px] leading-tight select-none my-2 transition-all"
@@ -394,13 +338,12 @@ export function ThermalReceiptModal({
           >
             {/* Store & Bill Header */}
             <div className="text-center">
-              <div className="font-extrabold text-[13px] tracking-tight">
-                Bill No: {order.order_number}
+              <div className="font-extrabold text-[12.5px] tracking-tight">
+                Order Number: {order.order_number}
               </div>
               <div className="font-black text-[14px] tracking-tight mt-0.5">
                 Green Basket Tcr
               </div>
-              <div className="font-bold text-[11px]">PHONE: {storePhone}</div>
             </div>
 
             {/* Solid Line */}
@@ -408,41 +351,34 @@ export function ThermalReceiptModal({
 
             {/* Date & Time */}
             <div className="flex justify-between text-[10.5px]">
-              <span>Date: {formattedDate}</span>
-              <span>Time: {formattedTime}</span>
+              <span>Date: ${formattedDate}</span>
+              <span>Time: ${formattedTime}</span>
             </div>
-            <div className="text-[10.5px] mt-0.5">Order Type: sale</div>
 
             {/* Solid Line */}
             <div className="border-b border-black my-1.5" />
 
-            {/* Items Table */}
-            <table className="w-full text-[10px] border-collapse">
+            {/* Items Table (Only Name & Quantity, No Price) */}
+            <table className="w-full text-[10.5px] border-collapse">
               <thead>
                 <tr className="font-bold text-left border-b border-black">
-                  <th className="pb-1 font-bold">Item</th>
-                  <th className="pb-1 text-center w-[12%] font-bold">Qty</th>
-                  <th className="pb-1 text-right w-[25%] font-bold">Rate</th>
-                  <th className="pb-1 text-right w-[25%] font-bold">Amt</th>
+                  <th className="pb-1 font-extrabold">Item</th>
+                  <th className="pb-1 text-right w-[25%] font-extrabold">Qty</th>
                 </tr>
               </thead>
               <tbody>
                 {(order.order_items || []).map((item) => (
                   <tr key={item.id} className="align-top">
-                    <td className="py-1 pr-1 font-medium leading-tight">
-                      <div>{item.product_name_snapshot}</div>
+                    <td className="py-1.5 pr-1 font-medium leading-tight">
+                      <div className="font-bold">{item.product_name_snapshot}</div>
                       {item.variant_label_snapshot && (
-                        <div className="text-[9px] text-gray-700">
+                        <div className="text-[9.5px] font-semibold text-gray-700">
                           {item.variant_label_snapshot}
                         </div>
                       )}
                     </td>
-                    <td className="py-1 text-center font-bold">{item.quantity}</td>
-                    <td className="py-1 text-right font-mono">
-                      {formatAmt(item.unit_price)}
-                    </td>
-                    <td className="py-1 text-right font-mono">
-                      {formatAmt(item.line_total)}
+                    <td className="py-1.5 text-right font-black text-[11.5px]">
+                      {item.quantity}
                     </td>
                   </tr>
                 ))}
@@ -452,70 +388,40 @@ export function ThermalReceiptModal({
             {/* Solid Line */}
             <div className="border-b border-black my-1.5" />
 
-            {/* Totals */}
-            <div className="space-y-1 text-[10.5px]">
-              <div className="flex justify-between">
-                <span>Sub Total</span>
-                <span className="font-bold font-mono">
-                  {formatAmt(order.subtotal)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Delivery Charge</span>
-                <span className="font-mono">
-                  {formatAmt(order.delivery_fee)}
-                </span>
-              </div>
+            {/* Items & Qty Summary */}
+            <div className="flex justify-between text-[10.5px] font-bold">
+              <span>Items: {totalItemsCount}</span>
+              <span>Total Qty: {totalQty}</span>
             </div>
 
             {/* Solid Line */}
             <div className="border-b border-black my-1.5" />
 
-            {/* Grand Total & Payment Mode */}
-            <div className="space-y-1 text-[11px]">
-              <div className="flex justify-between font-black text-[12.5px]">
-                <span>Grand Total</span>
-                <span className="font-mono">{formatAmt(order.total)}</span>
+            {/* Payment Mode & Customer */}
+            <div className="text-[11px] leading-tight space-y-1 text-gray-900">
+              <div>
+                <strong className="font-bold">Payment Mode:</strong>{" "}
+                <span>{paymentModeText}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Payment Mode</span>
-                <span className="font-bold lowercase">{paymentModeText}</span>
+              <div>
+                <strong className="font-bold">Customer:</strong>{" "}
+                {order.customer_name}
               </div>
-            </div>
-
-            {/* Customer Details Box (Optional) */}
-            {includeAddress && (
-              <>
-                <div className="border-b border-black my-1.5" />
-                <div className="text-[9.5px] leading-tight space-y-0.5 text-gray-900">
-                  <div>
-                    <strong className="font-bold">Customer:</strong>{" "}
-                    {order.customer_name}
-                  </div>
-                  <div>
-                    <strong className="font-bold">Phone:</strong> {order.phone}
-                  </div>
-                  <div>
-                    <strong className="font-bold">Address:</strong>{" "}
-                    {order.address}, {order.city} - {order.pincode}
-                  </div>
-                  {customerNote && (
-                    <div>
-                      <strong className="font-bold">Note:</strong> {customerNote}
-                    </div>
-                  )}
+              {customerNote && (
+                <div className="pt-0.5 text-[10px]">
+                  <strong className="font-bold">Note:</strong> {customerNote}
                 </div>
-              </>
-            )}
+              )}
+            </div>
 
             {/* Dashed Line */}
             <div className="border-b border-dashed border-black my-2" />
 
-            {/* Footer */}
-            <div className="text-center space-y-1 pt-0.5">
+            {/* Green Basket Greetings */}
+            <div className="text-center space-y-0.5 pt-0.5">
               <div className="font-bold text-[11px]">Thank you. Visit Again!</div>
-              <div className="text-[9.5px] tracking-wider text-gray-800">
-                Powered by GINGR POS
+              <div className="text-[10px] font-extrabold tracking-wider text-gray-900">
+                Green Basket TCR
               </div>
             </div>
           </div>
@@ -524,7 +430,7 @@ export function ThermalReceiptModal({
         {/* Bottom CTA */}
         <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-3 shrink-0">
           <p className="text-[11px] text-gray-500">
-            Works with any 58mm / 80mm USB & Bluetooth thermal printer.
+            Farm Packing Slip • 58mm Thermal Roll
           </p>
           <button
             onClick={handlePrint}
@@ -532,7 +438,7 @@ export function ThermalReceiptModal({
             className="btn-primary text-xs py-2 px-5 shadow-xs flex items-center gap-2"
           >
             <Printer size={15} />
-            <span>{isPrinting ? "Printing..." : "Print Bill (58mm)"}</span>
+            <span>{isPrinting ? "Printing..." : "Print Slip (58mm)"}</span>
           </button>
         </div>
       </div>

@@ -65,10 +65,33 @@ export async function createOrder(
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Generate clean, instant unique order number
-  const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, "");
-  const randomHex = Math.floor(1000 + Math.random() * 9000).toString();
-  const orderNumber = `GB-${dateStr}-${randomHex}`;
+  // Generate date-based order number in proper sequence: GB-YYMMDD-0001
+  const now = new Date();
+  const istTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  const yy = String(istTime.getUTCFullYear()).slice(2);
+  const mm = String(istTime.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(istTime.getUTCDate()).padStart(2, "0");
+  const dateStr = `${yy}${mm}${dd}`;
+  const prefix = `GB-${dateStr}-`;
+
+  // Fetch highest order sequence for today
+  const { data: latestToday } = await supabase
+    .from("orders")
+    .select("order_number")
+    .like("order_number", `${prefix}%`)
+    .order("order_number", { ascending: false })
+    .limit(1);
+
+  let seq = 1;
+  if (latestToday && latestToday.length > 0 && latestToday[0].order_number) {
+    const parts = latestToday[0].order_number.split("-");
+    const lastSeq = parseInt(parts[parts.length - 1], 10);
+    if (!isNaN(lastSeq)) {
+      seq = lastSeq + 1;
+    }
+  }
+
+  let orderNumber = `${prefix}${String(seq).padStart(4, "0")}`;
 
   // Prepare notes with payment metadata
   let formattedNotes = data.notes?.trim() || "";
@@ -81,31 +104,49 @@ export async function createOrder(
   const orderStatus = "pending";
   const orderId = crypto.randomUUID();
 
-  // Create order in DB using explicit UUID
-  const { error: orderError } = await supabase
-    .from("orders")
-    .insert({
-      id: orderId,
-      order_number: orderNumber,
-      customer_id: user?.id ?? null,
-      status: orderStatus,
-      subtotal: data.subtotal,
-      delivery_fee: data.deliveryFee,
-      total: data.total,
-      customer_name: data.customer_name,
-      phone: data.phone,
-      email: data.email || null,
-      address: data.address,
-      city: data.city,
-      pincode: data.pincode,
-      notes: formattedNotes || null,
-    });
+  // Create order in DB using explicit UUID with sequence collision safety
+  let inserted = false;
+  let attempts = 0;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let lastOrderError: any = null;
 
-  if (orderError) {
-    console.error("Order creation error:", orderError);
+  while (!inserted && attempts < 5) {
+    attempts++;
+    const { error: orderError } = await supabase
+      .from("orders")
+      .insert({
+        id: orderId,
+        order_number: orderNumber,
+        customer_id: user?.id ?? null,
+        status: orderStatus,
+        subtotal: data.subtotal,
+        delivery_fee: data.deliveryFee,
+        total: data.total,
+        customer_name: data.customer_name,
+        phone: data.phone,
+        email: data.email || null,
+        address: data.address,
+        city: data.city,
+        pincode: data.pincode,
+        notes: formattedNotes || null,
+      });
+
+    if (!orderError) {
+      inserted = true;
+    } else if (orderError.code === "23505" || orderError.message?.includes("unique")) {
+      seq++;
+      orderNumber = `${prefix}${String(seq).padStart(4, "0")}`;
+    } else {
+      lastOrderError = orderError;
+      break;
+    }
+  }
+
+  if (!inserted) {
+    console.error("Order creation error:", lastOrderError);
     return {
       success: false,
-      error: orderError?.message || "Failed to create order. Please try again.",
+      error: lastOrderError?.message || "Failed to create order. Please try again.",
     };
   }
 

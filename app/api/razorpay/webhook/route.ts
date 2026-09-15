@@ -95,10 +95,32 @@ export async function POST(req: NextRequest) {
       const total = Number(notes.total) || Number(payment?.amount || 0) / 100;
       const deliveryNotes = notes.delivery_notes || "";
 
-      // Generate order number
-      const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, "");
-      const randomHex = Math.floor(1000 + Math.random() * 9000).toString();
-      const orderNumber = `GB-${dateStr}-${randomHex}`;
+      // Generate date-based order number in proper sequence: GB-YYMMDD-0001
+      const now = new Date();
+      const istTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+      const yy = String(istTime.getUTCFullYear()).slice(2);
+      const mm = String(istTime.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(istTime.getUTCDate()).padStart(2, "0");
+      const dateStr = `${yy}${mm}${dd}`;
+      const prefix = `GB-${dateStr}-`;
+
+      const { data: latestToday } = await supabase
+        .from("orders")
+        .select("order_number")
+        .like("order_number", `${prefix}%`)
+        .order("order_number", { ascending: false })
+        .limit(1);
+
+      let seq = 1;
+      if (latestToday && latestToday.length > 0 && latestToday[0].order_number) {
+        const parts = latestToday[0].order_number.split("-");
+        const lastSeq = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(lastSeq)) {
+          seq = lastSeq + 1;
+        }
+      }
+
+      const orderNumber = `${prefix}${String(seq).padStart(4, "0")}`;
       const newOrderId = crypto.randomUUID();
 
       const formattedNotes = `[PAID ONLINE via Razorpay Webhook | Ref: ${paymentId} | OrderId: ${razorpayOrderId}] ${deliveryNotes}`.trim();
