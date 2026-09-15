@@ -83,6 +83,7 @@ export function CheckoutForm({
   // GPS autofill state
   const [locationFetch, setLocationFetch] = useState<LocationFetchStatus>("IDLE");
   const [locationNote, setLocationNote] = useState("");
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // Paste Location Link state
   const [initialLinkForMap, setInitialLinkForMap] = useState<string>("");
@@ -250,11 +251,13 @@ export function CheckoutForm({
               city: city,
               pincode: postcode || prev.pincode,
             }));
+            setGpsCoords({ lat: latitude, lng: longitude });
             setSelectedAddressId("custom");
             setLocationFetch("FILLED");
             setLocationNote("Location auto-filled from GPS.");
           } else {
             setLocationFetch("FILLED");
+            setGpsCoords({ lat: latitude, lng: longitude });
             setForm((prev) => ({
               ...prev,
               address: `GPS: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
@@ -347,6 +350,8 @@ export function CheckoutForm({
         const result = await createOrder({
           ...form,
           payment_method: "cod",
+          gps_lat: gpsCoords?.lat ?? null,
+          gps_lng: gpsCoords?.lng ?? null,
           items: items.map((item) => ({
             productId: item.productId,
             variantId: item.variantId,
@@ -456,6 +461,8 @@ export function CheckoutForm({
               payment_method: "razorpay",
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
+              gps_lat: gpsCoords?.lat ?? null,
+              gps_lng: gpsCoords?.lng ?? null,
               items: items.map((item) => ({
                 productId: item.productId,
                 variantId: item.variantId,

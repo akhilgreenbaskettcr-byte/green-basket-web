@@ -177,6 +177,8 @@ export interface Database {
           city: string;
           pincode: string;
           notes: string | null;
+          gps_lat: number | null;
+          gps_lng: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -201,6 +203,8 @@ export interface Database {
           city: string;
           pincode: string;
           notes?: string | null;
+          gps_lat?: number | null;
+          gps_lng?: number | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -22,6 +22,8 @@ const CheckoutSchema = z.object({
   payment_method: z.enum(["razorpay", "cod"]).default("cod"),
   razorpay_payment_id: z.string().optional().or(z.literal("")),
   razorpay_order_id: z.string().optional().or(z.literal("")),
+  gps_lat: z.number().optional().nullable(),
+  gps_lng: z.number().optional().nullable(),
   items: z.array(
     z.object({
       productId: z.string(),
@@ -129,6 +131,8 @@ export async function createOrder(
         city: data.city,
         pincode: data.pincode,
         notes: formattedNotes || null,
+        gps_lat: data.gps_lat ?? null,
+        gps_lng: data.gps_lng ?? null,
       });
 
     if (!orderError) {

@@ -15,6 +15,7 @@ import {
   Clock,
   Mail,
   Printer,
+  ExternalLink,
 } from "lucide-react";
 import type { Order, OrderStatus } from "@/types/database";
 import { ThermalReceiptModal } from "@/components/admin/ThermalReceiptModal";
@@ -421,11 +422,22 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
 
               <div className="flex items-start gap-2 text-xs text-gray-600 pt-1">
                 <MapPin size={15} className="text-gb-green shrink-0 mt-0.5" />
-                <div>
+                <div className="flex-1">
                   <p className="leading-relaxed">{selectedOrder.address}</p>
                   <p className="font-bold text-gray-800 mt-0.5">
                     {selectedOrder.city} — <span className="font-mono">{selectedOrder.pincode}</span>
                   </p>
+                  {selectedOrder.gps_lat != null && selectedOrder.gps_lng != null && (
+                    <a
+                      href={`https://www.google.com/maps?q=${selectedOrder.gps_lat},${selectedOrder.gps_lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-bold text-gb-green hover:text-emerald-700 underline underline-offset-2 transition-colors"
+                    >
+                      <ExternalLink size={11} />
+                      Open Exact GPS Location in Maps
+                    </a>
+                  )}
                 </div>
               </div>
 
