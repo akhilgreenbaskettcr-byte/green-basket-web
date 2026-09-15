@@ -351,8 +351,8 @@ export function ThermalReceiptModal({
 
             {/* Date & Time */}
             <div className="flex justify-between text-[10.5px]">
-              <span>Date: ${formattedDate}</span>
-              <span>Time: ${formattedTime}</span>
+              <span>Date: {formattedDate}</span>
+              <span>Time: {formattedTime}</span>
             </div>
 
             {/* Solid Line */}
