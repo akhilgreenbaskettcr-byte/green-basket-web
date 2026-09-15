@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Printer, X } from "lucide-react";
 import type { AdminOrderWithItems } from "@/components/admin/AdminOrdersClient";
 
@@ -15,6 +15,39 @@ export function ThermalReceiptModal({
   onClose,
 }: ThermalReceiptModalProps) {
   const [isPrinting, setIsPrinting] = useState(false);
+
+  // Lock background scroll (body, html, and admin layout <main> scroll container)
+  useEffect(() => {
+    if (!order) return;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    // In the admin dashboard, <main> is the overflowing scrollable element
+    const mainEl = document.querySelector("main");
+    const originalMainOverflow = mainEl ? mainEl.style.overflow : "";
+    if (mainEl) {
+      mainEl.style.overflow = "hidden";
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      if (mainEl) {
+        mainEl.style.overflow = originalMainOverflow;
+      }
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [order, onClose]);
 
   if (!order) return null;
 
@@ -171,19 +204,6 @@ export function ThermalReceiptModal({
       line-height: 1.35;
       margin: 3px 0;
     }
-    .footer-note {
-      text-align: center;
-      font-size: 11px;
-      font-weight: 700;
-      margin-top: 5px;
-    }
-    .branding {
-      text-align: center;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      margin-top: 2px;
-    }
   </style>
 </head>
 <body>
@@ -243,11 +263,6 @@ export function ThermalReceiptModal({
     <div style="margin-top: 2px;"><strong>Customer:</strong> ${order.customer_name}</div>
     ${customerNote ? `<div style="margin-top: 2px;"><strong>Note:</strong> ${customerNote}</div>` : ""}
   </div>
-
-  <div class="line-dashed"></div>
-
-  <div class="footer-note">Thank you. Visit Again!</div>
-  <div class="branding">Green Basket TCR</div>
 </body>
 </html>
 `;
@@ -291,11 +306,14 @@ export function ThermalReceiptModal({
 
   return (
     <div
-      className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200 overscroll-contain"
       role="dialog"
       aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
-      <div className="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-gray-100 max-h-[92vh] flex flex-col">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-gray-100 max-h-[92vh] flex flex-col overscroll-contain">
         {/* Header Actions */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-3 shrink-0">
           <div>
@@ -327,7 +345,7 @@ export function ThermalReceiptModal({
         </div>
 
         {/* Realistic Thermal Receipt Paper Scroll Preview */}
-        <div className="flex-1 overflow-y-auto py-2 px-1 flex justify-center bg-gray-100/70 rounded-2xl border border-gray-200/80 my-3">
+        <div className="flex-1 overflow-y-auto py-2 px-1 flex justify-center bg-gray-100/70 rounded-2xl border border-gray-200/80 my-3 overscroll-contain">
           <div
             id="thermal-receipt-preview"
             className="w-[280px] bg-white text-black p-4 shadow-md border border-gray-200/80 font-mono text-[11px] leading-tight select-none my-2 transition-all"
@@ -412,17 +430,6 @@ export function ThermalReceiptModal({
                   <strong className="font-bold">Note:</strong> {customerNote}
                 </div>
               )}
-            </div>
-
-            {/* Dashed Line */}
-            <div className="border-b border-dashed border-black my-2" />
-
-            {/* Green Basket Greetings */}
-            <div className="text-center space-y-0.5 pt-0.5">
-              <div className="font-bold text-[11px]">Thank you. Visit Again!</div>
-              <div className="text-[10px] font-extrabold tracking-wider text-gray-900">
-                Green Basket TCR
-              </div>
             </div>
           </div>
         </div>
