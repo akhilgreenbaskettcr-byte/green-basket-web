@@ -20,6 +20,9 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  KeyRound,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import type { Order, SavedAddress } from "@/types/database";
 
@@ -50,8 +53,16 @@ export function AccountClient() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [productImageMap, setProductImageMap] = useState<Record<string, string>>({});
 
-  // Dashboard active tab: "orders" | "addresses" | "track"
-  const [activeTab, setActiveTab] = useState<"orders" | "addresses" | "track">("orders");
+  // Dashboard active tab: "orders" | "addresses" | "track" | "password"
+  const [activeTab, setActiveTab] = useState<"orders" | "addresses" | "track" | "password">("orders");
+
+  // Change Password state
+  const [pwForm, setPwForm] = useState({ newPassword: "", confirmPassword: "" });
+  const [pwShowNew, setPwShowNew] = useState(false);
+  const [pwShowConfirm, setPwShowConfirm] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwSuccess, setPwSuccess] = useState("");
+  const [pwError, setPwError] = useState("");
 
   // User Orders State
   const [myOrders, setMyOrders] = useState<TrackedOrder[]>([]);
@@ -365,6 +376,19 @@ export function AccountClient() {
             >
               <MapPin size={14} />
               Saved Addresses ({addresses.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("password")}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                activeTab === "password"
+                  ? "bg-gb-green text-white shadow-xs"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+              }`}
+            >
+              <KeyRound size={14} />
+              Change Password
             </button>
           </>
         )}
@@ -858,6 +882,130 @@ export function AccountClient() {
               </button>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* TAB: CHANGE PASSWORD (Logged In Only) */}
+      {user && activeTab === "password" && (
+        <div className="bg-white rounded-3xl border border-gb-border p-6 md:p-8 shadow-2xs">
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <KeyRound size={18} className="text-gb-green" />
+              <h3 className="text-base font-bold text-gb-charcoal">Change Password</h3>
+            </div>
+            <p className="text-xs text-gray-500">
+              Enter your new password below. You must be logged in — no email required.
+            </p>
+          </div>
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setPwError("");
+              setPwSuccess("");
+
+              if (pwForm.newPassword.length < 8) {
+                setPwError("Password must be at least 8 characters.");
+                return;
+              }
+              if (pwForm.newPassword !== pwForm.confirmPassword) {
+                setPwError("Passwords do not match.");
+                return;
+              }
+
+              setPwLoading(true);
+              const supabase = createClient();
+              const { error: updateError } = await supabase.auth.updateUser({
+                password: pwForm.newPassword,
+              });
+              setPwLoading(false);
+
+              if (updateError) {
+                setPwError(updateError.message || "Failed to update password. Please try again.");
+              } else {
+                setPwSuccess("Password updated successfully!");
+                setPwForm({ newPassword: "", confirmPassword: "" });
+              }
+            }}
+            className="space-y-4 max-w-md"
+          >
+            {/* New Password */}
+            <div>
+              <label className="gb-label text-xs">New Password</label>
+              <div className="relative">
+                <input
+                  type={pwShowNew ? "text" : "password"}
+                  value={pwForm.newPassword}
+                  onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
+                  placeholder="Min. 8 characters"
+                  className="gb-input text-xs pr-10"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPwShowNew(!pwShowNew)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+                  aria-label={pwShowNew ? "Hide password" : "Show password"}
+                >
+                  {pwShowNew ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="gb-label text-xs">Confirm New Password</label>
+              <div className="relative">
+                <input
+                  type={pwShowConfirm ? "text" : "password"}
+                  value={pwForm.confirmPassword}
+                  onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
+                  placeholder="Re-enter new password"
+                  className="gb-input text-xs pr-10"
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPwShowConfirm(!pwShowConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+                  aria-label={pwShowConfirm ? "Hide password" : "Show password"}
+                >
+                  {pwShowConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Error / Success */}
+            {pwError && (
+              <div className="flex items-center gap-2 bg-red-50 text-red-600 text-xs p-3 rounded-xl border border-red-200">
+                <AlertCircle size={14} className="shrink-0" />
+                {pwError}
+              </div>
+            )}
+            {pwSuccess && (
+              <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs p-3 rounded-xl border border-emerald-200">
+                <CheckCircle2 size={14} className="shrink-0" />
+                {pwSuccess}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={pwLoading}
+              className="btn-primary w-full justify-center py-2.5 text-xs font-bold"
+            >
+              {pwLoading ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" /> Updating Password…
+                </>
+              ) : (
+                "Update Password"
+              )}
+            </button>
+          </form>
         </div>
       )}
     </div>
