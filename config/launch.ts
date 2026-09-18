@@ -8,4 +8,4 @@
  * Note: /admin and /api routes always remain fully accessible regardless of this setting
  * so you can manage products, view orders, and test the platform.
  */
-export const COMING_SOON_MODE = false;
+export const COMING_SOON_MODE = true;
