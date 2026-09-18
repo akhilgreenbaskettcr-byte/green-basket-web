@@ -32,21 +32,25 @@ export default function AdminLoginPage() {
       return;
     }
 
-    // Verify admin role
+    // Verify admin or staff role
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", data.user.id)
       .single();
 
-    if (profile?.role !== "admin") {
+    if (profile?.role !== "admin" && profile?.role !== "staff") {
       await supabase.auth.signOut();
-      setError("You do not have admin access. Please ensure your user role is set to 'admin' in the profiles table in Supabase.");
+      setError("You do not have access to the management portal. Please contact the administrator.");
       setLoading(false);
       return;
     }
 
-    router.push("/admin");
+    if (profile?.role === "staff") {
+      router.push("/admin/orders");
+    } else {
+      router.push("/admin");
+    }
     router.refresh();
   };
 
@@ -56,7 +60,7 @@ export default function AdminLoginPage() {
         {/* Logo */}
         <div className="text-center mb-8 flex flex-col items-center">
           <Logo href="/" size="lg" />
-          <p className="text-gray-500 text-xs mt-2 font-medium">Administrator Portal Sign In</p>
+          <p className="text-gray-500 text-xs mt-2 font-medium">Portal Sign In</p>
         </div>
 
         {/* Form */}

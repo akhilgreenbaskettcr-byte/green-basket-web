@@ -50,14 +50,34 @@ export async function updateSession(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if ((profile as { role: string } | null)?.role !== "admin") {
+    const role = (profile as { role: string } | null)?.role;
+
+    if (role !== "admin" && role !== "staff") {
       const url = request.nextUrl.clone();
       url.pathname = "/admin/login";
       return NextResponse.redirect(url);
     }
+
+    // If role is staff, restrict admin-only pages (dashboard, settings, staff, customers, home-editor)
+    if (role === "staff") {
+      const pathname = request.nextUrl.pathname;
+      const isAdminOnlyPath =
+        pathname === "/admin" ||
+        pathname === "/admin/" ||
+        pathname.startsWith("/admin/settings") ||
+        pathname.startsWith("/admin/staff") ||
+        pathname.startsWith("/admin/customers") ||
+        pathname.startsWith("/admin/home-editor");
+
+      if (isAdminOnlyPath) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/admin/orders";
+        return NextResponse.redirect(url);
+      }
+    }
   }
 
-  // If logged in as admin and trying to access admin login, redirect to /admin
+  // If logged in as admin or staff and trying to access admin login, redirect
   if (isAdminLoginRoute && user) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: profile } = await (supabase as any)
@@ -66,9 +86,15 @@ export async function updateSession(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if ((profile as { role: string } | null)?.role === "admin") {
+    const role = (profile as { role: string } | null)?.role;
+    if (role === "admin") {
       const url = request.nextUrl.clone();
       url.pathname = "/admin";
+      return NextResponse.redirect(url);
+    }
+    if (role === "staff") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/orders";
       return NextResponse.redirect(url);
     }
   }
