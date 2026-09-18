@@ -64,6 +64,7 @@ export async function updateSession(request: NextRequest) {
       const isAdminOnlyPath =
         pathname === "/admin" ||
         pathname === "/admin/" ||
+        pathname.startsWith("/admin/products") ||
         pathname.startsWith("/admin/settings") ||
         pathname.startsWith("/admin/staff") ||
         pathname.startsWith("/admin/customers") ||

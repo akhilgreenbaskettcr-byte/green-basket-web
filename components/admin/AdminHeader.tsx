@@ -28,10 +28,10 @@ import { Logo } from "@/components/ui/Logo";
 const ALL_NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true, adminOnly: true },
   { href: "/admin/home-editor", label: "Banners & Homepage", icon: LayoutTemplate, adminOnly: true },
-  { href: "/admin/products", label: "Products", icon: Package, adminOnly: false },
+  { href: "/admin/orders", label: "Orders", icon: ShoppingBag, adminOnly: false },
+  { href: "/admin/products", label: "Products", icon: Package, adminOnly: true },
   { href: "/admin/categories", label: "Categories", icon: Tags, adminOnly: false },
   { href: "/admin/delivery-areas", label: "Delivery Areas", icon: MapPin, adminOnly: false },
-  { href: "/admin/orders", label: "Orders", icon: ShoppingBag, adminOnly: false },
   { href: "/admin/customers", label: "Customers", icon: Users, adminOnly: true },
   { href: "/admin/settings", label: "Store Settings", icon: Settings, adminOnly: true },
   { href: "/admin/staff", label: "Staff Management", icon: UserCog, adminOnly: true },
@@ -46,7 +46,6 @@ const BOTTOM_NAV_ADMIN = [
 
 const BOTTOM_NAV_STAFF = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-  { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/delivery-areas", label: "Delivery", icon: MapPin },
   { href: "/admin/categories", label: "Categories", icon: Tags },
 ];

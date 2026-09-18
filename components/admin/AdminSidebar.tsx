@@ -21,17 +21,17 @@ import { cn } from "@/lib/utils";
 const ADMIN_ONLY_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/home-editor", label: "Banners & Homepage", icon: LayoutTemplate },
+  { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/settings", label: "Store Settings", icon: Settings },
   { href: "/admin/staff", label: "Staff Management", icon: UserCog },
 ];
 
-// Items visible to both admin and staff
+// Items visible to staff
 const SHARED_ITEMS = [
-  { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/categories", label: "Categories", icon: Tags },
   { href: "/admin/delivery-areas", label: "Delivery Areas", icon: MapPin },
-  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
 ];
 
 interface AdminSidebarProps {
@@ -43,7 +43,17 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
 
   const navItems =
     role === "admin"
-      ? [ADMIN_ONLY_ITEMS[0], ADMIN_ONLY_ITEMS[1], ...SHARED_ITEMS, ...ADMIN_ONLY_ITEMS.slice(2)]
+      ? [
+          ADMIN_ONLY_ITEMS[0], // Dashboard
+          ADMIN_ONLY_ITEMS[1], // Banners
+          SHARED_ITEMS[0],     // Orders
+          ADMIN_ONLY_ITEMS[2], // Products
+          SHARED_ITEMS[1],     // Categories
+          SHARED_ITEMS[2],     // Delivery Areas
+          ADMIN_ONLY_ITEMS[3], // Customers
+          ADMIN_ONLY_ITEMS[4], // Store Settings
+          ADMIN_ONLY_ITEMS[5], // Staff Management
+        ]
       : SHARED_ITEMS;
 
   return (
