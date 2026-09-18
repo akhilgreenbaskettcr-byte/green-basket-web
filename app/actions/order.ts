@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import crypto from "crypto";
 import { sendOrderEmails, sendDeliveryConfirmationEmail } from "@/lib/email";
 import type { OrderStatus } from "@/types/database";
@@ -203,8 +204,30 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
   try {
     const supabase = await createClient();
 
+    // Verify calling user is admin or staff
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profile } = await (supabase as any)
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role !== "admin" && profile?.role !== "staff") {
+      return { success: false, error: "Forbidden: Admin or staff only" };
+    }
+
+    const adminClient = createAdminClient();
+
     // 1. Update order status in DB and fetch order details for delivery email
-    const { data: order, error } = await supabase
+    const { data: order, error } = await (adminClient as any)
       .from("orders")
       .update({ status: newStatus })
       .eq("id", orderId)

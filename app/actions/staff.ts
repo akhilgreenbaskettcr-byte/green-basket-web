@@ -1,19 +1,11 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { z } from "zod";
 
-// Supabase Admin client (service role — bypasses RLS, can create users)
 function getAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  if (!serviceRoleKey || serviceRoleKey === "your_service_role_key_here") {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured in .env.local");
-  }
-  return createAdminClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  return createAdminClient();
 }
 
 // Verify the calling user is admin
