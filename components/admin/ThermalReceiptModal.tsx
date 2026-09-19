@@ -99,7 +99,7 @@ export function ThermalReceiptModal({
   <style>
     @page {
       size: 58mm auto;
-      margin: 0mm;
+      margin: 0;
     }
     @media print {
       html, body {
@@ -109,6 +109,12 @@ export function ThermalReceiptModal({
         padding: 0 !important;
         background: #fff !important;
         color: #000 !important;
+      }
+      .receipt-wrapper {
+        width: 48mm !important;
+        max-width: 48mm !important;
+        margin: 0 auto !important;
+        padding: 2mm 1mm !important;
       }
     }
     * {
@@ -122,12 +128,18 @@ export function ThermalReceiptModal({
       width: 58mm;
       max-width: 58mm;
       margin: 0 auto;
-      padding: 3mm 2mm 6mm 2mm;
+      padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", Courier, monospace;
       font-size: 11px;
       line-height: 1.25;
       color: #000;
       background: #fff;
+    }
+    .receipt-wrapper {
+      width: 48mm;
+      max-width: 48mm;
+      margin: 0 auto;
+      padding: 2mm 1mm;
     }
     .center {
       text-align: center;
@@ -204,64 +216,75 @@ export function ThermalReceiptModal({
       line-height: 1.35;
       margin: 3px 0;
     }
+    .tear-feed {
+      height: 25mm;
+      min-height: 25mm;
+      width: 100%;
+      display: block;
+    }
   </style>
 </head>
 <body>
-  <div class="center">
-    <div class="order-no">Order Number: ${order.order_number}</div>
-    <div class="store-name">Green Basket Tcr</div>
-  </div>
+  <div class="receipt-wrapper">
+    <div class="center">
+      <div class="order-no">Order Number: ${order.order_number}</div>
+      <div class="store-name">Green Basket Tcr</div>
+    </div>
 
-  <div class="line-solid"></div>
+    <div class="line-solid"></div>
 
-  <div class="meta-row">
-    <span>Date: ${formattedDate}</span>
-    <span>Time: ${formattedTime}</span>
-  </div>
+    <div class="meta-row">
+      <span>Date: ${formattedDate}</span>
+      <span>Time: ${formattedTime}</span>
+    </div>
 
-  <div class="line-solid"></div>
+    <div class="line-solid"></div>
 
-  <table class="items-table">
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th class="qty">Qty</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${(order.order_items || [])
-        .map(
-          (item) => `
+    <table class="items-table">
+      <thead>
         <tr>
-          <td>
-            <span class="item-name">${item.product_name_snapshot}</span>
-            ${
-              item.variant_label_snapshot
-                ? `<span class="item-variant">${item.variant_label_snapshot}</span>`
-                : ""
-            }
-          </td>
-          <td class="qty bold">${item.quantity}</td>
+          <th>Item</th>
+          <th class="qty">Qty</th>
         </tr>
-      `
-        )
-        .join("")}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        ${(order.order_items || [])
+          .map(
+            (item) => `
+          <tr>
+            <td>
+              <span class="item-name">${item.product_name_snapshot}</span>
+              ${
+                item.variant_label_snapshot
+                  ? `<span class="item-variant">${item.variant_label_snapshot}</span>`
+                  : ""
+              }
+            </td>
+            <td class="qty bold">${item.quantity}</td>
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    </table>
 
-  <div class="line-solid"></div>
+    <div class="line-solid"></div>
 
-  <div class="summary-row">
-    <span>Items: ${totalItemsCount}</span>
-    <span>Total Qty: ${totalQty}</span>
-  </div>
+    <div class="summary-row">
+      <span>Items: ${totalItemsCount}</span>
+      <span>Total Qty: ${totalQty}</span>
+    </div>
 
-  <div class="line-solid"></div>
+    <div class="line-solid"></div>
 
-  <div class="customer-box">
-    <div><strong>Payment Mode:</strong> ${paymentModeText}</div>
-    <div style="margin-top: 2px;"><strong>Customer:</strong> ${order.customer_name}</div>
-    ${customerNote ? `<div style="margin-top: 2px;"><strong>Note:</strong> ${customerNote}</div>` : ""}
+    <div class="customer-box">
+      <div><strong>Payment Mode:</strong> ${paymentModeText}</div>
+      <div style="margin-top: 2px;"><strong>Customer:</strong> ${order.customer_name}</div>
+      ${customerNote ? `<div style="margin-top: 2px;"><strong>Note:</strong> ${customerNote}</div>` : ""}
+    </div>
+
+    <!-- Feed past printer tear-off bar to avoid cutting customer text -->
+    <div class="tear-feed"></div>
   </div>
 </body>
 </html>
