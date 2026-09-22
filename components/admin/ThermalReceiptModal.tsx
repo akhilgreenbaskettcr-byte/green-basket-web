@@ -217,10 +217,23 @@ export function ThermalReceiptModal({
       margin: 3px 0;
     }
     .tear-feed {
-      height: 25mm;
-      min-height: 25mm;
-      width: 100%;
-      display: block;
+      margin-top: 10px;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .feed-dot {
+      font-size: 7px;
+      letter-spacing: 3px;
+      color: #333;
+      margin-top: 8px;
+    }
+    .feed-cut {
+      font-size: 8px;
+      letter-spacing: 1px;
+      font-weight: 700;
+      color: #000;
+      margin-top: 10px;
+      padding-bottom: 4px;
     }
   </style>
 </head>
@@ -283,8 +296,12 @@ export function ThermalReceiptModal({
       ${customerNote ? `<div style="margin-top: 2px;"><strong>Note:</strong> ${customerNote}</div>` : ""}
     </div>
 
-    <!-- Feed past printer tear-off bar to avoid cutting customer text -->
-    <div class="tear-feed"></div>
+    <!-- Printable trailing feed lines: forces printer motor to physically advance paper 25mm past tear bar -->
+    <div class="tear-feed">
+      <div class="feed-dot">. . . . . . . . . . . . . . . .</div>
+      <div class="feed-dot">. . . . . . . . . . . . . . . .</div>
+      <div class="feed-cut">✂ - - - - - - - - - - - - - ✂</div>
+    </div>
   </div>
 </body>
 </html>
@@ -453,6 +470,15 @@ export function ThermalReceiptModal({
                   <strong className="font-bold">Note:</strong> {customerNote}
                 </div>
               )}
+            </div>
+
+            {/* Tear Line Guide */}
+            <div className="text-center pt-3 pb-0.5 text-gray-400 select-none">
+              <div className="text-[7px] tracking-[3px] text-gray-300 leading-none">. . . . . . . . . . . . . . . .</div>
+              <div className="text-[7px] tracking-[3px] text-gray-300 leading-none mt-2">. . . . . . . . . . . . . . . .</div>
+              <div className="text-[8px] tracking-[1.5px] text-gray-400 mt-2 border-b border-dashed border-gray-300 pb-0.5 font-bold">
+                ✂ - - - - - - - - - - - - - ✂
+              </div>
             </div>
           </div>
         </div>
