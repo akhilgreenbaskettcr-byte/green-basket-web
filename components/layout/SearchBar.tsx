@@ -454,7 +454,7 @@ export function SearchBar() {
                                   alt={product.name}
                                   fill
                                   sizes="48px"
-                                  className={cn("object-contain p-1 mix-blend-multiply", !inStock && "opacity-60 grayscale-[40%]")}
+                                  className="object-contain p-1 mix-blend-multiply"
                                   unoptimized={product.image_url.startsWith("data:")}
                                 />
                               ) : (

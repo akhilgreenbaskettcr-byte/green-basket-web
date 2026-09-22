@@ -63,8 +63,8 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
         className="relative aspect-square w-full max-h-40 sm:max-h-44 overflow-hidden bg-[#FAFAF5] flex items-center justify-center p-3 rounded-none block cursor-pointer"
         aria-label={`View ${product.name}`}
       >
-        {/* Floating Brand Badge */}
-        <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-10 flex flex-wrap items-center gap-1 pointer-events-none max-w-[85%]">
+        {/* Floating Brand Badges (Top Left) */}
+        <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-10 flex flex-wrap items-center gap-1 pointer-events-none max-w-[70%]">
           {product.is_featured && (
             <span className="bg-amber-500 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs">
               Bestseller
@@ -75,10 +75,10 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
           </span>
         </div>
 
-        {/* Out of Stock Overlay */}
+        {/* Small Red Out of Stock Badge (Top Right) */}
         {isAllOutOfStock && (
-          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center pointer-events-none">
-            <span className="bg-red-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">
+          <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-10 pointer-events-none">
+            <span className="bg-red-600 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
               Out of Stock
             </span>
           </div>
@@ -90,10 +90,7 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
             alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-            className={cn(
-              "object-contain p-2 group-hover:scale-105 transition-transform duration-300 mix-blend-multiply select-none",
-              isAllOutOfStock && "opacity-60 grayscale-[40%]"
-            )}
+            className="object-contain p-2 group-hover:scale-105 transition-transform duration-300 mix-blend-multiply select-none"
             unoptimized={product.image_url.startsWith("data:")}
           />
         ) : (

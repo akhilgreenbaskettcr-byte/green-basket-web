@@ -136,13 +136,22 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         <div className="relative aspect-square w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-gray-200/70 shadow-2xs group p-4 sm:p-10 flex items-center justify-center">
           {/* Floating Badges */}
           <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-10 flex items-center justify-between gap-2 pointer-events-none">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-full text-[11px] sm:text-xs font-bold text-gb-green shadow-2xs border border-gray-100/80">
-              <Leaf size={12} className="text-gb-green shrink-0" />
-              {isVegetable ? "Farm Fresh" : "100% Organic & Pure"}
-            </span>
-            {product.is_featured && (
-              <span className="inline-flex items-center px-2.5 py-1 bg-amber-500 text-white rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-xs">
-                Bestseller
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-full text-[11px] sm:text-xs font-bold text-gb-green shadow-2xs border border-gray-100/80">
+                <Leaf size={12} className="text-gb-green shrink-0" />
+                {isVegetable ? "Farm Fresh" : "100% Organic & Pure"}
+              </span>
+              {product.is_featured && (
+                <span className="inline-flex items-center px-2.5 py-1 bg-amber-500 text-white rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-xs">
+                  Bestseller
+                </span>
+              )}
+            </div>
+
+            {/* Small Red Out of Stock Badge */}
+            {!isSelectedInStock && (
+              <span className="inline-flex items-center px-2.5 py-1 bg-red-600 text-white rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-xs">
+                Out of Stock
               </span>
             )}
           </div>
@@ -153,10 +162,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               alt={product.name}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className={cn(
-                "object-contain p-4 sm:p-10 group-hover:scale-105 transition-transform duration-500 ease-out select-none mix-blend-multiply",
-                !isSelectedInStock && "opacity-60 grayscale-[40%]"
-              )}
+              className="object-contain p-4 sm:p-10 group-hover:scale-105 transition-transform duration-500 ease-out select-none mix-blend-multiply"
               priority
               unoptimized={product.image_url.startsWith("data:")}
             />
@@ -174,15 +180,6 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 <circle cx="8.5" cy="8.5" r="1.5" />
                 <path d="M21 15l-5-5L5 21" />
               </svg>
-            </div>
-          )}
-
-          {/* Out of Stock Overlay */}
-          {!isSelectedInStock && (
-            <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center pointer-events-none">
-              <span className="bg-red-600 text-white text-xs sm:text-sm font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-md">
-                Out of Stock
-              </span>
             </div>
           )}
         </div>
