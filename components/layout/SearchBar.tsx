@@ -19,7 +19,7 @@ import {
   Leaf,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, cn } from "@/lib/utils";
 import { useCartStore } from "@/lib/store/cart";
 import { searchProductsLiveAction } from "@/app/actions/products";
 
@@ -245,11 +245,11 @@ export function SearchBar() {
     }
   };
 
-  const handleAddToCart = (e: React.MouseEvent, product: LiveProductResult) => {
+  const handleAddToCart = (e: React.MouseEvent, product: LiveProductResult, chosenVariant?: ProductVariant) => {
     e.preventDefault();
     e.stopPropagation();
-    const variant = product.product_variants?.[0];
-    if (!variant) return;
+    const variant = chosenVariant || product.product_variants?.find((v) => v.is_available && (v.stock_quantity ?? 0) > 0) || product.product_variants?.[0];
+    if (!variant || !variant.is_available || (variant.stock_quantity ?? 0) <= 0) return;
 
     addItemToCart({
       productId: product.id,
@@ -426,9 +426,10 @@ export function SearchBar() {
                   {results.length > 0 ? (
                     <div className="space-y-1.5">
                       {results.map((product, idx) => {
-                        const variant = product.product_variants?.[0];
+                        const variant = product.product_variants?.find((v) => v.is_available && (v.stock_quantity ?? 0) > 0) || product.product_variants?.[0];
                         const isSelected = selectedIndex === idx;
                         const isAdded = addedItemIds[product.id];
+                        const inStock = Boolean(variant && variant.is_available && (variant.stock_quantity ?? 0) > 0);
 
                         return (
                           <div
@@ -453,25 +454,27 @@ export function SearchBar() {
                                   alt={product.name}
                                   fill
                                   sizes="48px"
-                                  className="object-contain p-1 mix-blend-multiply transition-transform group-hover:scale-105"
+                                  className={cn("object-contain p-1 mix-blend-multiply", !inStock && "opacity-60 grayscale-[40%]")}
                                   unoptimized={product.image_url.startsWith("data:")}
                                 />
                               ) : (
-                                <Package size={22} className="text-gray-300" />
+                                <Package size={20} className="text-gray-300" />
                               )}
                             </div>
 
-                            {/* Product Details */}
+                            {/* Info */}
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-sm font-semibold text-gb-charcoal group-hover:text-gb-green transition-colors truncate">
-                                {renderHighlightedText(product.name, query)}
-                              </h4>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                {product.categories && (
-                                  <span className="text-[10px] font-bold text-gb-olive uppercase tracking-wider font-mono bg-gb-olive/10 px-1.5 py-0.5 rounded">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {product.categories?.name && (
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-gb-olive/80 bg-gray-100 px-1.5 py-0.5 rounded">
                                     {product.categories.name}
                                   </span>
                                 )}
+                              </div>
+                              <h4 className="text-sm font-bold text-gray-900 group-hover:text-gb-green transition-colors truncate mt-0.5">
+                                {renderHighlightedText(product.name, query)}
+                              </h4>
+                              <div className="flex items-center gap-2 mt-0.5">
                                 {variant?.label && (
                                   <span className="text-xs text-gray-500 font-medium">
                                     {variant.label}
@@ -487,7 +490,7 @@ export function SearchBar() {
                                   <span className="text-sm font-bold text-gb-charcoal block">
                                     {formatPrice(variant.price)}
                                   </span>
-                                  {variant.is_available && variant.stock_quantity > 0 ? (
+                                  {inStock ? (
                                     <span className="text-[10px] text-emerald-600 font-semibold">
                                       In Stock
                                     </span>
@@ -499,11 +502,11 @@ export function SearchBar() {
                                 </div>
                               )}
 
-                              {variant?.is_available && (
+                              {inStock ? (
                                 <button
                                   type="button"
-                                  onClick={(e) => handleAddToCart(e, product)}
-                                  className={`p-2 rounded-lg transition-all text-xs font-bold flex items-center justify-center ${
+                                  onClick={(e) => handleAddToCart(e, product, variant)}
+                                  className={`p-2 rounded-lg transition-all text-xs font-bold flex items-center justify-center cursor-pointer ${
                                     isAdded
                                       ? "bg-emerald-600 text-white"
                                       : "bg-gray-100 hover:bg-gb-green hover:text-white text-gray-700"
@@ -512,6 +515,10 @@ export function SearchBar() {
                                 >
                                   {isAdded ? <Check size={15} /> : <Plus size={15} />}
                                 </button>
+                              ) : (
+                                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-md">
+                                  Sold Out
+                                </span>
                               )}
 
                               <ChevronRight

@@ -88,7 +88,7 @@ export function ShopAllClient({
     // 4. In-Stock Only
     if (onlyInStock) {
       list = list.filter((p) =>
-        p.product_variants?.some((v) => v.is_available && (v.stock_quantity ?? 1) > 0)
+        p.product_variants?.some((v) => v.is_available && (v.stock_quantity ?? 0) > 0)
       );
     }
 

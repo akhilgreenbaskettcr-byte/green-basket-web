@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Info,
   Package,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,14 +30,23 @@ interface ProductDetailClientProps {
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const router = useRouter();
   const availableVariants = product.product_variants?.filter((v) => v.is_available) || [];
+
+  const isVariantInStock = (v?: ProductVariant | null) =>
+    Boolean(v && v.is_available && (v.stock_quantity ?? 0) > 0);
+
+  const inStockVariants = availableVariants.filter(isVariantInStock);
+  const isAllOutOfStock = inStockVariants.length === 0;
+
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
-    availableVariants[0] || product.product_variants[0]
+    inStockVariants[0] || availableVariants[0] || product.product_variants[0]
   );
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const addItemSilent = useCartStore((s) => s.addItemSilent);
   const closeCart = useCartStore((s) => s.closeCart);
+
+  const isSelectedInStock = isVariantInStock(selectedVariant);
 
   // Track product view in Google Analytics
   useEffect(() => {
@@ -52,7 +62,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   }, [product, selectedVariant]);
 
   const handleAddToCart = () => {
-    if (!selectedVariant) return;
+    if (!selectedVariant || !isSelectedInStock) return;
 
     trackAddToCart({
       id: product.id,
@@ -84,7 +94,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   };
 
   const handleBuyNow = () => {
-    if (!selectedVariant) return;
+    if (!selectedVariant || !isSelectedInStock) return;
 
     trackAddToCart({
       id: product.id,
@@ -143,7 +153,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               alt={product.name}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-contain p-4 sm:p-10 group-hover:scale-105 transition-transform duration-500 ease-out select-none mix-blend-multiply"
+              className={cn(
+                "object-contain p-4 sm:p-10 group-hover:scale-105 transition-transform duration-500 ease-out select-none mix-blend-multiply",
+                !isSelectedInStock && "opacity-60 grayscale-[40%]"
+              )}
               priority
               unoptimized={product.image_url.startsWith("data:")}
             />
@@ -161,6 +174,15 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 <circle cx="8.5" cy="8.5" r="1.5" />
                 <path d="M21 15l-5-5L5 21" />
               </svg>
+            </div>
+          )}
+
+          {/* Out of Stock Overlay */}
+          {!isSelectedInStock && (
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center pointer-events-none">
+              <span className="bg-red-600 text-white text-xs sm:text-sm font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-md">
+                Out of Stock
+              </span>
             </div>
           )}
         </div>
@@ -183,7 +205,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
           {/* Stock Indicator */}
           <div>
-            {selectedVariant.stock_quantity > 0 ? (
+            {isSelectedInStock ? (
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -192,7 +214,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 In Stock
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-200/60">
                 <span className="h-2 w-2 rounded-full bg-red-500" />
                 Out of Stock
               </span>
@@ -226,6 +248,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             >
               {availableVariants.map((v) => {
                 const isSelected = v.id === selectedVariant?.id;
+                const vInStock = isVariantInStock(v);
                 return (
                   <button
                     key={v.id}
@@ -234,13 +257,26 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                     className={cn(
                       "flex items-center justify-between px-3 py-2.5 sm:px-3.5 sm:py-3 rounded-xl border transition-all cursor-pointer text-left",
                       isSelected
-                        ? "border-gb-green bg-green-50/50 text-gb-green font-bold shadow-2xs ring-1 ring-gb-green/20"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                        ? vInStock
+                          ? "border-gb-green bg-green-50/50 text-gb-green font-bold shadow-2xs ring-1 ring-gb-green/20"
+                          : "border-gray-400 bg-gray-100 text-gray-700 font-bold shadow-2xs ring-1 ring-gray-400/20"
+                        : vInStock
+                        ? "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                        : "border-gray-200 bg-gray-50/60 text-gray-400 hover:border-gray-300"
                     )}
                     aria-pressed={isSelected}
-                    aria-label={`Select ${v.label} — ${formatPrice(v.price)}`}
+                    aria-label={`Select ${v.label} — ${formatPrice(v.price)}${!vInStock ? " (Out of Stock)" : ""}`}
                   >
-                    <span className="text-xs font-bold truncate pr-1">{v.label}</span>
+                    <div className="flex flex-col min-w-0">
+                      <span className={cn("text-xs font-bold truncate pr-1", !vInStock && "line-through text-gray-400")}>
+                        {v.label}
+                      </span>
+                      {!vInStock && (
+                        <span className="text-[9px] font-extrabold text-red-500 uppercase leading-none mt-0.5">
+                          Sold Out
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs font-extrabold shrink-0">
                       {formatPrice(v.price)}
                     </span>
@@ -276,11 +312,15 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           {/* Mobile Row 1: Stepper + Add to Cart (On Desktop sm:contents makes buttons equal flex-1 children) */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 max-sm:w-full sm:contents">
             {/* Stepper */}
-            <div className="flex items-center justify-between border border-gray-300/80 bg-white rounded-xl h-12 px-1.5 sm:px-2 shrink-0 w-[105px] sm:w-[120px]">
+            <div className={cn(
+              "flex items-center justify-between border rounded-xl h-12 px-1.5 sm:px-2 shrink-0 w-[105px] sm:w-[120px]",
+              isSelectedInStock ? "border-gray-300/80 bg-white" : "border-gray-200 bg-gray-50 opacity-50 pointer-events-none"
+            )}>
               <button
                 type="button"
+                disabled={!isSelectedInStock}
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:scale-95 transition-all text-gray-600 cursor-pointer shrink-0"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:scale-95 transition-all text-gray-600 cursor-pointer shrink-0 disabled:cursor-not-allowed"
                 aria-label="Decrease quantity"
               >
                 <Minus size={14} className="stroke-[2.5]" />
@@ -294,8 +334,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               </span>
               <button
                 type="button"
+                disabled={!isSelectedInStock}
                 onClick={() => setQuantity((q) => q + 1)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:scale-95 transition-all text-gray-600 cursor-pointer shrink-0"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 active:scale-95 transition-all text-gray-600 cursor-pointer shrink-0 disabled:cursor-not-allowed"
                 aria-label="Increase quantity"
               >
                 <Plus size={14} className="stroke-[2.5]" />
@@ -306,16 +347,23 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             <button
               type="button"
               onClick={handleAddToCart}
-              disabled={!selectedVariant || selectedVariant.stock_quantity === 0}
+              disabled={!isSelectedInStock}
               id="product-add-to-cart-btn"
               className={cn(
-                "flex-1 sm:flex-1 h-12 flex items-center justify-center gap-2 rounded-xl text-sm sm:text-base font-extrabold transition-all shadow-xs hover:shadow-md cursor-pointer active:scale-[0.99] px-3 sm:px-4 border border-gb-green/20",
-                added
-                  ? "bg-emerald-600 text-white"
-                  : "bg-green-50 hover:bg-green-100 text-gb-green"
+                "flex-1 sm:flex-1 h-12 flex items-center justify-center gap-2 rounded-xl text-sm sm:text-base font-extrabold transition-all px-3 sm:px-4",
+                !isSelectedInStock
+                  ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed shadow-none"
+                  : added
+                  ? "bg-emerald-600 text-white shadow-xs hover:shadow-md cursor-pointer active:scale-[0.99] border border-transparent"
+                  : "bg-green-50 hover:bg-green-100 text-gb-green shadow-xs hover:shadow-md cursor-pointer active:scale-[0.99] border border-gb-green/20"
               )}
             >
-              {added ? (
+              {!isSelectedInStock ? (
+                <>
+                  <AlertTriangle size={17} className="stroke-[2] shrink-0 text-gray-400" />
+                  <span>Out of Stock</span>
+                </>
+              ) : added ? (
                 <>
                   <Check size={17} className="stroke-[3] shrink-0" aria-hidden="true" />
                   <span>Added to Cart</span>
@@ -333,11 +381,16 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           <button
             type="button"
             onClick={handleBuyNow}
-            disabled={!selectedVariant || selectedVariant.stock_quantity === 0}
+            disabled={!isSelectedInStock}
             id="product-buy-now-btn"
-            className="w-full sm:flex-1 h-12 flex items-center justify-center rounded-xl text-sm sm:text-base font-extrabold bg-gb-green hover:bg-gb-green-dark text-white transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-[0.99] px-4 shrink-0 uppercase tracking-wide"
+            className={cn(
+              "w-full sm:flex-1 h-12 flex items-center justify-center rounded-xl text-sm sm:text-base font-extrabold transition-all px-4 shrink-0 uppercase tracking-wide",
+              !isSelectedInStock
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                : "bg-gb-green hover:bg-gb-green-dark text-white shadow-sm hover:shadow-md cursor-pointer active:scale-[0.99]"
+            )}
           >
-            <span>Buy Now</span>
+            <span>{isSelectedInStock ? "Buy Now" : "Unavailable"}</span>
           </button>
         </div>
 

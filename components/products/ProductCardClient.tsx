@@ -15,16 +15,25 @@ interface ProductCardClientProps {
 
 export function ProductCardClient({ product }: ProductCardClientProps) {
   const availableVariants = product.product_variants?.filter((v) => v.is_available) || [];
+
+  const isVariantInStock = (v?: ProductVariant | null) =>
+    Boolean(v && v.is_available && (v.stock_quantity ?? 0) > 0);
+
+  const inStockVariants = availableVariants.filter(isVariantInStock);
+  const isAllOutOfStock = inStockVariants.length === 0;
+
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
-    availableVariants[0]
+    inStockVariants[0] || availableVariants[0] || product.product_variants?.[0]
   );
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
 
+  const isSelectedInStock = isVariantInStock(selectedVariant);
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!selectedVariant) return;
+    if (!selectedVariant || !isSelectedInStock) return;
 
     addItem({
       productId: product.id,
@@ -66,13 +75,25 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
           </span>
         </div>
 
+        {/* Out of Stock Overlay */}
+        {isAllOutOfStock && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center pointer-events-none">
+            <span className="bg-red-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">
+              Out of Stock
+            </span>
+          </div>
+        )}
+
         {product.image_url ? (
           <Image
             src={product.image_url}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-            className="object-contain p-2 group-hover:scale-105 transition-transform duration-300 mix-blend-multiply select-none"
+            className={cn(
+              "object-contain p-2 group-hover:scale-105 transition-transform duration-300 mix-blend-multiply select-none",
+              isAllOutOfStock && "opacity-60 grayscale-[40%]"
+            )}
             unoptimized={product.image_url.startsWith("data:")}
           />
         ) : (
@@ -112,33 +133,49 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
           {/* Size / Variant Selector */}
           {availableVariants.length > 1 && (
             <div className="flex flex-wrap gap-1 mb-2.5 relative z-20" role="group" aria-label="Select package size">
-              {availableVariants.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setSelectedVariant(v);
-                  }}
-                  className={cn(
-                    "text-[10px] font-semibold py-0.5 px-2 rounded-md border transition-all cursor-pointer",
-                    v.id === selectedVariant.id
-                      ? "bg-gb-green text-white border-gb-green shadow-2xs font-bold"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:border-gb-green"
-                  )}
-                  aria-pressed={v.id === selectedVariant.id}
-                >
-                  {v.label}
-                </button>
-              ))}
+              {availableVariants.map((v) => {
+                const vInStock = isVariantInStock(v);
+                const isSelected = v.id === selectedVariant?.id;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedVariant(v);
+                    }}
+                    className={cn(
+                      "text-[10px] font-semibold py-0.5 px-2 rounded-md border transition-all cursor-pointer relative",
+                      isSelected
+                        ? vInStock
+                          ? "bg-gb-green text-white border-gb-green shadow-2xs font-bold"
+                          : "bg-gray-700 text-white border-gray-700 shadow-2xs font-bold"
+                        : vInStock
+                        ? "bg-gray-50 text-gray-600 border-gray-200 hover:border-gb-green"
+                        : "bg-gray-100 text-gray-400 border-gray-200 line-through opacity-70"
+                    )}
+                    aria-pressed={isSelected}
+                    title={!vInStock ? `${v.label} (Out of Stock)` : v.label}
+                  >
+                    {v.label}
+                  </button>
+                );
+              })}
             </div>
           )}
 
           {availableVariants.length === 1 && (
             <div className="mb-2.5">
-              <span className="text-[10px] font-semibold py-0.5 px-1.5 rounded-md bg-green-50 text-gb-green border border-green-100">
-                Pack: {selectedVariant.label}
+              <span
+                className={cn(
+                  "text-[10px] font-semibold py-0.5 px-1.5 rounded-md border",
+                  isSelectedInStock
+                    ? "bg-green-50 text-gb-green border-green-100"
+                    : "bg-red-50 text-red-600 border-red-200 font-bold"
+                )}
+              >
+                {isSelectedInStock ? `Pack: ${selectedVariant.label}` : `${selectedVariant.label} — Out of Stock`}
               </span>
             </div>
           )}
@@ -155,16 +192,21 @@ export function ProductCardClient({ product }: ProductCardClientProps) {
 
           <button
             onClick={handleAddToCart}
+            disabled={!isSelectedInStock}
             className={cn(
-              "flex items-center justify-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 shrink-0",
-              added
-                ? "bg-emerald-600 text-white"
-                : "bg-gb-green text-white hover:bg-gb-green-dark"
+              "flex items-center justify-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-xs shrink-0",
+              !isSelectedInStock
+                ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed shadow-none"
+                : added
+                ? "bg-emerald-600 text-white cursor-pointer active:scale-95"
+                : "bg-gb-green text-white hover:bg-gb-green-dark cursor-pointer active:scale-95"
             )}
-            aria-label={`Add ${product.name} to basket`}
+            aria-label={isSelectedInStock ? `Add ${product.name} to basket` : `${product.name} is out of stock`}
             id={`add-to-cart-${product.id}-${selectedVariant.id}`}
           >
-            {added ? (
+            {!isSelectedInStock ? (
+              <span className="text-[10px] sm:text-[11px] font-bold text-gray-400">Out of Stock</span>
+            ) : added ? (
               <>
                 <Check size={12} aria-hidden="true" />
                 <span className="text-[11px]">Added</span>

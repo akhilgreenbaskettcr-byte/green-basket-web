@@ -8,7 +8,7 @@ interface ProductJsonLdProps {
 export function ProductJsonLd({ product }: ProductJsonLdProps) {
   if (!product) return null;
 
-  const availableVariants = product.product_variants?.filter((v) => v.is_available) || [];
+  const availableVariants = product.product_variants?.filter((v) => v.is_available && (v.stock_quantity ?? 0) > 0) || [];
   const prices = availableVariants.map((v) => v.price);
   const lowPrice = prices.length > 0 ? Math.min(...prices) : 0;
   const highPrice = prices.length > 0 ? Math.max(...prices) : lowPrice;

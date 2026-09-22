@@ -68,6 +68,32 @@ export async function createOrder(
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Verify inventory stock for all ordered items
+  const variantIds = data.items.map((i) => i.variantId).filter(isUUID);
+  if (variantIds.length > 0) {
+    const { data: dbVariants, error: varError } = await supabase
+      .from("product_variants")
+      .select("id, label, stock_quantity, is_available, products(name)")
+      .in("id", variantIds);
+
+    if (!varError && dbVariants) {
+      for (const item of data.items) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const dbVar = dbVariants.find((v: any) => v.id === item.variantId);
+        if (dbVar) {
+          if (!dbVar.is_available || (dbVar.stock_quantity ?? 0) <= 0) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const pName = (dbVar as any).products?.name || item.productName;
+            return {
+              success: false,
+              error: `"${pName} (${dbVar.label})" is currently out of stock. Please remove it from your basket to proceed.`,
+            };
+          }
+        }
+      }
+    }
+  }
+
   // Generate date-based order number in proper sequence: GB-YYMMDD-0001
   const now = new Date();
   const istTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
@@ -174,6 +200,28 @@ export async function createOrder(
 
   if (itemsError) {
     console.error("Order items error:", itemsError);
+  } else {
+    // Decrement variant stock quantities
+    try {
+      for (const item of data.items) {
+        if (isUUID(item.variantId)) {
+          const { data: cur } = await supabase
+            .from("product_variants")
+            .select("stock_quantity")
+            .eq("id", item.variantId)
+            .single();
+          if (cur && typeof cur.stock_quantity === "number") {
+            const newQty = Math.max(0, cur.stock_quantity - item.quantity);
+            await supabase
+              .from("product_variants")
+              .update({ stock_quantity: newQty })
+              .eq("id", item.variantId);
+          }
+        }
+      }
+    } catch (stockErr) {
+      console.error("Failed to decrement variant stock:", stockErr);
+    }
   }
 
   // Trigger Brevo SMTP email notifications synchronously before response

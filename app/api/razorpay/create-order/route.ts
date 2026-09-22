@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/utils/supabase/server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,6 +11,34 @@ export async function POST(req: NextRequest) {
         { success: false, error: "Invalid amount" },
         { status: 400 }
       );
+    }
+
+    // Verify stock availability
+    if (items && Array.isArray(items) && items.length > 0) {
+      const supabase = await createClient();
+      const variantIds = items.map((i: any) => i.variantId).filter(Boolean);
+      if (variantIds.length > 0) {
+        const { data: dbVariants } = await supabase
+          .from("product_variants")
+          .select("id, label, stock_quantity, is_available, products(name)")
+          .in("id", variantIds);
+
+        if (dbVariants) {
+          for (const item of items) {
+            const dbVar = dbVariants.find((v: any) => v.id === item.variantId);
+            if (dbVar && (!dbVar.is_available || (dbVar.stock_quantity ?? 0) <= 0)) {
+              const pName = (dbVar as any).products?.name || item.productName;
+              return NextResponse.json(
+                {
+                  success: false,
+                  error: `"${pName} (${dbVar.label})" is currently out of stock. Please remove it from your basket to proceed.`,
+                },
+                { status: 400 }
+              );
+            }
+          }
+        }
+      }
     }
 
     const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
