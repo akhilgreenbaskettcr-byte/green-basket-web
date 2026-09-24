@@ -21,7 +21,8 @@ export async function saveSiteSettings(settings: Record<string, string>) {
       return { success: false, error: error.message };
     }
 
-    // Force revalidate all public pages so changes show immediately
+    // Force revalidate all public pages and layouts so changes show immediately
+    revalidatePath("/", "layout");
     revalidatePath("/", "page");
     revalidatePath("/categories", "page");
     revalidatePath("/about", "page");

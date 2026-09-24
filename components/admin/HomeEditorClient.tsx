@@ -50,12 +50,12 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
       initialSettings["same_day_message"] ??
       "Order before 1PM for next day delivery.",
     delivery_banner_tag:
-      initialSettings["delivery_banner_tag"] ?? "NEXT DAY DELIVERY",
+      initialSettings["delivery_banner_tag"] ?? "SAME DAY DELIVERY",
     delivery_banner_headline:
-      initialSettings["delivery_banner_headline"] ?? "Order before 1:00 PM,\nfor next day delivery.",
+      initialSettings["delivery_banner_headline"] ?? "Order before 1:00 PM,\nget it today.",
     delivery_banner_description:
       initialSettings["delivery_banner_description"] ??
-      "Freshly cut, hygienically packed, and delivered straight to your kitchen — next day fresh.",
+      "Freshly cut, hygienically packed, and delivered straight to your kitchen — the same day you order.",
     delivery_banner_btn_text:
       initialSettings["delivery_banner_btn_text"] ?? "Start Shopping",
     delivery_banner_btn_url:
