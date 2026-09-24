@@ -23,6 +23,16 @@ const SETTING_LABELS: Record<string, { label: string; type?: string }> = {
   facebook_url: { label: "Facebook URL", type: "url" },
   whatsapp_number: { label: "WhatsApp Number", type: "tel" },
   footer_tagline: { label: "Footer Tagline" },
+  freshness_banner_tag: { label: "Freshness Banner Tag" },
+  freshness_banner_title_1: { label: "Freshness Banner Headline 1" },
+  freshness_banner_title_2: { label: "Freshness Banner Headline 2" },
+  freshness_banner_description: { label: "Freshness Banner Description" },
+  freshness_card_delivery_subtitle: { label: "Freshness Delivery Card Subtitle" },
+  freshness_banner_btn_text: { label: "Freshness Banner Button Text" },
+  freshness_banner_btn_url: { label: "Freshness Banner Button Link" },
+  footer_delivery_title: { label: "Footer Delivery Title" },
+  footer_delivery_desc: { label: "Footer Delivery Description" },
+  footer_order_cutoff_text: { label: "Footer Order Cutoff Text" },
 };
 
 export default async function AdminSettingsPage() {

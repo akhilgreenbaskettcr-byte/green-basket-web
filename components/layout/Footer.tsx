@@ -21,6 +21,13 @@ export async function Footer() {
   const instagram = settings["instagram_url"] ?? "https://www.instagram.com/greenbaskettcr?igsi=MWR2aGZja3Z0dXB6OA==";
   const facebook = settings["facebook_url"] ?? "https://www.facebook.com/share/1D6LKpc5Rx/";
   const sameDayCutoff = settings["same_day_cutoff_time"] ?? "1:00 PM";
+  const footerDeliveryTitle =
+    settings["footer_delivery_title"]?.trim() || "SAME DAY DELIVERY";
+  const footerDeliveryDesc =
+    settings["footer_delivery_desc"]?.trim() || `Order before ${sameDayCutoff}`;
+  const footerOrderCutoffText =
+    settings["footer_order_cutoff_text"]?.trim() ||
+    `Same-Day delivery for orders before ${sameDayCutoff}`;
 
   const cleanWhatsapp = whatsappNumber.replace(/[^0-9]/g, "");
 
@@ -57,10 +64,10 @@ export async function Footer() {
             <div className="text-left space-y-1">
               <p className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1.5 uppercase tracking-tight">
                 <span className="w-1.5 h-1.5 rounded-full bg-gb-green shrink-0" />
-                NEXT DAY DELIVERY
+                {footerDeliveryTitle}
               </p>
               <p className="text-[11px] sm:text-xs text-gray-500 pl-3">
-                Order before {sameDayCutoff}
+                {footerDeliveryDesc}
               </p>
             </div>
 
@@ -254,7 +261,7 @@ export async function Footer() {
                   <Clock size={15} className="text-gb-green shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[10px] uppercase font-bold text-gray-400">ORDER CUTOFF</p>
-                    <p className="font-medium text-gray-800">Next-Day delivery before {sameDayCutoff}</p>
+                    <p className="font-medium text-gray-800">{footerOrderCutoffText}</p>
                   </div>
                 </div>
               </div>
@@ -292,6 +299,7 @@ export async function Footer() {
             phone={phone}
             email={email}
             address={address}
+            orderCutoffText={footerOrderCutoffText}
           />
         </div>
       </div>

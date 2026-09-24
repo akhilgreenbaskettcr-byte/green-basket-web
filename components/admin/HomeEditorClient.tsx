@@ -18,6 +18,8 @@ import {
   Layers,
   HeartHandshake,
   Workflow,
+  Truck,
+  Sparkles,
 } from "lucide-react";
 
 interface HomeEditorClientProps {
@@ -48,7 +50,7 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
       initialSettings["same_day_cutoff_time"] ?? "1:00 PM",
     same_day_message:
       initialSettings["same_day_message"] ??
-      "Order before 1PM for next day delivery.",
+      "Order before 1PM for same day delivery.",
     delivery_banner_tag:
       initialSettings["delivery_banner_tag"] ?? "SAME DAY DELIVERY",
     delivery_banner_headline:
@@ -61,6 +63,27 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
     delivery_banner_btn_url:
       initialSettings["delivery_banner_btn_url"] ?? "/categories",
     delivery_banner_image_url: initialDeliveryBanner,
+    freshness_banner_tag:
+      initialSettings["freshness_banner_tag"] ?? "Pure Farm-To-Door Harvest",
+    freshness_banner_title_1:
+      initialSettings["freshness_banner_title_1"] ?? "No day-old storage—",
+    freshness_banner_title_2:
+      initialSettings["freshness_banner_title_2"] ?? "just pure farm-to-door freshness.",
+    freshness_banner_description:
+      initialSettings["freshness_banner_description"] ??
+      "Order by 1 PM today to enjoy crisp, freshly harvested vegetables and premium quality fruits delivered straight to your doorstep today.",
+    freshness_card_cutoff_title:
+      initialSettings["freshness_card_cutoff_title"] ?? "1 PM Cutoff",
+    freshness_card_cutoff_subtitle:
+      initialSettings["freshness_card_cutoff_subtitle"] ?? "Daily fresh dispatch",
+    freshness_card_delivery_title:
+      initialSettings["freshness_card_delivery_title"] ?? "Doorstep Delivery",
+    freshness_card_delivery_subtitle:
+      initialSettings["freshness_card_delivery_subtitle"] ?? "Same day delivery",
+    freshness_banner_btn_text:
+      initialSettings["freshness_banner_btn_text"] ?? "Order Today's Fresh Basket",
+    freshness_banner_btn_url:
+      initialSettings["freshness_banner_btn_url"] ?? "/products",
     freshness_banner_image:
       initialSettings["freshness_banner_image"] ||
       initialSettings["farm_to_door_image_url"] ||
@@ -69,6 +92,13 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
       initialSettings["farm_to_door_image_url"] ||
       initialSettings["freshness_banner_image"] ||
       "",
+    footer_delivery_title:
+      initialSettings["footer_delivery_title"] ?? "SAME DAY DELIVERY",
+    footer_delivery_desc:
+      initialSettings["footer_delivery_desc"] ?? "Order before 1:00 PM",
+    footer_order_cutoff_text:
+      initialSettings["footer_order_cutoff_text"] ??
+      "Same-Day delivery for orders before 1:00 PM",
     why_card_1_image: initialSettings["why_card_1_image"] ?? "",
     why_card_2_image: initialSettings["why_card_2_image"] ?? "",
     why_card_3_image: initialSettings["why_card_3_image"] ?? "",
@@ -299,28 +329,157 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
             </div>
           </div>
 
-          {/* Section 2: Farm-to-Door Freshness Banner Image */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-5 shadow-sm">
-            <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
-              <Leaf size={18} className="text-gb-green" />
-              <h2 className="text-base font-bold text-gray-900">
-                2. Farm-to-Door Freshness Banner (Full Artwork Image)
-              </h2>
+          {/* Section 2: Farm-to-Door Freshness Banner */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-6 shadow-sm">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Leaf size={18} className="text-gb-green" />
+                <h2 className="text-base font-bold text-gray-900">
+                  2. Farm-to-Door Freshness Banner
+                </h2>
+              </div>
+              <span className="text-xs font-bold text-gb-green bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
+                Live on Homepage
+              </span>
             </div>
             <p className="text-xs text-gray-500">
-              Upload your campaign banner image (the wide graphic with fresh harvest basket and farm badge). This covers the entire Farm-to-Door promise section on the homepage.
+              Customize the Farm-to-Door freshness promise banner: upload your artwork graphic, change badges, headlines, same-day delivery cards, and call-to-action button.
             </p>
-            <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-200/70 space-y-2">
-              <ImageUpload
-                label="Farm-to-Door Artwork Banner Image"
-                value={values["freshness_banner_image"] || values["farm_to_door_image_url"] || ""}
-                onChange={(url) => {
-                  handleChange("freshness_banner_image", url);
-                  handleChange("farm_to_door_image_url", url);
-                }}
-                folder="banners"
-                helperText="Upload wide high-resolution campaign banner (PNG, WebP, JPG)."
-              />
+
+            <div className="space-y-4">
+              {/* Artwork Banner Image */}
+              <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-200/70 space-y-2">
+                <ImageUpload
+                  label="Farm-to-Door Artwork Banner Image"
+                  value={values["freshness_banner_image"] || values["farm_to_door_image_url"] || ""}
+                  onChange={(url) => {
+                    handleChange("freshness_banner_image", url);
+                    handleChange("farm_to_door_image_url", url);
+                  }}
+                  folder="banners"
+                  helperText="Upload wide high-resolution campaign banner (PNG, WebP, JPG) featuring your fresh basket."
+                />
+              </div>
+
+              {/* Tag & Button Label */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="gb-label">Top Eyebrow Pill Tag</label>
+                  <input
+                    type="text"
+                    value={values["freshness_banner_tag"]}
+                    onChange={(e) => handleChange("freshness_banner_tag", e.target.value)}
+                    placeholder="Pure Farm-To-Door Harvest"
+                    className="gb-input font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="gb-label">CTA Button Text</label>
+                  <input
+                    type="text"
+                    value={values["freshness_banner_btn_text"]}
+                    onChange={(e) => handleChange("freshness_banner_btn_text", e.target.value)}
+                    placeholder="Order Today's Fresh Basket"
+                    className="gb-input font-bold text-gb-green"
+                  />
+                </div>
+              </div>
+
+              {/* Headlines */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="gb-label">Headline (Line 1)</label>
+                  <input
+                    type="text"
+                    value={values["freshness_banner_title_1"]}
+                    onChange={(e) => handleChange("freshness_banner_title_1", e.target.value)}
+                    placeholder="No day-old storage—"
+                    className="gb-input font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="gb-label">Headline (Line 2 — Green Accent)</label>
+                  <input
+                    type="text"
+                    value={values["freshness_banner_title_2"]}
+                    onChange={(e) => handleChange("freshness_banner_title_2", e.target.value)}
+                    placeholder="just pure farm-to-door freshness."
+                    className="gb-input font-bold text-gb-green"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="gb-label">Banner Description Text</label>
+                <textarea
+                  value={values["freshness_banner_description"]}
+                  onChange={(e) => handleChange("freshness_banner_description", e.target.value)}
+                  rows={2}
+                  placeholder="Order by 1 PM today to enjoy crisp, freshly harvested vegetables..."
+                  className="gb-input resize-none"
+                />
+              </div>
+
+              {/* Feature Cards Customization */}
+              <div className="p-4 bg-gray-50/70 rounded-xl border border-gray-200/70 space-y-4">
+                <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Sparkles size={14} className="text-gb-green" />
+                  Trust Feature Cards (Delivery & Cutoff Cards)
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Card 2: Cutoff */}
+                  <div className="space-y-2 bg-white p-3 rounded-lg border border-gray-200">
+                    <span className="text-[11px] font-bold text-gray-600">Cutoff Feature Card</span>
+                    <input
+                      type="text"
+                      value={values["freshness_card_cutoff_title"]}
+                      onChange={(e) => handleChange("freshness_card_cutoff_title", e.target.value)}
+                      placeholder="1 PM Cutoff"
+                      className="gb-input text-xs font-bold py-1.5"
+                    />
+                    <input
+                      type="text"
+                      value={values["freshness_card_cutoff_subtitle"]}
+                      onChange={(e) => handleChange("freshness_card_cutoff_subtitle", e.target.value)}
+                      placeholder="Daily fresh dispatch"
+                      className="gb-input text-xs py-1.5 text-gray-600"
+                    />
+                  </div>
+
+                  {/* Card 3: Delivery (Same Day) */}
+                  <div className="space-y-2 bg-white p-3 rounded-lg border border-gray-200">
+                    <span className="text-[11px] font-bold text-emerald-800">Delivery Feature Card</span>
+                    <input
+                      type="text"
+                      value={values["freshness_card_delivery_title"]}
+                      onChange={(e) => handleChange("freshness_card_delivery_title", e.target.value)}
+                      placeholder="Doorstep Delivery"
+                      className="gb-input text-xs font-bold py-1.5"
+                    />
+                    <input
+                      type="text"
+                      value={values["freshness_card_delivery_subtitle"]}
+                      onChange={(e) => handleChange("freshness_card_delivery_subtitle", e.target.value)}
+                      placeholder="Same day delivery"
+                      className="gb-input text-xs py-1.5 text-emerald-700 font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Button Destination URL */}
+              <div>
+                <label className="gb-label">CTA Button Link URL</label>
+                <input
+                  type="text"
+                  value={values["freshness_banner_btn_url"]}
+                  onChange={(e) => handleChange("freshness_banner_btn_url", e.target.value)}
+                  placeholder="/products"
+                  className="gb-input font-mono text-xs"
+                />
+              </div>
             </div>
           </div>
 
@@ -520,12 +679,12 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
             <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
               <Bell size={18} className="text-gb-green" />
               <h2 className="text-base font-bold text-gray-900">
-                6. Top Announcement Strip
+                6. Header Top Announcement Strip
               </h2>
             </div>
 
             <div>
-              <label className="gb-label">Header Top Strip Message</label>
+              <label className="gb-label">Announcement Banner Text (Left Side)</label>
               <input
                 type="text"
                 value={values["delivery_message"]}
@@ -533,6 +692,80 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
                 placeholder="Freshly cut. Hygienically packed. Delivered to your doorstep."
                 className="gb-input"
               />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="gb-label">Same-Day Notice (Right Side)</label>
+                <input
+                  type="text"
+                  value={values["same_day_message"]}
+                  onChange={(e) => handleChange("same_day_message", e.target.value)}
+                  placeholder="Order before 1PM for same day delivery."
+                  className="gb-input font-semibold text-emerald-800"
+                />
+              </div>
+              <div>
+                <label className="gb-label">Cutoff Time Setting</label>
+                <input
+                  type="text"
+                  value={values["same_day_cutoff_time"]}
+                  onChange={(e) => handleChange("same_day_cutoff_time", e.target.value)}
+                  placeholder="1:00 PM"
+                  className="gb-input font-bold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 7: Footer Delivery & Cutoff Information */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-4 shadow-sm">
+            <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+              <Truck size={18} className="text-gb-green" />
+              <h2 className="text-base font-bold text-gray-900">
+                7. Footer Delivery & Cutoff Information
+              </h2>
+            </div>
+
+            <p className="text-xs text-gray-500">
+              Configure the delivery value-proposition card and the Kitchen Concierge cutoff notice displayed in the website footer.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="gb-label">Footer Delivery Strip Title</label>
+                <input
+                  type="text"
+                  value={values["footer_delivery_title"]}
+                  onChange={(e) => handleChange("footer_delivery_title", e.target.value)}
+                  placeholder="SAME DAY DELIVERY"
+                  className="gb-input font-bold uppercase"
+                />
+              </div>
+              <div>
+                <label className="gb-label">Footer Delivery Strip Subtext</label>
+                <input
+                  type="text"
+                  value={values["footer_delivery_desc"]}
+                  onChange={(e) => handleChange("footer_delivery_desc", e.target.value)}
+                  placeholder="Order before 1:00 PM"
+                  className="gb-input"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="gb-label">Footer Kitchen Concierge Cutoff Notice</label>
+              <input
+                type="text"
+                value={values["footer_order_cutoff_text"]}
+                onChange={(e) => handleChange("footer_order_cutoff_text", e.target.value)}
+                placeholder="Same-Day delivery for orders before 1:00 PM"
+                className="gb-input font-medium"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">
+                Appears in the desktop Kitchen Concierge card and mobile footer accordion.
+              </p>
             </div>
           </div>
         </div>
@@ -552,9 +785,7 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
               </div>
               <div className="flex justify-between items-center py-1 border-b border-gray-200/50">
                 <span className="text-gray-500">Farm-to-Door Banner:</span>
-                <span className={`font-bold ${(values["freshness_banner_image"] || values["farm_to_door_image_url"]) ? "text-emerald-700" : "text-gray-400"}`}>
-                  {(values["freshness_banner_image"] || values["farm_to_door_image_url"]) ? "Custom Uploaded" : "Default"}
-                </span>
+                <span className="font-bold text-emerald-700">Customized</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-gray-200/50">
                 <span className="text-gray-500">Why Choose Us Cards:</span>
@@ -570,10 +801,18 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
                   {values["delivery_banner_image_url"] ? "Custom Photo" : "Default Gradient"}
                 </span>
               </div>
+              <div className="flex justify-between items-center py-1 border-b border-gray-200/50">
+                <span className="text-gray-500">Top Announcement:</span>
+                <span className="font-bold text-emerald-700">Configured</span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-gray-500">Footer Delivery:</span>
+                <span className="font-bold text-emerald-700">{values["footer_delivery_title"] || "Configured"}</span>
+              </div>
             </div>
 
             <p className="text-[11px] text-gray-400 leading-relaxed">
-              Upload custom images for all sections and click "Publish Changes" to immediately update your live storefront in real-time.
+              Edit any fields and click "Publish Changes" to immediately update your live storefront in real-time.
             </p>
           </div>
         </div>

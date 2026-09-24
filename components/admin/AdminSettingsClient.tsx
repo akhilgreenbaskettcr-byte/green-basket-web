@@ -50,8 +50,11 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
       delivery_fee: "40",
       free_delivery_above: "0",
       same_day_cutoff_time: "1:00 PM",
-      same_day_message: "Order before 1PM for next day delivery.",
+      same_day_message: "Order before 1PM for same day delivery.",
       enable_cod: "true",
+      footer_delivery_title: "SAME DAY DELIVERY",
+      footer_delivery_desc: "Order before 1:00 PM",
+      footer_order_cutoff_text: "Same-Day delivery for orders before 1:00 PM",
     };
     settings.forEach(({ key, value }) => {
       if (value !== undefined && value !== null) initial[key] = value;
@@ -337,7 +340,37 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
                 type="text"
                 value={values["same_day_message"] ?? ""}
                 onChange={(e) => handleChange("same_day_message", e.target.value)}
-                placeholder="Order before 1PM for next day delivery."
+                placeholder="Order before 1PM for same day delivery."
+                className="gb-input"
+              />
+            </div>
+            <div>
+              <label className="gb-label">Footer Delivery Title</label>
+              <input
+                type="text"
+                value={values["footer_delivery_title"] ?? ""}
+                onChange={(e) => handleChange("footer_delivery_title", e.target.value)}
+                placeholder="SAME DAY DELIVERY"
+                className="gb-input uppercase font-bold"
+              />
+            </div>
+            <div>
+              <label className="gb-label">Footer Delivery Subtext</label>
+              <input
+                type="text"
+                value={values["footer_delivery_desc"] ?? ""}
+                onChange={(e) => handleChange("footer_delivery_desc", e.target.value)}
+                placeholder="Order before 1:00 PM"
+                className="gb-input"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="gb-label">Footer Kitchen Concierge Cutoff Notice</label>
+              <input
+                type="text"
+                value={values["footer_order_cutoff_text"] ?? ""}
+                onChange={(e) => handleChange("footer_order_cutoff_text", e.target.value)}
+                placeholder="Same-Day delivery for orders before 1:00 PM"
                 className="gb-input"
               />
             </div>

@@ -4,10 +4,10 @@ export async function AnnouncementBar() {
   const settings = await getSiteSettings();
 
   const deliveryMessage =
-    settings["delivery_message"] ??
+    settings["delivery_message"]?.trim() ||
     "Freshly cut. Hygienically packed. Delivered to your doorstep.";
   const sameDayMessage =
-    settings["same_day_message"] ?? "Order before 1PM for next day delivery.";
+    settings["same_day_message"]?.trim() || "Order before 1PM for same day delivery.";
 
   return (
     <div

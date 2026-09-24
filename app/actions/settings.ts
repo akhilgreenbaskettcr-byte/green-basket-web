@@ -24,10 +24,13 @@ export async function saveSiteSettings(settings: Record<string, string>) {
     // Force revalidate all public pages and layouts so changes show immediately
     revalidatePath("/", "layout");
     revalidatePath("/", "page");
+    revalidatePath("/products", "page");
     revalidatePath("/categories", "page");
     revalidatePath("/about", "page");
     revalidatePath("/contact", "page");
     revalidatePath("/how-it-works", "page");
+    revalidatePath("/admin/home-editor", "page");
+    revalidatePath("/admin/settings", "page");
 
     return { success: true };
   } catch (err: any) {

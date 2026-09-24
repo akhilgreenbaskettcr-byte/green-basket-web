@@ -10,6 +10,7 @@ interface FooterAccordionProps {
   phone: string;
   email: string;
   address: string;
+  orderCutoffText?: string;
 }
 
 export function FooterAccordion({
@@ -17,6 +18,7 @@ export function FooterAccordion({
   phone,
   email,
   address,
+  orderCutoffText,
 }: FooterAccordionProps) {
   const [openSection, setOpenSection] = useState<string | null>(null);
 
@@ -213,6 +215,13 @@ export function FooterAccordion({
               <p className="text-[10px] uppercase font-bold text-gray-400">SERVICE AREA</p>
               <p className="font-medium text-gray-800">{address || "Thrissur, Kerala, India"}</p>
             </div>
+
+            {orderCutoffText && (
+              <div>
+                <p className="text-[10px] uppercase font-bold text-gray-400">ORDER CUTOFF</p>
+                <p className="font-medium text-gray-800">{orderCutoffText}</p>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -43,6 +43,52 @@ export function FreshnessBanner({ settings = {} }: FreshnessBannerProps) {
     settings["farm_to_door_image_url"]?.trim() ||
     "";
 
+  // Dynamic texts configured by Admin
+  const tag = settings["freshness_banner_tag"]?.trim() || "Pure Farm-To-Door Harvest";
+  const title1 = settings["freshness_banner_title_1"]?.trim() || "No day-old storage—";
+  const title2 = settings["freshness_banner_title_2"]?.trim() || "just pure farm-to-door freshness.";
+  const cutoffTime = settings["same_day_cutoff_time"]?.trim() || "1 PM";
+  const description =
+    settings["freshness_banner_description"]?.trim() ||
+    `Order by ${cutoffTime} today to enjoy crisp, freshly harvested vegetables and premium quality fruits delivered straight to your doorstep today.`;
+
+  const cutoffTitle =
+    settings["freshness_card_cutoff_title"]?.trim() || `${cutoffTime} Cutoff`;
+  const cutoffSubtitle =
+    settings["freshness_card_cutoff_subtitle"]?.trim() || "Daily fresh dispatch";
+
+  const deliveryTitle =
+    settings["freshness_card_delivery_title"]?.trim() || "Doorstep Delivery";
+  const deliverySubtitle =
+    settings["freshness_card_delivery_subtitle"]?.trim() || "Same day delivery";
+
+  const btnText =
+    settings["freshness_banner_btn_text"]?.trim() || "Order Today's Fresh Basket";
+  const btnUrl = settings["freshness_banner_btn_url"]?.trim() || "/products";
+
+  const benefits = [
+    {
+      icon: Leaf,
+      title: settings["freshness_card_harvest_title"]?.trim() || "Fresh Harvest",
+      subtitle: settings["freshness_card_harvest_subtitle"]?.trim() || "Direct from farms",
+    },
+    {
+      icon: Clock3,
+      title: cutoffTitle,
+      subtitle: cutoffSubtitle,
+    },
+    {
+      icon: Truck,
+      title: deliveryTitle,
+      subtitle: deliverySubtitle,
+    },
+    {
+      icon: ShieldCheck,
+      title: settings["freshness_card_quality_title"]?.trim() || "100% Quality",
+      subtitle: settings["freshness_card_quality_subtitle"]?.trim() || "Clean & hygienic",
+    },
+  ];
+
   return (
     <section
       className="py-2.5 sm:py-4 md:py-6 overflow-hidden"
@@ -92,37 +138,29 @@ export function FreshnessBanner({ settings = {} }: FreshnessBannerProps) {
               {/* 1. Eyebrow Pill */}
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs border border-emerald-600/25 text-emerald-800 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider w-fit mb-3 sm:mb-3.5 shadow-2xs">
                 <Leaf size={13} className="text-emerald-700 shrink-0" />
-                <span>Pure Farm-To-Door Harvest</span>
+                <span>{tag}</span>
               </div>
 
               {/* 2. Main Headline (Compact & Sleek) */}
               <h2 className="text-2xl sm:text-3xl md:text-[2.2rem] lg:text-[2.35rem] xl:text-[2.6rem] font-black tracking-tight leading-[1.12] mb-3 text-[#111827]">
-                <span className="block">No day-old storage—</span>
+                <span className="block">{title1}</span>
                 <span className="text-[#1c532b] flex items-center gap-1.5 sm:gap-2 flex-wrap mt-0.5">
-                  <span>just pure farm-to-door</span>
-                  <span className="inline-flex items-center">
-                    <span>freshness.</span>
-                    <Leaf
-                      size={26}
-                      className="text-[#1c532b] fill-[#1c532b] inline-block ml-1 rotate-12 shrink-0"
-                    />
-                  </span>
+                  <span>{title2}</span>
+                  <Leaf
+                    size={26}
+                    className="text-[#1c532b] fill-[#1c532b] inline-block ml-1 rotate-12 shrink-0"
+                  />
                 </span>
               </h2>
 
               {/* 3. Subtitle Description */}
-              <p className="text-gray-700 text-xs sm:text-sm md:text-[14.5px] leading-relaxed max-w-xl mb-4 sm:mb-6 font-medium">
-                Order by{" "}
-                <strong className="text-gray-900 font-bold bg-white/70 px-1 py-0.5 rounded text-[#1c532b]">
-                  1 PM today
-                </strong>{" "}
-                to enjoy crisp, freshly harvested vegetables and premium quality
-                fruits delivered straight to your doorstep tomorrow morning.
+              <p className="text-gray-700 text-xs sm:text-sm md:text-[14.5px] leading-relaxed max-w-xl mb-4 sm:mb-6 font-medium whitespace-pre-line">
+                {description}
               </p>
 
               {/* 4. Four Compact Trust Feature Cards (2x2 Grid on mobile, 4-col row on desktop) */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mb-5 sm:mb-6 max-w-2xl">
-                {BENEFITS.map(({ icon: Icon, title, subtitle }) => (
+                {benefits.map(({ icon: Icon, title, subtitle }) => (
                   <div
                     key={title}
                     className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-emerald-100 shadow-2xs flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xs"
@@ -145,10 +183,10 @@ export function FreshnessBanner({ settings = {} }: FreshnessBannerProps) {
               {/* 5. Primary CTA Button */}
               <div className="w-full sm:w-auto">
                 <Link
-                  href="/products"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1c532b] hover:bg-[#153e20] text-white font-bold text-xs sm:text-sm px-6 sm:px-7 py-3 sm:py-3.5 rounded-full shadow-md hover:shadow-lg transition-all hover:scale-102 group"
+                  href={btnUrl}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1c532b] hover:bg-[#153e20] text-white font-bold text-xs sm:text-sm px-6 sm:px-7 py-3 sm:py-3.5 rounded-full shadow-md hover:shadow-lg transition-all hover:scale-102 group cursor-pointer"
                 >
-                  <span>Order Tomorrow's Fresh Basket</span>
+                  <span>{btnText}</span>
                   <ArrowRight
                     size={15}
                     className="group-hover:translate-x-1 transition-transform"
