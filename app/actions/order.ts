@@ -25,6 +25,7 @@ const CheckoutSchema = z.object({
   razorpay_order_id: z.string().optional().or(z.literal("")),
   gps_lat: z.number().optional().nullable(),
   gps_lng: z.number().optional().nullable(),
+  location_link: z.string().optional().nullable(),
   items: z.array(
     z.object({
       productId: z.string(),
@@ -122,12 +123,22 @@ export async function createOrder(
 
   let orderNumber = `${prefix}${String(seq).padStart(4, "0")}`;
 
-  // Prepare notes with payment metadata
+  // Prepare notes with payment metadata & location link
   let formattedNotes = data.notes?.trim() || "";
   if (data.payment_method === "razorpay" && data.razorpay_payment_id) {
     formattedNotes = `[PAID ONLINE via Razorpay | Ref: ${data.razorpay_payment_id}] ${formattedNotes}`.trim();
   } else {
     formattedNotes = `[PAYMENT: Cash on Delivery] ${formattedNotes}`.trim();
+  }
+
+  const mapLink =
+    data.location_link?.trim() ||
+    (data.gps_lat != null && data.gps_lng != null
+      ? `https://www.google.com/maps?q=${data.gps_lat},${data.gps_lng}`
+      : "");
+
+  if (mapLink) {
+    formattedNotes = `${formattedNotes} [Location: ${mapLink}]`.trim();
   }
 
   const orderStatus = "pending";

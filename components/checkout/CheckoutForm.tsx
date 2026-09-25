@@ -87,6 +87,7 @@ export function CheckoutForm({
 
   // Paste Location Link state
   const [initialLinkForMap, setInitialLinkForMap] = useState<string>("");
+  const [locationLink, setLocationLink] = useState<string>("");
   const [pastedLinkInput, setPastedLinkInput] = useState<string>("");
   const [pastedLinkError, setPastedLinkError] = useState<string>("");
   const [pastedLinkLoading, setPastedLinkLoading] = useState<boolean>(false);
@@ -107,6 +108,10 @@ export function CheckoutForm({
         setPastedLinkError(res.error);
       } else {
         setInitialLinkForMap(url);
+        setLocationLink(url);
+        if (res.lat && res.lng) {
+          setGpsCoords({ lat: res.lat, lng: res.lng });
+        }
         setShowMapModal(true);
         setPastedLinkError("");
       }
@@ -210,12 +215,26 @@ export function CheckoutForm({
   const handleMapConfirm = (locationData: {
     areaName: string;
     pincode: string;
+    lat?: number;
+    lng?: number;
+    locationLink?: string;
   }) => {
     setForm((prev) => ({
       ...prev,
       city: locationData.areaName ? `${locationData.areaName}, Thrissur` : prev.city,
       pincode: locationData.pincode || prev.pincode,
     }));
+
+    if (locationData.lat != null && locationData.lng != null) {
+      setGpsCoords({ lat: locationData.lat, lng: locationData.lng });
+      setLocationFetch("FILLED");
+      setLocationNote(`Location pinned on map: (${locationData.lat.toFixed(5)}, ${locationData.lng.toFixed(5)})`);
+    }
+
+    if (locationData.locationLink) {
+      setLocationLink(locationData.locationLink);
+      setPastedLinkInput(locationData.locationLink);
+    }
   };
 
   const handleGetLiveLocation = () => {
@@ -352,6 +371,10 @@ export function CheckoutForm({
           payment_method: "cod",
           gps_lat: gpsCoords?.lat ?? null,
           gps_lng: gpsCoords?.lng ?? null,
+          location_link:
+            locationLink ||
+            pastedLinkInput.trim() ||
+            (gpsCoords ? `https://www.google.com/maps?q=${gpsCoords.lat},${gpsCoords.lng}` : null),
           items: items.map((item) => ({
             productId: item.productId,
             variantId: item.variantId,
@@ -463,6 +486,10 @@ export function CheckoutForm({
               razorpay_order_id: response.razorpay_order_id,
               gps_lat: gpsCoords?.lat ?? null,
               gps_lng: gpsCoords?.lng ?? null,
+              location_link:
+                locationLink ||
+                pastedLinkInput.trim() ||
+                (gpsCoords ? `https://www.google.com/maps?q=${gpsCoords.lat},${gpsCoords.lng}` : null),
               items: items.map((item) => ({
                 productId: item.productId,
                 variantId: item.variantId,

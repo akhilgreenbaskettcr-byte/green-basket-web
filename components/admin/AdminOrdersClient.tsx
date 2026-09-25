@@ -16,6 +16,8 @@ import {
   Mail,
   Printer,
   ExternalLink,
+  Copy,
+  Check,
 } from "lucide-react";
 import type { Order, OrderStatus } from "@/types/database";
 import { ThermalReceiptModal } from "@/components/admin/ThermalReceiptModal";
@@ -50,6 +52,7 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<AdminOrderWithItems | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<AdminOrderWithItems | null>(null);
+  const [copiedMapLink, setCopiedMapLink] = useState(false);
 
   const filtered = orders.filter((order) => {
     const matchesSearch =
@@ -272,7 +275,26 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
 
                       {/* City */}
                       <td className="px-6 py-4 text-xs text-gray-600 font-medium">
-                        {order.city}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>{order.city}</span>
+                          {(order.gps_lat != null || order.notes?.includes("maps")) && (
+                            <a
+                              href={
+                                order.gps_lat != null && order.gps_lng != null
+                                  ? `https://www.google.com/maps?q=${order.gps_lat},${order.gps_lng}`
+                                  : (order.notes?.match(/https:\/\/[^\s\]]+/)?.[0] || "#")
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-100/80 hover:bg-emerald-200 border border-emerald-300/60 px-1.5 py-0.5 rounded-md font-bold transition-colors"
+                              title="Open Customer Map Location"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MapPin size={10} className="text-emerald-700 shrink-0" />
+                              <span>Map</span>
+                            </a>
+                          )}
+                        </div>
                       </td>
 
                       {/* Status badge */}
@@ -427,17 +449,61 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                   <p className="font-bold text-gray-800 mt-0.5">
                     {selectedOrder.city} — <span className="font-mono">{selectedOrder.pincode}</span>
                   </p>
-                  {selectedOrder.gps_lat != null && selectedOrder.gps_lng != null && (
-                    <a
-                      href={`https://www.google.com/maps?q=${selectedOrder.gps_lat},${selectedOrder.gps_lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-bold text-gb-green hover:text-emerald-700 underline underline-offset-2 transition-colors"
-                    >
-                      <ExternalLink size={11} />
-                      Open Exact GPS Location in Maps
-                    </a>
-                  )}
+
+                  {/* Customer Google Maps / GPS Location Link */}
+                  {(() => {
+                    const orderMapLink =
+                      selectedOrder.gps_lat != null && selectedOrder.gps_lng != null
+                        ? `https://www.google.com/maps?q=${selectedOrder.gps_lat},${selectedOrder.gps_lng}`
+                        : selectedOrder.notes?.match(/https:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|maps\.google\.com|www\.google\.com\/maps)[^\s\]]+/)?.[0] || null;
+
+                    if (!orderMapLink) return null;
+
+                    return (
+                      <div className="mt-3 p-3 rounded-xl bg-emerald-50/90 border border-emerald-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-gb-green text-white flex items-center justify-center shrink-0 shadow-2xs">
+                            <MapPin size={16} />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-emerald-900 leading-tight">
+                              Delivery Location Link
+                            </p>
+                            <p className="text-[10px] text-emerald-700 font-mono mt-0.5 truncate max-w-[200px]">
+                              {selectedOrder.gps_lat != null && selectedOrder.gps_lng != null
+                                ? `GPS: ${selectedOrder.gps_lat.toFixed(5)}, ${selectedOrder.gps_lng.toFixed(5)}`
+                                : "Google Maps Link Attached"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <a
+                            href={orderMapLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-gb-green hover:bg-gb-green-dark text-white text-xs font-bold transition-all shadow-xs"
+                          >
+                            <ExternalLink size={12} />
+                            <span>Open in Maps</span>
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(orderMapLink);
+                              setCopiedMapLink(true);
+                              setTimeout(() => setCopiedMapLink(false), 2000);
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-gray-100 text-gray-700 border border-emerald-200 text-xs font-semibold transition-colors flex items-center gap-1"
+                            title="Copy Map Link"
+                          >
+                            {copiedMapLink ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                            <span className="text-[11px]">{copiedMapLink ? "Copied" : "Copy"}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 

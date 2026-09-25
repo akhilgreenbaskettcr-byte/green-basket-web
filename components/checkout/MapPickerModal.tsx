@@ -4,10 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { X, MapPin, Loader2, CheckCircle2, AlertTriangle, Search, Link as LinkIcon } from "lucide-react";
 import { extractCoordinatesFromUrl } from "@/lib/location-parser";
 
+export interface MapLocationResult {
+  areaName: string;
+  pincode: string;
+  lat?: number;
+  lng?: number;
+  locationLink?: string;
+}
+
 interface MapPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (location: { areaName: string; pincode: string }) => void;
+  onConfirm: (location: MapLocationResult) => void;
   initialLink?: string;
 }
 
@@ -23,6 +31,7 @@ export function MapPickerModal({ isOpen, onClose, onConfirm, initialLink = "" }:
   const [geocoding, setGeocoding] = useState(false);
   const [detectedArea, setDetectedArea] = useState<string>("");
   const [detectedPin, setDetectedPin] = useState<string>("");
+  const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
 
   // Paste location link state
@@ -50,6 +59,7 @@ export function MapPickerModal({ isOpen, onClose, onConfirm, initialLink = "" }:
 
     const reverseGeocode = async (cLat: number, cLng: number) => {
       if (!isMounted) return;
+      setSelectedCoords({ lat: cLat, lng: cLng });
       setGeocoding(true);
       setErrorMsg("");
 
@@ -76,6 +86,7 @@ export function MapPickerModal({ isOpen, onClose, onConfirm, initialLink = "" }:
 
     // Function to initialize map
     const initMap = (lat = 9.9816, lng = 76.2999) => {
+      setSelectedCoords({ lat, lng });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const L = (window as any).L;
       if (!L || !mapContainerRef.current) return;
@@ -114,12 +125,14 @@ export function MapPickerModal({ isOpen, onClose, onConfirm, initialLink = "" }:
       // Drag end listener
       marker.on("dragend", () => {
         const position = marker.getLatLng();
+        setSelectedCoords({ lat: position.lat, lng: position.lng });
         reverseGeocode(position.lat, position.lng);
       });
 
       // Map click listener
       map.on("click", (e: { latlng: { lat: number; lng: number } }) => {
         marker.setLatLng(e.latlng);
+        setSelectedCoords({ lat: e.latlng.lat, lng: e.latlng.lng });
         reverseGeocode(e.latlng.lat, e.latlng.lng);
       });
 
@@ -160,7 +173,20 @@ export function MapPickerModal({ isOpen, onClose, onConfirm, initialLink = "" }:
 
   const handleConfirm = () => {
     if (!detectedPin) return;
-    onConfirm({ areaName: detectedArea, pincode: detectedPin });
+    const pos = markerRef.current ? markerRef.current.getLatLng() : null;
+    const lat = typeof pos?.lat === "number" ? pos.lat : selectedCoords?.lat;
+    const lng = typeof pos?.lng === "number" ? pos.lng : selectedCoords?.lng;
+    const locationLink =
+      linkInput.trim() ||
+      (lat != null && lng != null ? `https://www.google.com/maps?q=${lat},${lng}` : "");
+
+    onConfirm({
+      areaName: detectedArea,
+      pincode: detectedPin,
+      lat,
+      lng,
+      locationLink,
+    });
     onClose();
   };
 

@@ -293,6 +293,7 @@ export function ThermalReceiptModal({
     <div class="customer-box">
       <div><strong>Payment Mode:</strong> ${paymentModeText}</div>
       <div style="margin-top: 2px;"><strong>Customer:</strong> ${order.customer_name}</div>
+      ${order.gps_lat && order.gps_lng ? `<div style="margin-top: 2px; font-size: 10px;"><strong>GPS:</strong> ${order.gps_lat.toFixed(5)}, ${order.gps_lng.toFixed(5)}</div>` : ""}
       ${customerNote ? `<div style="margin-top: 2px;"><strong>Note:</strong> ${customerNote}</div>` : ""}
     </div>
 
