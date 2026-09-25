@@ -99,6 +99,9 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
     footer_order_cutoff_text:
       initialSettings["footer_order_cutoff_text"] ??
       "Same-Day delivery for orders before 1:00 PM",
+    order_success_delivery_text:
+      initialSettings["order_success_delivery_text"] ??
+      "Scheduled for Same-Day Delivery in Thrissur",
     why_card_1_image: initialSettings["why_card_1_image"] ?? "",
     why_card_2_image: initialSettings["why_card_2_image"] ?? "",
     why_card_3_image: initialSettings["why_card_3_image"] ?? "",
@@ -765,6 +768,20 @@ export function HomeEditorClient({ initialSettings }: HomeEditorClientProps) {
               />
               <p className="text-[11px] text-gray-400 mt-1">
                 Appears in the desktop Kitchen Concierge card and mobile footer accordion.
+              </p>
+            </div>
+
+            <div>
+              <label className="gb-label">Order Confirmation Page Delivery Notice</label>
+              <input
+                type="text"
+                value={values["order_success_delivery_text"]}
+                onChange={(e) => handleChange("order_success_delivery_text", e.target.value)}
+                placeholder="Scheduled for Same-Day Delivery in Thrissur"
+                className="gb-input font-medium text-emerald-800"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">
+                Shown to customers under the Order Reference Number on the post-checkout confirmation screen.
               </p>
             </div>
           </div>

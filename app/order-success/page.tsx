@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { getSiteSettings } from "@/lib/supabase/queries";
 import { CheckCircle2, ShoppingBag, ArrowRight, Truck, Phone, MessageCircle, ShieldCheck } from "lucide-react";
 import { OrderSuccessTracker } from "@/components/order/OrderSuccessTracker";
 
@@ -16,7 +17,16 @@ interface Props {
 }
 
 export default async function OrderSuccessPage({ searchParams }: Props) {
-  const { order } = await searchParams;
+  const [{ order }, settings] = await Promise.all([
+    searchParams,
+    getSiteSettings(),
+  ]);
+
+  const deliveryText =
+    settings["order_success_delivery_text"]?.trim() ||
+    (settings["footer_delivery_title"]?.toUpperCase().includes("NEXT")
+      ? "Scheduled for Next-Day Delivery in Thrissur"
+      : "Scheduled for Same-Day Delivery in Thrissur");
 
   return (
     <>
@@ -57,7 +67,7 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
                 </p>
                 <div className="flex items-center justify-center gap-1.5 text-xs text-emerald-800 font-semibold mt-2 pt-2 border-t border-emerald-100">
                   <Truck size={14} className="text-gb-green" />
-                  <span>Scheduled for Next-Day Delivery in Thrissur</span>
+                  <span>{deliveryText}</span>
                 </div>
               </div>
             )}

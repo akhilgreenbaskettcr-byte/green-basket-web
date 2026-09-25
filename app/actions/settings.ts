@@ -29,6 +29,8 @@ export async function saveSiteSettings(settings: Record<string, string>) {
     revalidatePath("/about", "page");
     revalidatePath("/contact", "page");
     revalidatePath("/how-it-works", "page");
+    revalidatePath("/shipping-policy", "page");
+    revalidatePath("/order-success", "page");
     revalidatePath("/admin/home-editor", "page");
     revalidatePath("/admin/settings", "page");
 

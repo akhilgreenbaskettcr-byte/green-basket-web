@@ -77,9 +77,9 @@ export default async function ShippingPolicyPage() {
                 <div className="w-8 h-8 rounded-lg bg-emerald-100/60 text-gb-green flex items-center justify-center">
                   <Clock size={18} />
                 </div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-gray-700">NEXT-DAY DELIVERY</h2>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-gray-700">SAME-DAY DELIVERY</h2>
                 <p className="text-xs text-gray-600 font-semibold">Order before {cutoffTime}</p>
-                <p className="text-[11px] text-gray-400">Delivered fresh the next day</p>
+                <p className="text-[11px] text-gray-400">Delivered fresh the same day</p>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200/70 space-y-1.5">
@@ -114,7 +114,7 @@ export default async function ShippingPolicyPage() {
               </h2>
               <ul className="list-disc pl-5 space-y-2 text-xs sm:text-sm text-gray-600 leading-relaxed">
                 <li>
-                  <strong>Next-Day Delivery:</strong> Orders placed before <strong>{cutoffTime}</strong> (IST) from Monday through Sunday are prepped fresh and delivered to your doorstep the next day between 7:30 AM and 1:30 PM.
+                  <strong>Same-Day Delivery:</strong> Orders placed before <strong>{cutoffTime}</strong> (IST) from Monday through Sunday are prepped fresh and delivered to your doorstep the same day.
                 </li>
                 <li>
                   <strong>Direct Farm Sourcing:</strong> All vegetables and fruits are cut and packed in the early morning of the delivery day to guarantee field-fresh crispness.
