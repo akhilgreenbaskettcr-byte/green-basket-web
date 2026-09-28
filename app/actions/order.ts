@@ -329,3 +329,267 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
     return { success: false, error: err.message || "Failed to update status" };
   }
 }
+
+const ManualOrderSchema = z.object({
+  customer_name: z.string().min(2, "Customer name must be at least 2 characters").max(100),
+  phone: z.string().min(7, "Enter a valid phone number (at least 7 digits)"),
+  email: z.string().email("Enter a valid email").optional().or(z.literal("")),
+  address: z.string().min(3, "Address is required").max(500),
+  city: z.string().min(2, "City / Area is required").max(100),
+  pincode: z.string().max(10).optional().or(z.literal("")),
+  notes: z.string().max(1000).optional().or(z.literal("")),
+  payment_method: z.string().default("cod"),
+  order_status: z.enum(["pending", "confirmed", "preparing", "out_for_delivery", "delivered", "cancelled"]).default("confirmed"),
+  items: z.array(
+    z.object({
+      productId: z.string().optional().nullable(),
+      variantId: z.string().optional().nullable(),
+      productName: z.string().min(1, "Product name is required"),
+      variantLabel: z.string().min(1, "Size / Variant is required"),
+      price: z.number().nonnegative("Price cannot be negative"),
+      quantity: z.number().int().positive("Quantity must be at least 1"),
+      imageUrl: z.string().optional().nullable(),
+    })
+  ).min(1, "At least one product item is required in the order"),
+  subtotal: z.number().nonnegative(),
+  deliveryFee: z.number().nonnegative().default(0),
+  total: z.number().nonnegative(),
+  isWhatsAppOrder: z.boolean().default(true),
+});
+
+export type ManualOrderFormData = z.infer<typeof ManualOrderSchema>;
+
+export type CreateManualOrderResult =
+  | { success: true; orderNumber: string; orderId: string; createdOrder: any }
+  | { success: false; error: string };
+
+export async function createManualAdminOrder(
+  formData: ManualOrderFormData
+): Promise<CreateManualOrderResult> {
+  try {
+    const supabase = await createClient();
+
+    // Verify session & role (Admin or Staff)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Unauthorized: Please log in." };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profile } = await (supabase as any)
+      .from("profiles")
+      .select("role, full_name")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role !== "admin" && profile?.role !== "staff") {
+      return { success: false, error: "Forbidden: Admin or Staff workspace access required." };
+    }
+
+    const parsed = ManualOrderSchema.safeParse(formData);
+    if (!parsed.success) {
+      console.error("Manual Order Zod Validation Error:", parsed.error.format());
+      return {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid manual order data",
+      };
+    }
+
+    const data = parsed.data;
+    const adminClient = createAdminClient();
+
+    // Generate date-based order number: GB-YYMMDD-0001
+    const now = new Date();
+    const istTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    const yy = String(istTime.getUTCFullYear()).slice(2);
+    const mm = String(istTime.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(istTime.getUTCDate()).padStart(2, "0");
+    const dateStr = `${yy}${mm}${dd}`;
+    const prefix = `GB-${dateStr}-`;
+
+    // Fetch highest order sequence for today
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: latestToday } = await (adminClient as any)
+      .from("orders")
+      .select("order_number")
+      .like("order_number", `${prefix}%`)
+      .order("order_number", { ascending: false })
+      .limit(1);
+
+    let seq = 1;
+    if (latestToday && latestToday.length > 0 && latestToday[0].order_number) {
+      const parts = latestToday[0].order_number.split("-");
+      const lastSeq = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(lastSeq)) {
+        seq = lastSeq + 1;
+      }
+    }
+
+    let orderNumber = `${prefix}${String(seq).padStart(4, "0")}`;
+
+    // Format notes with staff & channel metadata
+    const creatorInfo = `${profile.role.toUpperCase()}: ${profile.full_name || user.email}`;
+    const sourceTag = data.isWhatsAppOrder ? "[WhatsApp Order]" : "[Manual / Staff Order]";
+    const paymentTag = `[Payment: ${data.payment_method}]`;
+    const userNotes = data.notes?.trim() || "";
+
+    const formattedNotes = `${sourceTag} ${paymentTag} (Taken by ${creatorInfo}) ${userNotes}`.trim();
+
+    const orderId = crypto.randomUUID();
+    let inserted = false;
+    let attempts = 0;
+    let lastOrderError: any = null;
+
+    while (!inserted && attempts < 5) {
+      attempts++;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: orderError } = await (adminClient as any)
+        .from("orders")
+        .insert({
+          id: orderId,
+          order_number: orderNumber,
+          customer_id: null,
+          status: data.order_status,
+          subtotal: data.subtotal,
+          delivery_fee: data.deliveryFee,
+          total: data.total,
+          customer_name: data.customer_name,
+          phone: data.phone,
+          email: data.email || null,
+          address: data.address,
+          city: data.city,
+          pincode: data.pincode || "680001",
+          notes: formattedNotes || null,
+        });
+
+      if (!orderError) {
+        inserted = true;
+      } else if (orderError.code === "23505" || orderError.message?.includes("unique")) {
+        seq++;
+        orderNumber = `${prefix}${String(seq).padStart(4, "0")}`;
+      } else {
+        lastOrderError = orderError;
+        break;
+      }
+    }
+
+    if (!inserted) {
+      console.error("Manual order creation DB error:", lastOrderError);
+      return {
+        success: false,
+        error: lastOrderError?.message || "Failed to create manual order in database.",
+      };
+    }
+
+    // Insert order items
+    const orderItems = data.items.map((item) => ({
+      id: crypto.randomUUID(),
+      order_id: orderId,
+      product_id: isUUID(item.productId) ? item.productId : null,
+      variant_id: isUUID(item.variantId) ? item.variantId : null,
+      product_name_snapshot: item.productName,
+      variant_label_snapshot: item.variantLabel,
+      unit_price: item.price,
+      quantity: item.quantity,
+      line_total: item.price * item.quantity,
+    }));
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: itemsError } = await (adminClient as any)
+      .from("order_items")
+      .insert(orderItems);
+
+    if (itemsError) {
+      console.error("Manual order items insertion error:", itemsError);
+    } else {
+      // Decrement stock for matched standard variants
+      try {
+        for (const item of data.items) {
+          if (isUUID(item.variantId)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: cur } = await (adminClient as any)
+              .from("product_variants")
+              .select("stock_quantity")
+              .eq("id", item.variantId)
+              .single();
+            if (cur && typeof cur.stock_quantity === "number") {
+              const newQty = Math.max(0, cur.stock_quantity - item.quantity);
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (adminClient as any)
+                .from("product_variants")
+                .update({ stock_quantity: newQty })
+                .eq("id", item.variantId);
+            }
+          }
+        }
+      } catch (stockErr) {
+        console.error("Failed to decrement variant stock for manual order:", stockErr);
+      }
+    }
+
+    // If customer has an email, send confirmation email
+    if (data.email) {
+      try {
+        await sendOrderEmails({
+          orderNumber,
+          customerName: data.customer_name,
+          phone: data.phone,
+          email: data.email,
+          address: data.address,
+          city: data.city,
+          pincode: data.pincode || "680001",
+          notes: data.notes,
+          paymentMethod: data.payment_method === "razorpay" ? "razorpay" : "cod",
+          items: data.items.map((it) => ({
+            productId: it.productId || "",
+            variantId: it.variantId || "",
+            productName: it.productName,
+            variantLabel: it.variantLabel,
+            price: it.price,
+            quantity: it.quantity,
+            imageUrl: it.imageUrl,
+          })),
+          subtotal: data.subtotal,
+          deliveryFee: data.deliveryFee,
+          total: data.total,
+        });
+      } catch (emailErr) {
+        console.error("Failed to send manual order email:", emailErr);
+      }
+    }
+
+    const createdOrder = {
+      id: orderId,
+      order_number: orderNumber,
+      customer_name: data.customer_name,
+      phone: data.phone,
+      email: data.email || null,
+      address: data.address,
+      city: data.city,
+      pincode: data.pincode || "680001",
+      notes: formattedNotes,
+      status: data.order_status,
+      subtotal: data.subtotal,
+      delivery_fee: data.deliveryFee,
+      total: data.total,
+      created_at: new Date().toISOString(),
+      order_items: orderItems,
+    };
+
+    return {
+      success: true,
+      orderNumber,
+      orderId,
+      createdOrder,
+    };
+  } catch (err: any) {
+    console.error("createManualAdminOrder exception:", err);
+    return {
+      success: false,
+      error: err.message || "An unexpected error occurred while creating manual order.",
+    };
+  }
+}

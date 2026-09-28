@@ -33,6 +33,8 @@ const SETTING_LABELS: Record<string, { label: string; type?: string }> = {
   footer_delivery_title: { label: "Footer Delivery Title" },
   footer_delivery_desc: { label: "Footer Delivery Description" },
   footer_order_cutoff_text: { label: "Footer Order Cutoff Text" },
+  store_upi_id: { label: "Store UPI ID / VPA (e.g. greenbasket@okaxis)" },
+  store_upi_name: { label: "UPI Payee Name (e.g. Green Basket TCR)" },
 };
 
 export default async function AdminSettingsPage() {

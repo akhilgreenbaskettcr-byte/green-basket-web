@@ -16,6 +16,7 @@ import {
   EyeOff,
   AlertCircle,
   ShieldCheck,
+  QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ const TABS = [
   { id: "hero", label: "Hero & Homepage", icon: LayoutTemplate },
   { id: "branding", label: "Branding & Store", icon: Store },
   { id: "delivery", label: "Delivery & Ordering", icon: Truck },
+  { id: "upi", label: "UPI & Payments", icon: QrCode },
   { id: "contact", label: "Contact & Social", icon: PhoneCall },
   { id: "security", label: "Security", icon: ShieldCheck },
 ];
@@ -55,6 +57,8 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
       footer_delivery_title: "SAME DAY DELIVERY",
       footer_delivery_desc: "Order before 1:00 PM",
       footer_order_cutoff_text: "Same-Day delivery for orders before 1:00 PM",
+      store_upi_id: "greenbasket@okaxis",
+      store_upi_name: "Green Basket TCR",
     };
     settings.forEach(({ key, value }) => {
       if (value !== undefined && value !== null) initial[key] = value;
@@ -396,6 +400,60 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gb-green"></div>
               </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: UPI & Payments */}
+      {activeTab === "upi" && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-6 shadow-sm">
+          <div>
+            <h2 className="text-lg font-bold text-gb-charcoal">
+              Store UPI & Payment Configuration
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Set the store&apos;s UPI ID (VPA) and payee name. Dynamic payment QR codes and WhatsApp invoices will automatically use these details.
+            </p>
+          </div>
+
+          <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-4 flex items-start gap-3">
+            <QrCode size={22} className="text-gb-green shrink-0 mt-0.5" />
+            <div className="text-xs text-emerald-900 space-y-1">
+              <p className="font-bold">Dynamic UPI QR Code Integration Active</p>
+              <p className="text-emerald-800/80">
+                When you or staff create manual/WhatsApp orders, the system automatically generates an exact-amount QR code and deep-link using this UPI ID. You can update your UPI ID anytime here without contacting developer.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="gb-label">Store UPI ID / VPA *</label>
+              <input
+                type="text"
+                value={values["store_upi_id"] || ""}
+                onChange={(e) => handleChange("store_upi_id", e.target.value)}
+                placeholder="e.g. greenbasket@okaxis or 9876543210@paytm"
+                className="gb-input font-mono"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">
+                Enter your Google Pay / PhonePe / Paytm Merchant or Personal UPI VPA.
+              </p>
+            </div>
+
+            <div>
+              <label className="gb-label">UPI Payee Business Name *</label>
+              <input
+                type="text"
+                value={values["store_upi_name"] || ""}
+                onChange={(e) => handleChange("store_upi_name", e.target.value)}
+                placeholder="e.g. Green Basket TCR"
+                className="gb-input"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">
+                Display name shown inside the customer&apos;s GPay/PhonePe payment screen.
+              </p>
             </div>
           </div>
         </div>
