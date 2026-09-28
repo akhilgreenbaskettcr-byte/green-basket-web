@@ -80,6 +80,9 @@ export interface Database {
           is_active: boolean;
           is_featured: boolean;
           sort_order: number;
+          base_price: number;
+          unit_type: "kg" | "litre" | "piece" | "pack";
+          compare_base_price: number | null;
           benefits: string | null;
           ingredients: string | null;
           storage_info: string | null;
@@ -96,6 +99,9 @@ export interface Database {
           is_active?: boolean;
           is_featured?: boolean;
           sort_order?: number;
+          base_price?: number;
+          unit_type?: "kg" | "litre" | "piece" | "pack";
+          compare_base_price?: number | null;
           benefits?: string | null;
           ingredients?: string | null;
           storage_info?: string | null;
@@ -111,6 +117,9 @@ export interface Database {
           is_active?: boolean;
           is_featured?: boolean;
           sort_order?: number;
+          base_price?: number;
+          unit_type?: "kg" | "litre" | "piece" | "pack";
+          compare_base_price?: number | null;
           benefits?: string | null;
           ingredients?: string | null;
           storage_info?: string | null;
@@ -128,6 +137,8 @@ export interface Database {
           stock_quantity: number;
           is_available: boolean;
           sort_order: number;
+          quantity_value: number;
+          is_auto_priced: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -141,6 +152,8 @@ export interface Database {
           stock_quantity?: number;
           is_available?: boolean;
           sort_order?: number;
+          quantity_value?: number;
+          is_auto_priced?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -152,6 +165,8 @@ export interface Database {
           stock_quantity?: number;
           is_available?: boolean;
           sort_order?: number;
+          quantity_value?: number;
+          is_auto_priced?: boolean;
           updated_at?: string;
         };
       };
