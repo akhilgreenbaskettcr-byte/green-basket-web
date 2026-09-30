@@ -47,6 +47,8 @@ export interface CatalogueProduct {
   slug: string;
   category_id: string;
   category_name: string;
+  gst_enabled?: boolean;
+  gst_percentage?: number;
   image_url: string | null;
   base_price: number;
   unit_type: UnitType;
@@ -88,6 +90,8 @@ export interface CartItem {
   unitType: UnitType;
   basePrice: number;
   isCustomSize: boolean;
+  gstEnabled?: boolean;
+  gstPercentage?: number;
 }
 
 interface AdminNewOrderClientProps {
@@ -272,6 +276,8 @@ export function AdminNewOrderClient({
           unitType: product.unit_type,
           basePrice: product.base_price,
           isCustomSize: false,
+          gstEnabled: product.gst_enabled,
+          gstPercentage: product.gst_percentage,
         },
       ];
     });
@@ -376,6 +382,8 @@ export function AdminNewOrderClient({
         unitType: calculatorProduct.unit_type,
         basePrice: calculatorProduct.base_price,
         isCustomSize: true,
+        gstEnabled: calculatorProduct.gst_enabled,
+        gstPercentage: calculatorProduct.gst_percentage,
       },
     ]);
 
@@ -415,9 +423,45 @@ export function AdminNewOrderClient({
     return cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }, [cart]);
 
+  const gstTotal = useMemo(() => {
+    const total = cart.reduce((sum, item) => {
+      if (item.gstEnabled && item.gstPercentage && item.gstPercentage > 0) {
+        const itemTotal = item.unitPrice * item.quantity;
+        return sum + (itemTotal * item.gstPercentage) / 100;
+      }
+      return sum;
+    }, 0);
+    return Math.round((total + Number.EPSILON) * 100) / 100;
+  }, [cart]);
+
+  const gstBreakdown = useMemo(() => {
+    const breakdownMap = new Map<number, { taxableAmount: number; gstAmount: number }>();
+    for (const item of cart) {
+      if (item.gstEnabled && item.gstPercentage && item.gstPercentage > 0) {
+        const rate = Number(item.gstPercentage);
+        const lineTotal = item.unitPrice * item.quantity;
+        const lineGst = (lineTotal * rate) / 100;
+
+        const existing = breakdownMap.get(rate) || { taxableAmount: 0, gstAmount: 0 };
+        breakdownMap.set(rate, {
+          taxableAmount: existing.taxableAmount + lineTotal,
+          gstAmount: existing.gstAmount + lineGst,
+        });
+      }
+    }
+
+    return Array.from(breakdownMap.entries())
+      .map(([percentage, { taxableAmount, gstAmount }]) => ({
+        percentage,
+        taxableAmount: Math.round((taxableAmount + Number.EPSILON) * 100) / 100,
+        gstAmount: Math.round((gstAmount + Number.EPSILON) * 100) / 100,
+      }))
+      .sort((a, b) => a.percentage - b.percentage);
+  }, [cart]);
+
   const grandTotal = useMemo(() => {
-    return Math.max(0, subtotal + (deliveryFee || 0));
-  }, [subtotal, deliveryFee]);
+    return Math.max(0, subtotal + gstTotal + (deliveryFee || 0));
+  }, [subtotal, gstTotal, deliveryFee]);
 
   // Submit Order
   const handleCreateOrder = () => {
@@ -456,16 +500,27 @@ export function AdminNewOrderClient({
         payment_method: paymentMethod,
         order_status: orderStatus,
         isWhatsAppOrder: isWhatsAppOrder,
-        items: cart.map((item) => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          productName: item.productName,
-          variantLabel: item.variantLabel,
-          price: item.unitPrice,
-          quantity: item.quantity,
-          imageUrl: item.imageUrl,
-        })),
+        items: cart.map((item) => {
+          const lineTotal = item.unitPrice * item.quantity;
+          const gstRate = item.gstPercentage ? Number(item.gstPercentage) : 0;
+          const gstAmt =
+            item.gstEnabled && gstRate > 0
+              ? Math.round(((lineTotal * gstRate) / 100 + Number.EPSILON) * 100) / 100
+              : 0;
+          return {
+            productId: item.productId,
+            variantId: item.variantId,
+            productName: item.productName,
+            variantLabel: item.variantLabel,
+            price: item.unitPrice,
+            quantity: item.quantity,
+            imageUrl: item.imageUrl,
+            gstPercentage: gstRate,
+            gstAmount: gstAmt,
+          };
+        }),
         subtotal: subtotal,
+        gstTotal: gstTotal,
         deliveryFee: deliveryFee || 0,
         total: grandTotal,
       });
@@ -1052,6 +1107,24 @@ export function AdminNewOrderClient({
                 <span>Items Subtotal</span>
                 <span className="font-mono font-bold text-gray-900">{formatPrice(subtotal)}</span>
               </div>
+
+              {/* GST Breakdown */}
+              {gstTotal > 0 && (
+                <div className="space-y-1 py-1 border-t border-dashed border-gray-100">
+                  {gstBreakdown.map((b) => (
+                    <div key={b.percentage} className="flex items-center justify-between text-[11px] text-gray-500">
+                      <span>GST @{b.percentage}% (on {formatPrice(b.taxableAmount)})</span>
+                      <span className="font-bold text-amber-800 font-mono">+{formatPrice(b.gstAmount)}</span>
+                    </div>
+                  ))}
+                  {gstBreakdown.length > 1 && (
+                    <div className="flex items-center justify-between text-[11px] font-bold text-gray-700">
+                      <span>Total GST Taxes</span>
+                      <span className="font-mono text-amber-900">+{formatPrice(gstTotal)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-center justify-between gap-2 text-gray-600">
                 <div className="flex items-center gap-1.5">

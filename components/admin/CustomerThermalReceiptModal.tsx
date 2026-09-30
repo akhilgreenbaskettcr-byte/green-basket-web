@@ -267,6 +267,11 @@ export function CustomerThermalReceiptModal({
     <span>Subtotal:</span>
     <span>₹${Number(order.subtotal).toFixed(0)}</span>
   </div>
+  ${
+    (order as any).gst_total > 0
+      ? `<div class="summary-row"><span>GST Taxes:</span><span>₹${Number((order as any).gst_total).toFixed(0)}</span></div>`
+      : ""
+  }
   <div class="summary-row">
     <span>Delivery Fee:</span>
     <span>${order.delivery_fee > 0 ? `₹${Number(order.delivery_fee).toFixed(0)}` : "FREE"}</span>
@@ -378,6 +383,12 @@ export function CustomerThermalReceiptModal({
               <span>Subtotal:</span>
               <span>{formatPrice(order.subtotal)}</span>
             </div>
+            {(order as any).gst_total > 0 && (
+              <div className="flex justify-between text-gray-600">
+                <span>GST Taxes:</span>
+                <span>{formatPrice((order as any).gst_total)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-gray-600">
               <span>Delivery:</span>
               <span>{order.delivery_fee > 0 ? formatPrice(order.delivery_fee) : "FREE"}</span>

@@ -36,6 +36,8 @@ export type AdminOrderWithItems = Order & {
     unit_price: number;
     quantity: number;
     line_total: number;
+    gst_percentage_snapshot?: number;
+    gst_amount?: number;
   }[];
 };
 
@@ -591,6 +593,12 @@ export function AdminOrdersClient({
                 <span>Subtotal</span>
                 <span>{formatPrice(selectedOrder.subtotal)}</span>
               </div>
+              {selectedOrder.gst_total > 0 && (
+                <div className="flex justify-between text-gray-500">
+                  <span>GST Taxes</span>
+                  <span className="font-medium text-amber-900">+{formatPrice(selectedOrder.gst_total)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-gray-500">
                 <span>Delivery Fee</span>
                 <span>
@@ -602,7 +610,7 @@ export function AdminOrdersClient({
                 </span>
               </div>
               <div className="flex justify-between font-bold text-base text-gb-charcoal border-t border-gray-100 pt-2">
-                <span>Total Amount (Cash on Delivery)</span>
+                <span>Total Amount</span>
                 <span className="text-gb-green">{formatPrice(selectedOrder.total)}</span>
               </div>
             </div>

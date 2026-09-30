@@ -1,5 +1,11 @@
 import type { ProductVariant } from "@/types/database";
 
+export interface GstBreakdownItem {
+  percentage: number;
+  taxableAmount: number;
+  gstAmount: number;
+}
+
 export interface CartItem {
   productId: string;
   variantId: string;
@@ -9,6 +15,9 @@ export interface CartItem {
   quantity: number;
   imageUrl: string | null;
   slug: string;
+  categoryId?: string | null;
+  gstEnabled?: boolean;
+  gstPercentage?: number;
 }
 
 export interface CartState {
@@ -26,6 +35,8 @@ export interface CartState {
   clearLastAdded: () => void;
   itemCount: () => number;
   subtotal: () => number;
+  gstTotal: () => number;
+  gstBreakdown: () => GstBreakdownItem[];
 }
 
 export type AddToCartPayload = {
@@ -34,4 +45,8 @@ export type AddToCartPayload = {
   slug: string;
   imageUrl: string | null;
   variant: ProductVariant;
+  categoryId?: string | null;
+  gstEnabled?: boolean;
+  gstPercentage?: number;
 };
+

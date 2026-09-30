@@ -142,12 +142,14 @@ export function FreshnessBanner({ settings = {} }: FreshnessBannerProps) {
               </div>
 
               {/* 2. Main Headline (Compact & Sleek) */}
-              <h2 className="text-2xl sm:text-3xl md:text-[2.2rem] lg:text-[2.35rem] xl:text-[2.6rem] font-black tracking-tight leading-[1.12] mb-3 text-[#111827]">
-                <span className="block">{title1}</span>
-                <span className="text-[#1c532b] flex items-center gap-1.5 sm:gap-2 flex-wrap mt-0.5">
+              <h2 className="mb-3">
+                <span className="block text-2xl sm:text-3xl md:text-[2.2rem] lg:text-[2.35rem] xl:text-[2.6rem] font-black tracking-tight leading-[1.12] text-[#111827]">
+                  {title1}
+                </span>
+                <span className="text-[#1c532b] text-base sm:text-lg md:text-xl lg:text-[1.35rem] xl:text-[1.5rem] font-bold sm:font-extrabold leading-snug flex items-center gap-1.5 sm:gap-2 flex-wrap mt-1.5 sm:mt-2">
                   <span>{title2}</span>
                   <Leaf
-                    size={26}
+                    size={20}
                     className="text-[#1c532b] fill-[#1c532b] inline-block ml-1 rotate-12 shrink-0"
                   />
                 </span>

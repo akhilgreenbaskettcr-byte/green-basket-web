@@ -152,7 +152,7 @@ export async function searchProductsLiveAction(
       .from("products")
       .select(`
         id, name, slug, description, image_url,
-        categories:category_id(id, name, slug),
+        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
         product_variants(id, label, price, stock_quantity, is_available)
       `)
       .eq("is_active", true)

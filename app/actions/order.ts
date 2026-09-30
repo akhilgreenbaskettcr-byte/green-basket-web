@@ -35,9 +35,12 @@ const CheckoutSchema = z.object({
       price: z.number().positive(),
       quantity: z.number().int().positive(),
       imageUrl: z.string().optional().nullable(),
+      gstPercentage: z.number().optional().nullable(),
+      gstAmount: z.number().optional().nullable(),
     })
   ).min(1, "Cart is empty"),
   subtotal: z.number().nonnegative(),
+  gstTotal: z.number().nonnegative().optional().default(0),
   deliveryFee: z.number().nonnegative(),
   total: z.number().positive(),
 });
@@ -161,6 +164,7 @@ export async function createOrder(
         status: orderStatus,
         subtotal: data.subtotal,
         delivery_fee: data.deliveryFee,
+        gst_total: data.gstTotal ?? 0,
         total: data.total,
         customer_name: data.customer_name,
         phone: data.phone,
@@ -192,18 +196,29 @@ export async function createOrder(
     };
   }
 
-  // Create order items with safe UUID parsing
-  const orderItems = data.items.map((item) => ({
-    id: crypto.randomUUID(),
-    order_id: orderId,
-    product_id: isUUID(item.productId) ? item.productId : null,
-    variant_id: isUUID(item.variantId) ? item.variantId : null,
-    product_name_snapshot: item.productName,
-    variant_label_snapshot: item.variantLabel,
-    unit_price: item.price,
-    quantity: item.quantity,
-    line_total: item.price * item.quantity,
-  }));
+  // Create order items with safe UUID parsing and GST snapshot
+  const orderItems = data.items.map((item) => {
+    const lineTotal = item.price * item.quantity;
+    const gstRate = item.gstPercentage ? Number(item.gstPercentage) : 0;
+    const gstAmt =
+      item.gstAmount != null
+        ? Number(item.gstAmount)
+        : Math.round(((lineTotal * gstRate) / 100 + Number.EPSILON) * 100) / 100;
+
+    return {
+      id: crypto.randomUUID(),
+      order_id: orderId,
+      product_id: isUUID(item.productId) ? item.productId : null,
+      variant_id: isUUID(item.variantId) ? item.variantId : null,
+      product_name_snapshot: item.productName,
+      variant_label_snapshot: item.variantLabel,
+      unit_price: item.price,
+      quantity: item.quantity,
+      line_total: lineTotal,
+      gst_percentage_snapshot: gstRate,
+      gst_amount: gstAmt,
+    };
+  });
 
   const { error: itemsError } = await supabase
     .from("order_items")
@@ -249,6 +264,7 @@ export async function createOrder(
       paymentMethod: data.payment_method,
       items: data.items,
       subtotal: data.subtotal,
+      gstTotal: data.gstTotal ?? 0,
       deliveryFee: data.deliveryFee,
       total: data.total,
     });
@@ -349,9 +365,12 @@ const ManualOrderSchema = z.object({
       price: z.number().nonnegative("Price cannot be negative"),
       quantity: z.number().int().positive("Quantity must be at least 1"),
       imageUrl: z.string().optional().nullable(),
+      gstPercentage: z.number().optional().nullable(),
+      gstAmount: z.number().optional().nullable(),
     })
   ).min(1, "At least one product item is required in the order"),
   subtotal: z.number().nonnegative(),
+  gstTotal: z.number().nonnegative().optional().default(0),
   deliveryFee: z.number().nonnegative().default(0),
   total: z.number().nonnegative(),
   isWhatsAppOrder: z.boolean().default(true),
@@ -455,6 +474,7 @@ export async function createManualAdminOrder(
           status: data.order_status,
           subtotal: data.subtotal,
           delivery_fee: data.deliveryFee,
+          gst_total: data.gstTotal ?? 0,
           total: data.total,
           customer_name: data.customer_name,
           phone: data.phone,
@@ -484,18 +504,29 @@ export async function createManualAdminOrder(
       };
     }
 
-    // Insert order items
-    const orderItems = data.items.map((item) => ({
-      id: crypto.randomUUID(),
-      order_id: orderId,
-      product_id: isUUID(item.productId) ? item.productId : null,
-      variant_id: isUUID(item.variantId) ? item.variantId : null,
-      product_name_snapshot: item.productName,
-      variant_label_snapshot: item.variantLabel,
-      unit_price: item.price,
-      quantity: item.quantity,
-      line_total: item.price * item.quantity,
-    }));
+    // Insert order items with GST snapshot
+    const orderItems = data.items.map((item) => {
+      const lineTotal = item.price * item.quantity;
+      const gstRate = item.gstPercentage ? Number(item.gstPercentage) : 0;
+      const gstAmt =
+        item.gstAmount != null
+          ? Number(item.gstAmount)
+          : Math.round(((lineTotal * gstRate) / 100 + Number.EPSILON) * 100) / 100;
+
+      return {
+        id: crypto.randomUUID(),
+        order_id: orderId,
+        product_id: isUUID(item.productId) ? item.productId : null,
+        variant_id: isUUID(item.variantId) ? item.variantId : null,
+        product_name_snapshot: item.productName,
+        variant_label_snapshot: item.variantLabel,
+        unit_price: item.price,
+        quantity: item.quantity,
+        line_total: lineTotal,
+        gst_percentage_snapshot: gstRate,
+        gst_amount: gstAmt,
+      };
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: itemsError } = await (adminClient as any)
@@ -553,6 +584,7 @@ export async function createManualAdminOrder(
             imageUrl: it.imageUrl,
           })),
           subtotal: data.subtotal,
+          gstTotal: data.gstTotal ?? 0,
           deliveryFee: data.deliveryFee,
           total: data.total,
         });
@@ -574,6 +606,7 @@ export async function createManualAdminOrder(
       status: data.order_status,
       subtotal: data.subtotal,
       delivery_fee: data.deliveryFee,
+      gst_total: data.gstTotal ?? 0,
       total: data.total,
       created_at: new Date().toISOString(),
       order_items: orderItems,

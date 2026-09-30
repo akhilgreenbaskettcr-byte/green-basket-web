@@ -42,8 +42,8 @@ export default async function AdminOrdersPage() {
       .from("orders")
       .select(`
         id, order_number, customer_name, phone, email, address, city, pincode, notes,
-        status, subtotal, delivery_fee, total, created_at, gps_lat, gps_lng,
-        order_items(id, product_name_snapshot, variant_label_snapshot, unit_price, quantity, line_total)
+        status, subtotal, delivery_fee, gst_total, total, created_at, gps_lat, gps_lng,
+        order_items(id, product_name_snapshot, variant_label_snapshot, unit_price, quantity, line_total, gst_percentage_snapshot, gst_amount)
       `)
       .order("created_at", { ascending: false }) as Promise<{ data: AdminOrderWithItems[] | null }>,
     getSiteSettings(),

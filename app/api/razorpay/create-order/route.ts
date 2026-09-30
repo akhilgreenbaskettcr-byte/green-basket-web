@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { amount, receipt, customer_name, phone, email, address, city, pincode, notes, items, subtotal, deliveryFee, total } = body;
+    const { amount, receipt, customer_name, phone, email, address, city, pincode, notes, items, subtotal, gstTotal, gst_total, deliveryFee, total } = body;
 
     if (!amount || amount <= 0) {
       return NextResponse.json(
@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
       pincode: String(pincode || "").slice(0, 10),
       delivery_notes: String(notes || "").slice(0, 200),
       subtotal: String(subtotal || amount),
+      gst_total: String(gst_total || gstTotal || 0),
       delivery_fee: String(deliveryFee || 0),
       total: String(total || amount),
     };

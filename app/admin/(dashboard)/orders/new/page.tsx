@@ -47,7 +47,7 @@ export default async function AdminNewOrderPage() {
     .from("products")
     .select(`
       id, name, slug, image_url, category_id, base_price, unit_type, is_active,
-      categories:category_id (name),
+      categories:category_id (name, gst_enabled, gst_percentage),
       product_variants (
         id, label, price, quantity_value, stock_quantity, is_available, is_auto_priced
       )
@@ -63,6 +63,8 @@ export default async function AdminNewOrderPage() {
     slug: p.slug,
     category_id: p.category_id,
     category_name: p.categories?.name || "General",
+    gst_enabled: Boolean(p.categories?.gst_enabled),
+    gst_percentage: Number(p.categories?.gst_percentage) || 0,
     image_url: p.image_url,
     base_price: Number(p.base_price) || 0,
     unit_type: p.unit_type || "kg",

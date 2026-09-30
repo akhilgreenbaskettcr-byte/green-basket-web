@@ -35,6 +35,8 @@ interface CategoryInfo {
   id: string;
   name: string;
   slug: string;
+  gst_enabled?: boolean;
+  gst_percentage?: number;
 }
 
 interface LiveProductResult {
@@ -259,6 +261,9 @@ export function SearchBar() {
       price: variant.price,
       imageUrl: product.image_url || "",
       slug: product.slug,
+      categoryId: product.categories?.id,
+      gstEnabled: product.categories?.gst_enabled,
+      gstPercentage: product.categories?.gst_percentage,
     });
 
     setAddedItemIds((prev) => ({ ...prev, [product.id]: true }));

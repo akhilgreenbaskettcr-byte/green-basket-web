@@ -8,10 +8,11 @@ import { formatPrice } from "@/lib/utils";
 import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight, ShieldCheck } from "lucide-react";
 
 export function CartSlideOver() {
-  const { items, isOpen, closeCart, updateQuantity, removeItem, subtotal, itemCount } =
+  const { items, isOpen, closeCart, updateQuantity, removeItem, subtotal, gstTotal, itemCount } =
     useCartStore();
 
   const totalAmount = subtotal();
+  const estimatedGst = gstTotal();
   const totalCount = itemCount();
 
   // Close on Escape key press
@@ -163,15 +164,25 @@ export function CartSlideOver() {
         {/* Drawer Footer */}
         {items.length > 0 && (
           <div className="p-5 border-t border-gray-100 bg-white space-y-3 shadow-lg">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500 font-semibold">Subtotal</span>
-              <span className="font-black text-lg text-gb-charcoal font-mono">
-                {formatPrice(totalAmount)}
-              </span>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 font-semibold">Subtotal</span>
+                <span className="font-bold text-gray-800 font-mono">
+                  {formatPrice(totalAmount)}
+                </span>
+              </div>
+              {estimatedGst > 0 && (
+                <div className="flex items-center justify-between text-xs text-amber-800">
+                  <span className="font-medium">Estimated GST Taxes</span>
+                  <span className="font-semibold font-mono">+{formatPrice(estimatedGst)}</span>
+                </div>
+              )}
             </div>
 
             <p className="text-[11px] text-gray-400">
-              Taxes and delivery calculated at checkout.
+              {estimatedGst > 0
+                ? "Delivery and final taxes calculated at checkout."
+                : "Taxes and delivery calculated at checkout."}
             </p>
 
             <div className="space-y-2 pt-1">

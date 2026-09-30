@@ -45,6 +45,8 @@ export interface Database {
           image_url: string | null;
           sort_order: number;
           is_active: boolean;
+          gst_enabled: boolean;
+          gst_percentage: number;
           created_at: string;
           updated_at: string;
         };
@@ -56,6 +58,8 @@ export interface Database {
           image_url?: string | null;
           sort_order?: number;
           is_active?: boolean;
+          gst_enabled?: boolean;
+          gst_percentage?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -66,6 +70,8 @@ export interface Database {
           image_url?: string | null;
           sort_order?: number;
           is_active?: boolean;
+          gst_enabled?: boolean;
+          gst_percentage?: number;
           updated_at?: string;
         };
       };
@@ -184,6 +190,7 @@ export interface Database {
             | "cancelled";
           subtotal: number;
           delivery_fee: number;
+          gst_total: number;
           total: number;
           customer_name: string;
           phone: string;
@@ -210,6 +217,7 @@ export interface Database {
             | "cancelled";
           subtotal: number;
           delivery_fee?: number;
+          gst_total?: number;
           total: number;
           customer_name: string;
           phone: string;
@@ -232,6 +240,7 @@ export interface Database {
             | "delivered"
             | "cancelled";
           notes?: string | null;
+          gst_total?: number;
           updated_at?: string;
         };
       };
@@ -246,6 +255,8 @@ export interface Database {
           unit_price: number;
           quantity: number;
           line_total: number;
+          gst_percentage_snapshot: number;
+          gst_amount: number;
         };
         Insert: {
           id?: string;
@@ -257,6 +268,8 @@ export interface Database {
           unit_price: number;
           quantity: number;
           line_total: number;
+          gst_percentage_snapshot?: number;
+          gst_amount?: number;
         };
         Update: never;
       };
@@ -376,7 +389,7 @@ export type OrderStatus = Order["status"];
 // Enriched product type with variants and category
 export type ProductWithVariants = Product & {
   product_variants: ProductVariant[];
-  categories: Pick<Category, "id" | "name" | "slug"> | null;
+  categories: Pick<Category, "id" | "name" | "slug" | "gst_enabled" | "gst_percentage"> | null;
 };
 
 // Enriched order type with items

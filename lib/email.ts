@@ -22,6 +22,7 @@ interface OrderEmailPayload {
   paymentMethod: "razorpay" | "cod";
   items: OrderItemPayload[];
   subtotal: number;
+  gstTotal?: number;
   deliveryFee: number;
   total: number;
 }
@@ -181,6 +182,11 @@ export async function sendOrderEmails(order: OrderEmailPayload) {
                   <td style="padding: 4px 0; color: #6b7280;">Subtotal:</td>
                   <td style="padding: 4px 0; text-align: right; font-weight: 600; color: #374151;">₹${order.subtotal}</td>
                 </tr>
+                ${order.gstTotal && order.gstTotal > 0 ? `
+                <tr>
+                  <td style="padding: 4px 0; color: #6b7280;">Taxes (GST):</td>
+                  <td style="padding: 4px 0; text-align: right; font-weight: 600; color: #374151;">₹${order.gstTotal}</td>
+                </tr>` : ""}
                 <tr>
                   <td style="padding: 4px 0; color: #6b7280;">Delivery Fee:</td>
                   <td style="padding: 4px 0; text-align: right; font-weight: 600; color: ${order.deliveryFee === 0 ? "#059669" : "#374151"};">
