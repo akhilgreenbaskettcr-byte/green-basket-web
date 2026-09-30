@@ -93,6 +93,45 @@ export const useCartStore = create<CartState>()(
           (total, item) => total + item.price * item.quantity,
           0
         ),
+
+      gstTotal: () => {
+        const items = get().items;
+        const total = items.reduce((sum, item) => {
+          if (item.gstEnabled && item.gstPercentage && item.gstPercentage > 0) {
+            const itemTotal = item.price * item.quantity;
+            return sum + (itemTotal * item.gstPercentage) / 100;
+          }
+          return sum;
+        }, 0);
+        return Math.round((total + Number.EPSILON) * 100) / 100;
+      },
+
+      gstBreakdown: () => {
+        const items = get().items;
+        const breakdownMap = new Map<number, { taxableAmount: number; gstAmount: number }>();
+
+        for (const item of items) {
+          if (item.gstEnabled && item.gstPercentage && item.gstPercentage > 0) {
+            const rate = Number(item.gstPercentage);
+            const lineTotal = item.price * item.quantity;
+            const lineGst = (lineTotal * rate) / 100;
+
+            const existing = breakdownMap.get(rate) || { taxableAmount: 0, gstAmount: 0 };
+            breakdownMap.set(rate, {
+              taxableAmount: existing.taxableAmount + lineTotal,
+              gstAmount: existing.gstAmount + lineGst,
+            });
+          }
+        }
+
+        return Array.from(breakdownMap.entries())
+          .map(([percentage, { taxableAmount, gstAmount }]) => ({
+            percentage,
+            taxableAmount: Math.round((taxableAmount + Number.EPSILON) * 100) / 100,
+            gstAmount: Math.round((gstAmount + Number.EPSILON) * 100) / 100,
+          }))
+          .sort((a, b) => a.percentage - b.percentage);
+      },
     }),
     {
       name: "green-basket-cart",
@@ -111,5 +150,8 @@ export function addToCart(payload: AddToCartPayload) {
     price: payload.variant.price,
     imageUrl: payload.imageUrl,
     slug: payload.slug,
+    categoryId: payload.categoryId,
+    gstEnabled: payload.gstEnabled,
+    gstPercentage: payload.gstPercentage,
   });
 }

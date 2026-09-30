@@ -82,6 +82,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         price: selectedVariant.price,
         imageUrl: product.image_url,
         slug: product.slug,
+        categoryId: product.category_id || product.categories?.id,
+        gstEnabled: product.categories?.gst_enabled,
+        gstPercentage: product.categories?.gst_percentage,
       },
       quantity
     );
@@ -116,6 +119,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         price: selectedVariant.price,
         imageUrl: product.image_url,
         slug: product.slug,
+        categoryId: product.category_id || product.categories?.id,
+        gstEnabled: product.categories?.gst_enabled,
+        gstPercentage: product.categories?.gst_percentage,
       },
       quantity
     );

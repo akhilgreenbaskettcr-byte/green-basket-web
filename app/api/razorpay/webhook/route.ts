@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
       const city = notes.city || "Thrissur";
       const pincode = notes.pincode || "680001";
       const subtotal = Number(notes.subtotal) || Number(payment?.amount || 0) / 100;
+      const gstTotal = Number(notes.gst_total) || 0;
       const deliveryFee = Number(notes.delivery_fee) || 0;
       const total = Number(notes.total) || Number(payment?.amount || 0) / 100;
       const deliveryNotes = notes.delivery_notes || "";
@@ -132,6 +133,7 @@ export async function POST(req: NextRequest) {
         status: "confirmed",
         subtotal: subtotal,
         delivery_fee: deliveryFee,
+        gst_total: gstTotal,
         total: total,
         customer_name: customerName,
         phone: phone,
@@ -170,6 +172,7 @@ export async function POST(req: NextRequest) {
             paymentMethod: "razorpay",
             items: parsedItems,
             subtotal,
+            gstTotal,
             deliveryFee,
             total,
           });

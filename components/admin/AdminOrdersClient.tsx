@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { formatPrice, formatOrderStatus } from "@/lib/utils";
 import { OrderStatusUpdater } from "@/components/admin/OrderStatusUpdater";
 import {
@@ -18,9 +19,14 @@ import {
   ExternalLink,
   Copy,
   Check,
+  Plus,
+  FileText,
 } from "lucide-react";
 import type { Order, OrderStatus } from "@/types/database";
 import { ThermalReceiptModal } from "@/components/admin/ThermalReceiptModal";
+import { CustomerThermalReceiptModal } from "@/components/admin/CustomerThermalReceiptModal";
+import { UpiQrModal } from "@/components/admin/UpiQrModal";
+import { QrCode } from "lucide-react";
 
 export type AdminOrderWithItems = Order & {
   order_items?: {
@@ -30,11 +36,16 @@ export type AdminOrderWithItems = Order & {
     unit_price: number;
     quantity: number;
     line_total: number;
+    gst_percentage_snapshot?: number;
+    gst_amount?: number;
   }[];
 };
 
 interface AdminOrdersClientProps {
   orders: AdminOrderWithItems[];
+  storeUpiId?: string;
+  storeUpiName?: string;
+  storePhone?: string;
 }
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
@@ -47,11 +58,18 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
-export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
+export function AdminOrdersClient({
+  orders,
+  storeUpiId = "greenbasket@okaxis",
+  storeUpiName = "Green Basket TCR",
+  storePhone = "+91 90481 78886",
+}: AdminOrdersClientProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<AdminOrderWithItems | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<AdminOrderWithItems | null>(null);
+  const [customerBillOrder, setCustomerBillOrder] = useState<AdminOrderWithItems | null>(null);
+  const [upiQrOrder, setUpiQrOrder] = useState<AdminOrderWithItems | null>(null);
   const [copiedMapLink, setCopiedMapLink] = useState(false);
 
   const filtered = orders.filter((order) => {
@@ -75,6 +93,14 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
             {orders.length} orders placed in total
           </p>
         </div>
+
+        <Link
+          href="/admin/orders/new"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gb-green hover:bg-gb-green/90 text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <Plus size={16} />
+          <span>+ Create WhatsApp / Manual Order</span>
+        </Link>
       </div>
 
       {/* Filters */}
@@ -187,17 +213,26 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                     />
                     <button
                       type="button"
-                      onClick={() => setReceiptOrder(order)}
-                      className="text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1"
-                      title="Print Farm Order Slip (58mm)"
+                      onClick={() => setCustomerBillOrder(order)}
+                      className="text-xs font-bold text-gray-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-1.5 rounded-lg border border-emerald-200/60 transition-colors shrink-0 flex items-center gap-1"
+                      title="Print 58mm Customer Bill with Item Pricing"
                     >
-                      <Printer size={13} className="text-gray-700" />
-                      <span>Slip</span>
+                      <Printer size={12} className="text-emerald-700" />
+                      <span>Bill</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReceiptOrder(order)}
+                      className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-2 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1"
+                      title="Print 58mm Farm Packing Slip without Pricing"
+                    >
+                      <FileText size={12} className="text-gray-500" />
+                      <span>Farm</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setSelectedOrder(order)}
-                      className="text-xs font-bold text-gb-green bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors shrink-0"
+                      className="text-xs font-bold text-gb-green bg-green-50 hover:bg-green-100 px-2.5 py-1.5 rounded-lg transition-colors shrink-0"
                     >
                       Inspect
                     </button>
@@ -331,12 +366,21 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
-                            onClick={() => setReceiptOrder(order)}
-                            className="text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-gray-900 px-2.5 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-2xs"
-                            title="Print Farm Order Slip (58mm)"
+                            onClick={() => setCustomerBillOrder(order)}
+                            className="text-xs font-bold text-emerald-950 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg border border-emerald-200/60 transition-colors inline-flex items-center gap-1 shadow-2xs"
+                            title="Print 58mm Customer Bill with Item Pricing"
                           >
-                            <Printer size={13} className="text-gray-700" />
-                            <span>Slip</span>
+                            <Printer size={13} className="text-emerald-700" />
+                            <span>Bill</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setReceiptOrder(order)}
+                            className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 hover:text-gray-900 px-2.5 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1 shadow-2xs"
+                            title="Print 58mm Farm Packing Slip without Pricing"
+                          >
+                            <FileText size={13} className="text-gray-500" />
+                            <span>Farm Slip</span>
                           </button>
                           <button
                             type="button"
@@ -549,6 +593,12 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                 <span>Subtotal</span>
                 <span>{formatPrice(selectedOrder.subtotal)}</span>
               </div>
+              {selectedOrder.gst_total > 0 && (
+                <div className="flex justify-between text-gray-500">
+                  <span>GST Taxes</span>
+                  <span className="font-medium text-amber-900">+{formatPrice(selectedOrder.gst_total)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-gray-500">
                 <span>Delivery Fee</span>
                 <span>
@@ -560,9 +610,44 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
                 </span>
               </div>
               <div className="flex justify-between font-bold text-base text-gb-charcoal border-t border-gray-100 pt-2">
-                <span>Total Amount (Cash on Delivery)</span>
+                <span>Total Amount</span>
                 <span className="text-gb-green">{formatPrice(selectedOrder.total)}</span>
               </div>
+            </div>
+
+            {/* Action Buttons in Drawer */}
+            <div className="pt-3 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setCustomerBillOrder(selectedOrder)}
+                className="py-2.5 px-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Printer size={14} />
+                <span>58mm Customer Bill</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setReceiptOrder(selectedOrder)}
+                className="py-2.5 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <FileText size={14} />
+                <span>58mm Farm Slip</span>
+              </button>
+
+              {/* Show UPI QR button if manual / WhatsApp order */}
+              {(selectedOrder.notes?.includes("WhatsApp") ||
+                selectedOrder.notes?.includes("Manual") ||
+                !selectedOrder.notes?.toLowerCase().includes("paid online")) && (
+                <button
+                  type="button"
+                  onClick={() => setUpiQrOrder(selectedOrder)}
+                  className="py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors col-span-2 sm:col-span-1"
+                >
+                  <QrCode size={14} className="text-emerald-700" />
+                  <span>UPI Payment QR</span>
+                </button>
+              )}
             </div>
 
             {/* Close button */}
@@ -576,11 +661,33 @@ export function AdminOrdersClient({ orders }: AdminOrdersClientProps) {
         </div>
       )}
 
-      {/* Thermal Receipt Modal (58mm ATPOS) */}
+      {/* 1. Customer 58mm Thermal Bill Modal (With Item Prices) */}
+      <CustomerThermalReceiptModal
+        order={customerBillOrder}
+        onClose={() => setCustomerBillOrder(null)}
+        storePhone={storePhone}
+      />
+
+      {/* 2. Farm 58mm Picking Slip Modal (Untouched Existing Slip) */}
       <ThermalReceiptModal
         order={receiptOrder}
         onClose={() => setReceiptOrder(null)}
+        storePhone={storePhone}
       />
+
+      {/* 3. Dynamic Amount UPI Payment QR Modal */}
+      {upiQrOrder && (
+        <UpiQrModal
+          isOpen={!!upiQrOrder}
+          onClose={() => setUpiQrOrder(null)}
+          orderNumber={upiQrOrder.order_number}
+          amount={Number(upiQrOrder.total) || 0}
+          customerName={upiQrOrder.customer_name}
+          customerPhone={upiQrOrder.phone}
+          upiId={storeUpiId}
+          payeeName={storeUpiName}
+        />
+      )}
     </div>
   );
 }

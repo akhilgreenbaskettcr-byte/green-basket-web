@@ -625,8 +625,17 @@ export function AdminProductsClient({ products: initialProducts }: AdminProducts
                       </td>
 
                       {/* Price */}
-                      <td className="px-5 py-4 text-sm font-bold text-gray-900">
-                        {minPrice !== null ? formatPrice(minPrice) : "—"}
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-black text-gray-900">
+                            {minPrice !== null ? formatPrice(minPrice) : "—"}
+                          </span>
+                          {product.base_price > 0 && (
+                            <span className="text-[10px] font-semibold text-gray-500 font-mono">
+                              Base: {formatPrice(product.base_price)} / {product.unit_type || "kg"}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Stock */}

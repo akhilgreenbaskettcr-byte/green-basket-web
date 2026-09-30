@@ -63,7 +63,7 @@ export function CheckoutForm({
   enableCod = true,
 }: CheckoutFormProps) {
   const router = useRouter();
-  const { items, subtotal, clearCart } = useCartStore();
+  const { items, subtotal, gstTotal, gstBreakdown, clearCart } = useCartStore();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<"IDLE" | "OPENING" | "CONFIRMING" | "COD">("IDLE");
@@ -320,8 +320,10 @@ export function CheckoutForm({
   const isPinApproved = Boolean(matchedDeliveryArea);
 
   const sub = subtotal();
+  const tax = gstTotal();
+  const breakdown = gstBreakdown();
   const delivery = Math.max(0, defaultDeliveryFee);
-  const total = sub + delivery;
+  const total = sub + tax + delivery;
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -375,16 +377,27 @@ export function CheckoutForm({
             locationLink ||
             pastedLinkInput.trim() ||
             (gpsCoords ? `https://www.google.com/maps?q=${gpsCoords.lat},${gpsCoords.lng}` : null),
-          items: items.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            productName: item.productName,
-            variantLabel: item.variantLabel,
-            price: item.price,
-            quantity: item.quantity,
-            imageUrl: item.imageUrl,
-          })),
+          items: items.map((item) => {
+            const lineTotal = item.price * item.quantity;
+            const gstRate = item.gstPercentage ? Number(item.gstPercentage) : 0;
+            const gstAmt =
+              item.gstEnabled && gstRate > 0
+                ? Math.round(((lineTotal * gstRate) / 100 + Number.EPSILON) * 100) / 100
+                : 0;
+            return {
+              productId: item.productId,
+              variantId: item.variantId,
+              productName: item.productName,
+              variantLabel: item.variantLabel,
+              price: item.price,
+              quantity: item.quantity,
+              imageUrl: item.imageUrl,
+              gstPercentage: gstRate,
+              gstAmount: gstAmt,
+            };
+          }),
           subtotal: sub,
+          gstTotal: tax,
           deliveryFee: delivery,
           total,
         });
@@ -436,6 +449,7 @@ export function CheckoutForm({
             imageUrl: i.imageUrl,
           })),
           subtotal: sub,
+          gstTotal: tax,
           deliveryFee: delivery,
           total: total,
         }),
@@ -490,16 +504,27 @@ export function CheckoutForm({
                 locationLink ||
                 pastedLinkInput.trim() ||
                 (gpsCoords ? `https://www.google.com/maps?q=${gpsCoords.lat},${gpsCoords.lng}` : null),
-              items: items.map((item) => ({
-                productId: item.productId,
-                variantId: item.variantId,
-                productName: item.productName,
-                variantLabel: item.variantLabel,
-                price: item.price,
-                quantity: item.quantity,
-                imageUrl: item.imageUrl,
-              })),
+              items: items.map((item) => {
+                const lineTotal = item.price * item.quantity;
+                const gstRate = item.gstPercentage ? Number(item.gstPercentage) : 0;
+                const gstAmt =
+                  item.gstEnabled && gstRate > 0
+                    ? Math.round(((lineTotal * gstRate) / 100 + Number.EPSILON) * 100) / 100
+                    : 0;
+                return {
+                  productId: item.productId,
+                  variantId: item.variantId,
+                  productName: item.productName,
+                  variantLabel: item.variantLabel,
+                  price: item.price,
+                  quantity: item.quantity,
+                  imageUrl: item.imageUrl,
+                  gstPercentage: gstRate,
+                  gstAmount: gstAmt,
+                };
+              }),
               subtotal: sub,
+              gstTotal: tax,
               deliveryFee: delivery,
               total,
             });
@@ -927,11 +952,35 @@ export function CheckoutForm({
             </div>
 
             {/* Totals */}
-            <div className="border-t border-gb-border pt-4 space-y-3">
+            <div className="border-t border-gb-border pt-4 space-y-2.5">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Subtotal</span>
                 <span className="font-medium text-gb-charcoal">{formatPrice(sub)}</span>
               </div>
+
+              {/* GST Breakdown (Grouped by Tax Rate) */}
+              {tax > 0 && (
+                <div className="space-y-1.5 py-1">
+                  {breakdown.map((b) => (
+                    <div key={b.percentage} className="flex justify-between text-xs text-gray-600">
+                      <span className="flex items-center gap-1.5">
+                        <span className="font-medium text-amber-900 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[10px]">
+                          GST @{b.percentage}%
+                        </span>
+                        <span className="text-[11px] text-gray-400">on {formatPrice(b.taxableAmount)}</span>
+                      </span>
+                      <span className="font-medium text-gb-charcoal">+{formatPrice(b.gstAmount)}</span>
+                    </div>
+                  ))}
+                  {breakdown.length > 1 && (
+                    <div className="flex justify-between text-xs font-semibold text-gray-700 pt-1 border-t border-dashed border-gray-100">
+                      <span>Total GST Taxes</span>
+                      <span className="text-amber-800">+{formatPrice(tax)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Delivery</span>
                 <span className="font-medium text-gb-charcoal">

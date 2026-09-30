@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
@@ -30,6 +30,8 @@ interface CategoryFormData {
   slug: string;
   description: string;
   image_url: string;
+  gst_enabled: boolean;
+  gst_percentage: number;
 }
 
 export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps) {
@@ -45,6 +47,8 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
     slug: "",
     description: "",
     image_url: "",
+    gst_enabled: false,
+    gst_percentage: 0,
   });
 
   const [editForm, setEditForm] = useState<CategoryFormData>({
@@ -52,7 +56,42 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
     slug: "",
     description: "",
     image_url: "",
+    gst_enabled: false,
+    gst_percentage: 0,
   });
+
+  // Lock background scrolling when edit modal is active
+  useEffect(() => {
+    if (!editingCategory) return;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    // In the admin dashboard, <main> is the overflowing scroll container
+    const mainEl = document.querySelector("main");
+    const originalMainOverflow = mainEl ? mainEl.style.overflow : "";
+    if (mainEl) {
+      mainEl.style.overflow = "hidden";
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setEditingCategory(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      if (mainEl) {
+        mainEl.style.overflow = originalMainOverflow;
+      }
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [editingCategory]);
 
   const handleCreateNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCreateForm((prev) => ({
@@ -77,6 +116,8 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
         image_url: createForm.image_url.trim() || null,
         is_active: true,
         sort_order: categories.length + 1,
+        gst_enabled: createForm.gst_enabled,
+        gst_percentage: createForm.gst_enabled ? Number(createForm.gst_percentage) || 0 : 0,
       });
 
       if (dbError) {
@@ -84,7 +125,14 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
         return;
       }
 
-      setCreateForm({ name: "", slug: "", description: "", image_url: "" });
+      setCreateForm({
+        name: "",
+        slug: "",
+        description: "",
+        image_url: "",
+        gst_enabled: false,
+        gst_percentage: 0,
+      });
       setShowCreateForm(false);
       setSuccessMessage("Category created successfully!");
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -99,6 +147,8 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
       slug: cat.slug,
       description: cat.description ?? "",
       image_url: cat.image_url ?? "",
+      gst_enabled: Boolean(cat.gst_enabled),
+      gst_percentage: Number(cat.gst_percentage) || 0,
     });
     setError("");
   };
@@ -119,6 +169,8 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
           slug: editForm.slug.trim() || generateSlug(editForm.name),
           description: editForm.description.trim() || null,
           image_url: editForm.image_url.trim() || null,
+          gst_enabled: editForm.gst_enabled,
+          gst_percentage: editForm.gst_enabled ? Number(editForm.gst_percentage) || 0 : 0,
         })
         .eq("id", editingCategory.id);
 
@@ -214,6 +266,64 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
               />
             </div>
 
+            {/* GST Configuration Box */}
+            <div className="p-4 rounded-xl border border-amber-200/80 bg-amber-50/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-gray-900">GST (Goods & Services Tax)</p>
+                  <p className="text-[11px] text-gray-500">Enable if items in this category attract GST during checkout</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCreateForm((p) => ({ ...p, gst_enabled: !p.gst_enabled }))}
+                  className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+                    createForm.gst_enabled
+                      ? "bg-amber-100 text-amber-900 border border-amber-300"
+                      : "bg-gray-100 text-gray-500 border border-gray-200"
+                  }`}
+                >
+                  {createForm.gst_enabled ? (
+                    <ToggleRight size={16} className="text-amber-600" />
+                  ) : (
+                    <ToggleLeft size={16} className="text-gray-400" />
+                  )}
+                  {createForm.gst_enabled ? "GST Applicable" : "No GST"}
+                </button>
+              </div>
+
+              {createForm.gst_enabled && (
+                <div className="pt-2 border-t border-amber-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                  <div>
+                    <label htmlFor="cat-gst-pct" className="block text-[11px] font-semibold text-gray-700 mb-1">
+                      GST Percentage Rate (%) *
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="cat-gst-pct"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={createForm.gst_percentage || ""}
+                        onChange={(e) =>
+                          setCreateForm((p) => ({ ...p, gst_percentage: parseFloat(e.target.value) || 0 }))
+                        }
+                        className="gb-input pr-8 text-sm"
+                        placeholder="e.g. 5, 12, 18"
+                        required={createForm.gst_enabled}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">
+                        %
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-relaxed sm:pt-4">
+                    Items under this category will automatically calculate {createForm.gst_percentage || 0}% GST at checkout.
+                  </p>
+                </div>
+              )}
+            </div>
+
             {error && <p className="text-red-600 text-xs" role="alert">{error}</p>}
 
             <div className="flex gap-3 pt-2">
@@ -249,7 +359,7 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
             </div>
             <div>
               <p className="font-bold text-sm text-gray-900">Manage Store Categories</p>
-              <p className="text-xs text-gray-400">Add or edit category images & details</p>
+              <p className="text-xs text-gray-400">Add or edit category images, GST rates & details</p>
             </div>
           </div>
           <button
@@ -268,6 +378,7 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
             <tr className="border-b border-gray-100 bg-gray-50/70">
               <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Category</th>
               <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Slug</th>
+              <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">GST Rate</th>
               <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Description</th>
               <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Status</th>
               <th className="text-right text-xs font-semibold text-gray-500 px-6 py-3.5">Actions</th>
@@ -308,6 +419,17 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
                 </td>
 
                 <td className="px-6 py-4 text-xs text-gray-500 font-mono">{cat.slug}</td>
+
+                {/* GST Rate Column */}
+                <td className="px-6 py-4">
+                  {cat.gst_enabled && Number(cat.gst_percentage) > 0 ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                      {cat.gst_percentage}% GST
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400 font-medium">0% (No GST)</span>
+                  )}
+                </td>
                 
                 <td className="px-6 py-4 text-xs text-gray-500 max-w-xs truncate">
                   {cat.description ?? "—"}
@@ -359,11 +481,14 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
       {/* Edit Category Modal */}
       {editingCategory && (
         <div
-          className="fixed inset-0 z-[300] bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-[300] bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditingCategory(null);
+          }}
         >
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-5 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-5 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
                 <span className="text-xs text-gray-400 font-mono">Category Editor</span>
@@ -419,6 +544,64 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
                   className="gb-input resize-none"
                   rows={2}
                 />
+              </div>
+
+              {/* GST Configuration Box in Edit Modal */}
+              <div className="p-4 rounded-xl border border-amber-200/80 bg-amber-50/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-gray-900">GST (Goods & Services Tax)</p>
+                    <p className="text-[11px] text-gray-500">Enable if items in this category attract GST</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditForm((p) => ({ ...p, gst_enabled: !p.gst_enabled }))}
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+                      editForm.gst_enabled
+                        ? "bg-amber-100 text-amber-900 border border-amber-300"
+                        : "bg-gray-100 text-gray-500 border border-gray-200"
+                    }`}
+                  >
+                    {editForm.gst_enabled ? (
+                      <ToggleRight size={16} className="text-amber-600" />
+                    ) : (
+                      <ToggleLeft size={16} className="text-gray-400" />
+                    )}
+                    {editForm.gst_enabled ? "GST Applicable" : "No GST"}
+                  </button>
+                </div>
+
+                {editForm.gst_enabled && (
+                  <div className="pt-2 border-t border-amber-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                    <div>
+                      <label htmlFor="cat-edit-gst-pct" className="block text-[11px] font-semibold text-gray-700 mb-1">
+                        GST Percentage Rate (%) *
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="cat-edit-gst-pct"
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          value={editForm.gst_percentage || ""}
+                          onChange={(e) =>
+                            setEditForm((p) => ({ ...p, gst_percentage: parseFloat(e.target.value) || 0 }))
+                          }
+                          className="gb-input pr-8 text-sm"
+                          placeholder="e.g. 5, 12, 18"
+                          required={editForm.gst_enabled}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">
+                          %
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-gray-500 leading-relaxed sm:pt-4">
+                      Items under this category will automatically calculate {editForm.gst_percentage || 0}% GST at checkout.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {error && <p className="text-red-600 text-xs">{error}</p>}

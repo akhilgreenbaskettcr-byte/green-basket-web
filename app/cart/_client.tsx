@@ -13,15 +13,17 @@ interface CartPageContentProps {
 
 export default function CartPageContent({ defaultDeliveryFee = 40 }: CartPageContentProps) {
   const [mounted, setMounted] = useState(false);
-  const { items, removeItem, updateQuantity, subtotal, itemCount } = useCartStore();
+  const { items, removeItem, updateQuantity, subtotal, gstTotal, gstBreakdown, itemCount } = useCartStore();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const sub = subtotal();
+  const tax = gstTotal();
+  const breakdown = gstBreakdown();
   const delivery = Math.max(0, defaultDeliveryFee);
-  const total = sub + delivery;
+  const total = sub + tax + delivery;
   const count = itemCount();
 
   if (!mounted) {
@@ -127,11 +129,35 @@ export default function CartPageContent({ defaultDeliveryFee = 40 }: CartPageCon
               <div className="bg-white rounded-2xl border border-gb-border p-6 sticky top-24">
                 <h2 className="font-semibold text-gb-charcoal text-base mb-5">Order Summary</h2>
 
-                <div className="space-y-3 mb-5">
+                <div className="space-y-2.5 mb-5">
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Subtotal</span>
                     <span className="font-medium text-gb-charcoal">{formatPrice(sub)}</span>
                   </div>
+
+                  {/* GST Breakdown */}
+                  {tax > 0 && (
+                    <div className="space-y-1.5 py-1">
+                      {breakdown.map((b) => (
+                        <div key={b.percentage} className="flex justify-between text-xs text-gray-600">
+                          <span className="flex items-center gap-1.5">
+                            <span className="font-medium text-amber-900 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded text-[10px]">
+                              GST @{b.percentage}%
+                            </span>
+                            <span className="text-[11px] text-gray-400">on {formatPrice(b.taxableAmount)}</span>
+                          </span>
+                          <span className="font-medium text-gb-charcoal">+{formatPrice(b.gstAmount)}</span>
+                        </div>
+                      ))}
+                      {breakdown.length > 1 && (
+                        <div className="flex justify-between text-xs font-semibold text-gray-700 pt-1 border-t border-dashed border-gray-100">
+                          <span>Total GST Taxes</span>
+                          <span className="text-amber-800">+{formatPrice(tax)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Delivery</span>
                     <span className="font-medium text-gb-charcoal">

@@ -15,10 +15,16 @@ export interface UpdateProductPayload {
   storage_info: string | null;
   is_active: boolean;
   is_featured: boolean;
+  base_price: number;
+  unit_type: "kg" | "litre" | "piece" | "pack";
+  compare_base_price?: number | null;
   variants: {
     id?: string;
     label: string;
     price: number;
+    compare_price?: number | null;
+    quantity_value?: number;
+    is_auto_priced?: boolean;
     stock_quantity: number;
     sku: string | null;
     sort_order: number;
@@ -28,6 +34,11 @@ export interface UpdateProductPayload {
 export async function updateProduct(payload: UpdateProductPayload) {
   try {
     const supabase = await createClient();
+
+    const basePrice = Number(payload.base_price) || 0;
+    const compareBasePrice = payload.compare_base_price != null && payload.compare_base_price > 0 
+      ? Number(payload.compare_base_price) 
+      : null;
 
     // 1. Update product main table
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,6 +55,9 @@ export async function updateProduct(payload: UpdateProductPayload) {
         storage_info: payload.storage_info?.trim() || null,
         is_active: payload.is_active,
         is_featured: payload.is_featured,
+        base_price: basePrice,
+        unit_type: payload.unit_type || "kg",
+        compare_base_price: compareBasePrice,
       })
       .eq("id", payload.id);
 
@@ -70,32 +84,40 @@ export async function updateProduct(payload: UpdateProductPayload) {
       await (supabase as any).from("product_variants").delete().in("id", toDeleteIds);
     }
 
-    // Update existing variants
+    // Update or insert variants
     for (const v of payload.variants) {
+      const isAuto = v.is_auto_priced !== false;
+      const qVal = v.quantity_value != null && v.quantity_value > 0 ? Number(v.quantity_value) : 1;
+      
+      const calculatedPrice = isAuto ? Math.round(basePrice * qVal * 100) / 100 : Number(v.price) || 0;
+      const calculatedComparePrice = isAuto && compareBasePrice
+        ? Math.round(compareBasePrice * qVal * 100) / 100
+        : (v.compare_price != null && v.compare_price > 0 ? Number(v.compare_price) : null);
+
+      const variantData = {
+        label: v.label.trim(),
+        price: calculatedPrice,
+        compare_price: calculatedComparePrice,
+        quantity_value: qVal,
+        is_auto_priced: isAuto,
+        stock_quantity: v.stock_quantity,
+        sku: v.sku?.trim() || null,
+        sort_order: v.sort_order,
+        is_available: true,
+      };
+
       if (v.id) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any)
           .from("product_variants")
-          .update({
-            label: v.label.trim(),
-            price: v.price,
-            stock_quantity: v.stock_quantity,
-            sku: v.sku?.trim() || null,
-            sort_order: v.sort_order,
-            is_available: true,
-          })
+          .update(variantData)
           .eq("id", v.id);
       } else {
         // Insert new variant
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).from("product_variants").insert({
+          ...variantData,
           product_id: payload.id,
-          label: v.label.trim(),
-          price: v.price,
-          stock_quantity: v.stock_quantity,
-          sku: v.sku?.trim() || null,
-          sort_order: v.sort_order,
-          is_available: true,
         });
       }
     }
@@ -130,7 +152,7 @@ export async function searchProductsLiveAction(
       .from("products")
       .select(`
         id, name, slug, description, image_url,
-        categories:category_id(id, name, slug),
+        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
         product_variants(id, label, price, stock_quantity, is_available)
       `)
       .eq("is_active", true)

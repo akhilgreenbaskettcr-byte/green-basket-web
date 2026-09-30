@@ -52,9 +52,8 @@ export function FooterAccordion({
                 <li key={cat.id}>
                   <Link
                     href={`/categories/${cat.slug}`}
-                    className="text-gray-600 hover:text-gb-green transition-colors flex items-center gap-2"
+                    className="text-gray-600 hover:text-gb-green transition-colors block"
                   >
-                    <span className="w-1 h-1 rounded-full bg-gb-green" />
                     <span>{cat.name}</span>
                   </Link>
                 </li>
@@ -91,35 +90,25 @@ export function FooterAccordion({
 
         {openSection === "links" && (
           <div className="px-4 pb-4 pt-1 border-t border-gray-100">
-            <ul className="space-y-2.5 text-xs font-medium">
+            <ul className="space-y-2.5 text-xs">
               <li>
                 <Link href="/" className="text-gray-600 hover:text-gb-green transition-colors">
-                  HOME
+                  Home
                 </Link>
               </li>
               <li>
                 <Link href="/products" className="text-gray-600 hover:text-gb-green transition-colors">
-                  SHOP ALL PRODUCTS
+                  Shop All Products
                 </Link>
               </li>
               <li>
                 <Link href="/categories" className="text-gray-600 hover:text-gb-green transition-colors">
-                  CATEGORIES
+                  Categories
                 </Link>
               </li>
               <li>
                 <Link href="/about" className="text-gray-600 hover:text-gb-green transition-colors">
-                  ABOUT US
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-gray-600 hover:text-gb-green transition-colors">
-                  CONTACT US
-                </Link>
-              </li>
-              <li>
-                <Link href="/orders" className="text-gray-600 hover:text-gb-green transition-colors">
-                  TRACK ORDER
+                  About Us
                 </Link>
               </li>
             </ul>
@@ -146,25 +135,25 @@ export function FooterAccordion({
 
         {openSection === "policies" && (
           <div className="px-4 pb-4 pt-1 border-t border-gray-100">
-            <ul className="space-y-2.5 text-xs font-medium">
+            <ul className="space-y-2.5 text-xs">
               <li>
                 <Link href="/shipping-policy" className="text-gray-600 hover:text-gb-green transition-colors">
-                  SHIPPING & DELIVERY POLICY
+                  Shipping Policy
                 </Link>
               </li>
               <li>
                 <Link href="/refund-policy" className="text-gray-600 hover:text-gb-green transition-colors">
-                  CANCELLATION & REFUND POLICY
+                  Refund Policy
                 </Link>
               </li>
               <li>
                 <Link href="/privacy-policy" className="text-gray-600 hover:text-gb-green transition-colors">
-                  PRIVACY POLICY
+                  Privacy Policy
                 </Link>
               </li>
               <li>
                 <Link href="/terms-and-conditions" className="text-gray-600 hover:text-gb-green transition-colors">
-                  TERMS & CONDITIONS
+                  Terms & Conditions
                 </Link>
               </li>
             </ul>

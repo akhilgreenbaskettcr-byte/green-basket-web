@@ -92,7 +92,7 @@ export const getAllActiveProducts = cache(async (): Promise<ProductWithVariants[
         id, category_id, name, slug, description, image_url,
         is_active, is_featured, sort_order, benefits, ingredients,
         storage_info, created_at, updated_at,
-        categories:category_id(id, name, slug),
+        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
         product_variants(
           id, product_id, label, price, compare_price, sku,
           stock_quantity, is_available, sort_order, created_at, updated_at
@@ -122,7 +122,7 @@ export async function getProductsByCategory(categoryId: string): Promise<Product
         id, category_id, name, slug, description, image_url,
         is_active, is_featured, sort_order, benefits, ingredients,
         storage_info, created_at, updated_at,
-        categories:category_id(id, name, slug),
+        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
         product_variants(
           id, product_id, label, price, compare_price, sku,
           stock_quantity, is_available, sort_order, created_at, updated_at
@@ -153,7 +153,7 @@ export async function getFeaturedProducts(): Promise<ProductWithVariants[]> {
         id, category_id, name, slug, description, image_url,
         is_active, is_featured, sort_order, benefits, ingredients,
         storage_info, created_at, updated_at,
-        categories:category_id(id, name, slug),
+        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
         product_variants(
           id, product_id, label, price, compare_price, sku,
           stock_quantity, is_available, sort_order, created_at, updated_at
@@ -185,7 +185,7 @@ export async function getProductBySlug(slug: string): Promise<ProductWithVariant
         id, category_id, name, slug, description, image_url,
         is_active, is_featured, sort_order, benefits, ingredients,
         storage_info, created_at, updated_at,
-        categories:category_id(id, name, slug),
+        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
         product_variants(
           id, product_id, label, price, compare_price, sku,
           stock_quantity, is_available, sort_order, created_at, updated_at
@@ -213,7 +213,7 @@ export async function searchProducts(query: string): Promise<ProductWithVariants
         id, category_id, name, slug, description, image_url,
         is_active, is_featured, sort_order, benefits, ingredients,
         storage_info, created_at, updated_at,
-        categories:category_id(id, name, slug),
+        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
         product_variants(
           id, product_id, label, price, compare_price, sku,
           stock_quantity, is_available, sort_order, created_at, updated_at
@@ -258,7 +258,7 @@ export async function getAllProductsAdmin(): Promise<ProductWithVariants[]> {
       .from("products")
       .select(`
         *,
-        categories:category_id(id, name, slug),
+        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
         product_variants(*)
       `)
       .order("created_at", { ascending: false });
