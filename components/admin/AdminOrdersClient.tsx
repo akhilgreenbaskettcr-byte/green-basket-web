@@ -21,6 +21,7 @@ import {
   Check,
   Plus,
   FileText,
+  Eye,
 } from "lucide-react";
 import type { Order, OrderStatus } from "@/types/database";
 import { ThermalReceiptModal } from "@/components/admin/ThermalReceiptModal";
@@ -197,44 +198,50 @@ export function AdminOrdersClient({
                   </div>
                 </div>
 
-                {/* Bottom Row: Total, Status Selector & Inspect Button */}
-                <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total</span>
-                    <p className="text-sm font-black text-gb-green font-mono">
-                      {formatPrice(order.total)}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
+                {/* Bottom Section: 2-Row Mobile Layout */}
+                <div className="pt-2.5 border-t border-gray-100 space-y-2">
+                  {/* Row 1: Total & Order Status updater (Single Line) */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xs font-semibold text-gray-500">Total:</span>
+                      <span className="text-sm font-black text-gb-green font-mono">
+                        {formatPrice(order.total)}
+                      </span>
+                    </div>
                     <OrderStatusUpdater
                       orderId={order.id}
                       currentStatus={order.status as OrderStatus}
                     />
+                  </div>
+
+                  {/* Row 2: Action Buttons (Bill, Farm, Inspect) */}
+                  <div className="grid grid-cols-3 gap-2 pt-0.5">
                     <button
                       type="button"
                       onClick={() => setCustomerBillOrder(order)}
-                      className="text-xs font-bold text-gray-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-1.5 rounded-lg border border-emerald-200/60 transition-colors shrink-0 flex items-center gap-1"
-                      title="Print 58mm Customer Bill with Item Pricing"
+                      className="text-xs font-bold text-gray-900 bg-emerald-50 hover:bg-emerald-100 active:scale-98 py-2 px-2 rounded-xl border border-emerald-200/60 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                      title="Print Customer Bill with Item Pricing"
                     >
-                      <Printer size={12} className="text-emerald-700" />
+                      <Printer size={13} className="text-emerald-700" />
                       <span>Bill</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setReceiptOrder(order)}
-                      className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-2 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1"
-                      title="Print 58mm Farm Packing Slip without Pricing"
+                      className="text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 active:scale-98 py-2 px-2 rounded-xl border border-gray-200/60 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                      title="Print Farm Packing Slip without Pricing"
                     >
-                      <FileText size={12} className="text-gray-500" />
+                      <FileText size={13} className="text-gray-600" />
                       <span>Farm</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setSelectedOrder(order)}
-                      className="text-xs font-bold text-gb-green bg-green-50 hover:bg-green-100 px-2.5 py-1.5 rounded-lg transition-colors shrink-0"
+                      className="text-xs font-bold text-gb-green bg-green-50 hover:bg-green-100 active:scale-98 py-2 px-2 rounded-xl border border-green-200/60 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                      title="View order details"
                     >
-                      Inspect
+                      <Eye size={13} className="text-gb-green" />
+                      <span>Inspect</span>
                     </button>
                   </div>
                 </div>
@@ -623,7 +630,7 @@ export function AdminOrdersClient({
                 className="py-2.5 px-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Printer size={14} />
-                <span>58mm Customer Bill</span>
+                <span>Customer Bill</span>
               </button>
 
               <button
@@ -632,22 +639,22 @@ export function AdminOrdersClient({
                 className="py-2.5 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors"
               >
                 <FileText size={14} />
-                <span>58mm Farm Slip</span>
+                <span>Farm Slip</span>
               </button>
 
               {/* Show UPI QR button if manual / WhatsApp order */}
               {(selectedOrder.notes?.includes("WhatsApp") ||
                 selectedOrder.notes?.includes("Manual") ||
                 !selectedOrder.notes?.toLowerCase().includes("paid online")) && (
-                <button
-                  type="button"
-                  onClick={() => setUpiQrOrder(selectedOrder)}
-                  className="py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors col-span-2 sm:col-span-1"
-                >
-                  <QrCode size={14} className="text-emerald-700" />
-                  <span>UPI Payment QR</span>
-                </button>
-              )}
+                  <button
+                    type="button"
+                    onClick={() => setUpiQrOrder(selectedOrder)}
+                    className="py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors col-span-2 sm:col-span-1"
+                  >
+                    <QrCode size={14} className="text-emerald-700" />
+                    <span>UPI Payment QR</span>
+                  </button>
+                )}
             </div>
 
             {/* Close button */}
@@ -666,6 +673,8 @@ export function AdminOrdersClient({
         order={customerBillOrder}
         onClose={() => setCustomerBillOrder(null)}
         storePhone={storePhone}
+        upiId={storeUpiId}
+        payeeName={storeUpiName}
       />
 
       {/* 2. Farm 58mm Picking Slip Modal (Untouched Existing Slip) */}

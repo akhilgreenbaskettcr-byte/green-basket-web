@@ -1470,7 +1470,7 @@ export function AdminNewOrderClient({
               </button>
 
               <div className="grid grid-cols-2 gap-2">
-                {/* 58mm Customer Bill Print */}
+                {/* Customer Bill Print */}
                 <button
                   type="button"
                   onClick={() => setShowCustomerBillModal(true)}
@@ -1478,10 +1478,10 @@ export function AdminNewOrderClient({
                   title="Print customer receipt with prices"
                 >
                   <Printer size={14} />
-                  <span>58mm Customer Bill</span>
+                  <span>Customer Bill</span>
                 </button>
 
-                {/* 58mm Farm Picking Slip */}
+                {/* Farm Picking Slip */}
                 <button
                   type="button"
                   onClick={() => setShowFarmSlipModal(true)}
@@ -1489,7 +1489,7 @@ export function AdminNewOrderClient({
                   title="Print farm packing slip without customer pricing"
                 >
                   <Printer size={14} />
-                  <span>58mm Farm Slip</span>
+                  <span>Farm Slip</span>
                 </button>
               </div>
 
@@ -1533,6 +1533,8 @@ export function AdminNewOrderClient({
           order={createdOrderResult.createdOrder}
           onClose={() => setShowCustomerBillModal(false)}
           storePhone={storePhone}
+          upiId={storeUpiId}
+          payeeName={storeUpiName}
         />
       )}
 

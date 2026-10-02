@@ -72,13 +72,7 @@ export function ThermalReceiptModal({
     order.notes?.toLowerCase().includes("razorpay");
   const paymentModeText = isOnlinePaid ? "Online (Paid)" : "Cash on Delivery";
 
-  // Clean customer note if any (strip system payment tags)
-  const customerNote = order.notes
-    ? order.notes
-        .replace(/\[PAID ONLINE.*?\]/gi, "")
-        .replace(/\[PAYMENT:.*?\]/gi, "")
-        .trim()
-    : "";
+
 
   // Calculate total quantities
   const totalQty = (order.order_items || []).reduce(
@@ -98,23 +92,27 @@ export function ThermalReceiptModal({
   <title>Order-${order.order_number}</title>
   <style>
     @page {
-      size: 58mm auto;
+      size: 48mm auto;
       margin: 0;
     }
     @media print {
       html, body {
-        width: 58mm !important;
-        max-width: 58mm !important;
+        width: 48mm !important;
+        max-width: 48mm !important;
+        height: auto !important;
         margin: 0 !important;
         padding: 0 !important;
         background: #fff !important;
         color: #000 !important;
+        overflow: visible !important;
       }
       .receipt-wrapper {
-        width: 48mm !important;
-        max-width: 48mm !important;
-        margin: 0 auto !important;
-        padding: 2mm 1mm !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 2mm 2mm 4mm 2mm !important;
+        overflow: visible !important;
       }
     }
     * {
@@ -125,8 +123,9 @@ export function ThermalReceiptModal({
       print-color-adjust: exact !important;
     }
     body {
-      width: 58mm;
-      max-width: 58mm;
+      width: 48mm;
+      max-width: 48mm;
+      height: auto;
       margin: 0 auto;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", Courier, monospace;
@@ -134,12 +133,17 @@ export function ThermalReceiptModal({
       line-height: 1.25;
       color: #000;
       background: #fff;
+      overflow: visible;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     .receipt-wrapper {
-      width: 48mm;
-      max-width: 48mm;
-      margin: 0 auto;
-      padding: 2mm 1mm;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      margin: 0;
+      padding: 2mm 2mm 4mm 2mm;
+      overflow: visible;
     }
     .center {
       text-align: center;
@@ -215,6 +219,8 @@ export function ThermalReceiptModal({
       font-size: 11px;
       line-height: 1.35;
       margin: 3px 0;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     .tear-feed {
       margin-top: 10px;
@@ -294,7 +300,6 @@ export function ThermalReceiptModal({
       <div><strong>Payment Mode:</strong> ${paymentModeText}</div>
       <div style="margin-top: 2px;"><strong>Customer:</strong> ${order.customer_name}</div>
       ${order.gps_lat && order.gps_lng ? `<div style="margin-top: 2px; font-size: 10px;"><strong>GPS:</strong> ${order.gps_lat.toFixed(5)}, ${order.gps_lng.toFixed(5)}</div>` : ""}
-      ${customerNote ? `<div style="margin-top: 2px;"><strong>Note:</strong> ${customerNote}</div>` : ""}
     </div>
 
     <!-- Printable trailing feed lines: forces printer motor to physically advance paper 25mm past tear bar -->
@@ -386,10 +391,10 @@ export function ThermalReceiptModal({
         </div>
 
         {/* Realistic Thermal Receipt Paper Scroll Preview */}
-        <div className="flex-1 overflow-y-auto py-2 px-1 flex justify-center bg-gray-100/70 rounded-2xl border border-gray-200/80 my-3 overscroll-contain">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 flex flex-col items-center bg-gray-100/70 rounded-2xl border border-gray-200/80 my-3 overscroll-contain min-h-0">
           <div
             id="thermal-receipt-preview"
-            className="w-[280px] bg-white text-black p-4 shadow-md border border-gray-200/80 font-mono text-[11px] leading-tight select-none my-2 transition-all"
+            className="w-[280px] min-w-[280px] max-w-[280px] h-auto bg-white text-black p-4 shadow-md border border-gray-200/80 font-mono text-[11px] leading-tight select-none my-1 shrink-0 rounded-xs transition-all"
             style={{
               fontFamily:
                 '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace',
@@ -466,11 +471,7 @@ export function ThermalReceiptModal({
                 <strong className="font-bold">Customer:</strong>{" "}
                 {order.customer_name}
               </div>
-              {customerNote && (
-                <div className="pt-0.5 text-[10px]">
-                  <strong className="font-bold">Note:</strong> {customerNote}
-                </div>
-              )}
+
             </div>
 
             {/* Tear Line Guide */}
