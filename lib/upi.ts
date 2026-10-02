@@ -40,9 +40,9 @@ export async function generateUpiQrCodeDataUrl(
   try {
     return await QRCode.toDataURL(upiUri, {
       width,
-      margin: 2,
+      margin: 1,
       color: {
-        dark: "#143D2B", // Green Basket Dark Green
+        dark: "#000000", // Pure solid black for crisp thermal printing & instant scanner recognition
         light: "#FFFFFF",
       },
       errorCorrectionLevel: "M",

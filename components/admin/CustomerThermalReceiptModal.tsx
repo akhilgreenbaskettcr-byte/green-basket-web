@@ -81,7 +81,7 @@ export function CustomerThermalReceiptModal({
         orderNumber: order.order_number,
         note: `Green Basket Bill #${order.order_number}`,
       },
-      280
+      200
     ).then((dataUrl) => {
       if (isMounted) {
         setQrDataUrl(dataUrl);
@@ -176,8 +176,16 @@ export function CustomerThermalReceiptModal({
     }
     .center { text-align: center; }
     .bold { font-weight: 700; }
+    .store-logo {
+      max-height: 16mm;
+      max-width: 42mm;
+      height: auto;
+      margin: 0 auto 3px auto;
+      display: block;
+      object-fit: contain;
+    }
     .store-name {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 800;
       letter-spacing: 0.2px;
       text-transform: uppercase;
@@ -273,35 +281,28 @@ export function CustomerThermalReceiptModal({
     }
     .qr-section {
       text-align: center;
-      margin: 4px 0 2px 0;
-      padding: 2px 0;
+      margin: 3px 0 1px 0;
+      padding: 1px 0;
     }
     .qr-title {
-      font-size: 9px;
+      font-size: 8.5px;
       font-weight: 800;
       letter-spacing: 0.3px;
       margin-bottom: 2px;
       text-transform: uppercase;
     }
-    .qr-box {
-      display: inline-block;
-      padding: 2px;
-      background: #f9fafb;
-      border: 1px solid #aaa;
-      border-radius: 4px;
-      margin: 2px auto;
-    }
     .qr-image {
-      width: 34mm;
-      height: 34mm;
-      max-width: 140px;
-      max-height: 140px;
+      width: 22mm;
+      height: 22mm;
+      max-width: 90px;
+      max-height: 90px;
       margin: 0 auto;
       display: block;
+      image-rendering: pixelated;
     }
     .upi-id-text {
       font-size: 8.5px;
-      font-weight: 700;
+      font-weight: 800;
       margin-top: 2px;
       letter-spacing: 0.2px;
       word-break: break-all;
@@ -336,8 +337,9 @@ export function CustomerThermalReceiptModal({
 <body>
   <div class="receipt-wrapper">
     <div class="center">
-      <div class="store-name">GREEN BASKET</div>
-      <div class="store-tagline">Fresh & Pure Farm Produce</div>
+      <img src="/images/logo/Green-basket-logo.png" alt="Green Basket" class="store-logo" />
+      <div class="store-name">GREEN BASKET TCR</div>
+      <div class="store-tagline">Ayyanthole</div>
       <div class="store-address">Thrissur, Kerala • Tel: ${storePhone}</div>
     </div>
 
@@ -362,11 +364,10 @@ export function CustomerThermalReceiptModal({
       <span>Mobile:</span>
       <span>${order.phone}</span>
     </div>
-    ${
-      order.city
+    ${order.city
         ? `<div class="meta-row"><span>Area:</span><span>${order.city}</span></div>`
         : ""
-    }
+      }
 
     <div class="line-solid"></div>
 
@@ -381,8 +382,8 @@ export function CustomerThermalReceiptModal({
       </thead>
       <tbody>
         ${(order.order_items || [])
-          .map(
-            (item) => `
+        .map(
+          (item) => `
           <tr>
             <td>
               <div class="item-name">${item.product_name_snapshot}</div>
@@ -393,7 +394,7 @@ export function CustomerThermalReceiptModal({
             <td style="text-align: right; font-weight: 700;">${Number(item.line_total).toFixed(0)}</td>
           </tr>
         `)
-          .join("")}
+        .join("")}
       </tbody>
     </table>
 
@@ -403,11 +404,10 @@ export function CustomerThermalReceiptModal({
       <span>Subtotal:</span>
       <span>₹${Number(order.subtotal).toFixed(0)}</span>
     </div>
-    ${
-      (order as any).gst_total > 0
+    ${(order as any).gst_total > 0
         ? `<div class="summary-row"><span>GST Taxes:</span><span>₹${Number((order as any).gst_total).toFixed(0)}</span></div>`
         : ""
-    }
+      }
     <div class="summary-row">
       <span>Delivery Fee:</span>
       <span>${order.delivery_fee > 0 ? `₹${Number(order.delivery_fee).toFixed(0)}` : "FREE"}</span>
@@ -424,25 +424,22 @@ export function CustomerThermalReceiptModal({
       ${paymentModeText}
     </div>
 
-    ${
-      !isPaid && qrDataUrl
+    ${!isPaid && qrDataUrl
         ? `
       <div class="line-dashed"></div>
       <div class="qr-section">
         <div class="qr-title">SCAN & PAY WITH ANY UPI APP</div>
-        <div class="qr-box">
-          <img src="${qrDataUrl}" alt="UPI QR" class="qr-image" />
-        </div>
+        <img src="${qrDataUrl}" alt="UPI QR" class="qr-image" />
         <div class="upi-id-text">UPI: ${upiId}</div>
         <div style="font-size: 8px; font-weight: 600; margin-top: 1px;">GPay • PhonePe • Paytm • BHIM</div>
       </div>
       `
         : ""
-    }
+      }
 
     <div class="footer">
       <p>Thank you for shopping with us!</p>
-      <p>Visit again • www.greenbasket.in</p>
+      <p>Visit again • www.greenbaskettcr.com</p>
     </div>
 
     <div class="tear-feed">
@@ -498,7 +495,7 @@ export function CustomerThermalReceiptModal({
         <div className="flex items-center justify-between border-b border-gray-100 pb-3 shrink-0">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-gb-green">
-              Customer Bill (58mm)
+              Customer Bill
             </span>
             <h3 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
               <Printer size={18} className="text-gb-green" />
@@ -536,14 +533,20 @@ export function CustomerThermalReceiptModal({
           >
             {/* Store & Bill Header */}
             <div className="text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/logo/Green-basket-logo.png"
+                alt="Green Basket Logo"
+                className="h-11 w-auto mx-auto mb-1.5 object-contain"
+              />
               <div className="font-black text-[14px] tracking-tight">
-                GREEN BASKET
+                GREEN BASKET TCR
               </div>
               <div className="text-[9.5px] text-gray-600 mt-0.5">
-                Fresh & Pure Farm Produce
+                Ayyanthole, Thrissur, Kerala
               </div>
               <div className="text-[9px] text-gray-500 mt-0.5">
-                Thrissur, Kerala • Tel: {storePhone}
+                Phone: {storePhone}
               </div>
             </div>
 
@@ -656,19 +659,19 @@ export function CustomerThermalReceiptModal({
             {!isPaid && qrDataUrl && (
               <>
                 <div className="border-b border-dashed border-black my-2" />
-                <div className="text-center my-2 flex flex-col items-center">
-                  <div className="text-[9.5px] font-extrabold uppercase tracking-wide mb-1">
+                <div className="text-center my-1.5 flex flex-col items-center">
+                  <div className="text-[9px] font-extrabold uppercase tracking-wide mb-1">
                     SCAN & PAY WITH ANY UPI APP
                   </div>
-                  <div className="p-2 bg-gray-50 border-2 border-gray-300 rounded-lg inline-block shadow-xs">
+                  <div className="p-1 bg-white inline-block">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={qrDataUrl}
                       alt="UPI QR Code"
-                      className="w-36 h-36 mx-auto object-contain"
+                      className="w-24 h-24 mx-auto object-contain"
                     />
                   </div>
-                  <div className="text-[9px] font-bold tracking-tight text-gray-800 mt-1">
+                  <div className="text-[8.5px] font-bold tracking-tight text-gray-800 mt-1">
                     UPI ID: <span className="font-extrabold text-black">{upiId}</span>
                   </div>
                   <div className="text-[8px] text-gray-500 font-semibold mt-0.5">
@@ -681,7 +684,7 @@ export function CustomerThermalReceiptModal({
             {/* Footer */}
             <div className="text-center text-[9px] mt-2 text-gray-700">
               <p>Thank you for shopping with us!</p>
-              <p>Visit again • www.greenbasket.in</p>
+              <p>Visit again • www.greenbaskettcr.com</p>
             </div>
 
             {/* Tear Line Guide */}
@@ -706,7 +709,7 @@ export function CustomerThermalReceiptModal({
             className="btn-primary text-xs py-2 px-5 shadow-xs flex items-center gap-2"
           >
             <Printer size={15} />
-            <span>{isPrinting ? "Printing..." : "Print Bill (58mm)"}</span>
+            <span>{isPrinting ? "Printing..." : "Print Bill"}</span>
           </button>
         </div>
       </div>
