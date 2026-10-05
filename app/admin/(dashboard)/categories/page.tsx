@@ -15,10 +15,10 @@ export default async function AdminCategoriesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
-          <p className="text-gray-500 text-sm mt-1">{categories?.length ?? 0} categories</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Categories</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5 sm:mt-1">{categories?.length ?? 0} categories</p>
         </div>
       </div>
       <AdminCategoriesClient categories={categories ?? []} />

@@ -90,8 +90,8 @@ export function CategorySection({ categories }: CategorySectionProps) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-400">
-            <p>Categories coming soon.</p>
+          <div className="text-center py-12 text-gray-500 font-medium">
+            <p>Fresh batches arriving daily! Fresh categories available tomorrow morning.</p>
           </div>
         )}
 

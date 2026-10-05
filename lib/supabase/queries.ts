@@ -92,20 +92,24 @@ export const getAllActiveProducts = cache(async (): Promise<ProductWithVariants[
         id, category_id, name, slug, description, image_url,
         is_active, is_featured, sort_order, benefits, ingredients,
         storage_info, created_at, updated_at,
-        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
+        categories:category_id!inner(id, name, slug, gst_enabled, gst_percentage, is_active),
         product_variants(
           id, product_id, label, price, compare_price, sku,
           stock_quantity, is_available, sort_order, created_at, updated_at
         )
       `)
       .eq("is_active", true)
+      .eq("categories.is_active", true)
       .order("sort_order", { ascending: true });
 
     if (error) {
       console.error("Error fetching all products:", error);
       return [];
     }
-    return (data as ProductWithVariants[]) ?? [];
+    const products = ((data as ProductWithVariants[]) ?? []).filter(
+      (p) => p.is_active === true && p.categories?.is_active === true
+    );
+    return products;
   } catch (err) {
     console.error("Exception fetching all products:", err);
     return [];
@@ -122,7 +126,7 @@ export async function getProductsByCategory(categoryId: string): Promise<Product
         id, category_id, name, slug, description, image_url,
         is_active, is_featured, sort_order, benefits, ingredients,
         storage_info, created_at, updated_at,
-        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
+        categories:category_id!inner(id, name, slug, gst_enabled, gst_percentage, is_active),
         product_variants(
           id, product_id, label, price, compare_price, sku,
           stock_quantity, is_available, sort_order, created_at, updated_at
@@ -130,13 +134,17 @@ export async function getProductsByCategory(categoryId: string): Promise<Product
       `)
       .eq("category_id", categoryId)
       .eq("is_active", true)
+      .eq("categories.is_active", true)
       .order("sort_order", { ascending: true });
 
     if (error) {
       console.error("Error fetching products by category:", error);
       return [];
     }
-    return (data as ProductWithVariants[]) ?? [];
+    const products = ((data as ProductWithVariants[]) ?? []).filter(
+      (p) => p.is_active === true && p.categories?.is_active === true
+    );
+    return products;
   } catch (err) {
     console.error("Exception fetching products by category:", err);
     return [];
@@ -153,7 +161,7 @@ export async function getFeaturedProducts(): Promise<ProductWithVariants[]> {
         id, category_id, name, slug, description, image_url,
         is_active, is_featured, sort_order, benefits, ingredients,
         storage_info, created_at, updated_at,
-        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
+        categories:category_id!inner(id, name, slug, gst_enabled, gst_percentage, is_active),
         product_variants(
           id, product_id, label, price, compare_price, sku,
           stock_quantity, is_available, sort_order, created_at, updated_at
@@ -161,6 +169,7 @@ export async function getFeaturedProducts(): Promise<ProductWithVariants[]> {
       `)
       .eq("is_active", true)
       .eq("is_featured", true)
+      .eq("categories.is_active", true)
       .order("sort_order", { ascending: true })
       .limit(8);
 
@@ -168,7 +177,10 @@ export async function getFeaturedProducts(): Promise<ProductWithVariants[]> {
       console.error("Error fetching featured products:", error);
       return [];
     }
-    return (data as ProductWithVariants[]) ?? [];
+    const products = ((data as ProductWithVariants[]) ?? []).filter(
+      (p) => p.is_active === true && p.categories?.is_active === true
+    );
+    return products;
   } catch (err) {
     console.error("Exception fetching featured products:", err);
     return [];
@@ -185,7 +197,7 @@ export async function getProductBySlug(slug: string): Promise<ProductWithVariant
         id, category_id, name, slug, description, image_url,
         is_active, is_featured, sort_order, benefits, ingredients,
         storage_info, created_at, updated_at,
-        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
+        categories:category_id!inner(id, name, slug, gst_enabled, gst_percentage, is_active),
         product_variants(
           id, product_id, label, price, compare_price, sku,
           stock_quantity, is_available, sort_order, created_at, updated_at
@@ -193,9 +205,11 @@ export async function getProductBySlug(slug: string): Promise<ProductWithVariant
       `)
       .eq("slug", slug)
       .eq("is_active", true)
+      .eq("categories.is_active", true)
       .maybeSingle();
 
-    if (error) return null;
+    if (error || !data) return null;
+    if (data.is_active !== true || data.categories?.is_active !== true) return null;
     return data as ProductWithVariants;
   } catch (err) {
     console.error("Exception fetching product by slug:", err);
@@ -213,18 +227,22 @@ export async function searchProducts(query: string): Promise<ProductWithVariants
         id, category_id, name, slug, description, image_url,
         is_active, is_featured, sort_order, benefits, ingredients,
         storage_info, created_at, updated_at,
-        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
+        categories:category_id!inner(id, name, slug, gst_enabled, gst_percentage, is_active),
         product_variants(
           id, product_id, label, price, compare_price, sku,
           stock_quantity, is_available, sort_order, created_at, updated_at
         )
       `)
       .eq("is_active", true)
+      .eq("categories.is_active", true)
       .ilike("name", `%${query}%`)
       .limit(12);
 
-    if (error) return [];
-    return (data as ProductWithVariants[]) ?? [];
+    if (error || !data) return [];
+    const products = ((data as ProductWithVariants[]) ?? []).filter(
+      (p) => p.is_active === true && p.categories?.is_active === true
+    );
+    return products;
   } catch (err) {
     console.error("Exception searching products:", err);
     return [];

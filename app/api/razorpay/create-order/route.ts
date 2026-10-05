@@ -1,10 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { getDeliveryQuote, quoteFailureMessage } from "@/lib/delivery/quote";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { amount, receipt, customer_name, phone, email, address, city, pincode, notes, items, subtotal, gstTotal, gst_total, deliveryFee, total } = body;
+    const { receipt, customer_name, phone, email, address, city, notes, items, gps_lat, gps_lng } = body;
+
+    // Server-side authority: recompute prices, GST, eligibility and delivery charge.
+    // Client-supplied amount / subtotal / deliveryFee / total are ignored.
+    const quote = await getDeliveryQuote({
+      lat: gps_lat,
+      lng: gps_lng,
+      items: Array.isArray(items)
+        ? items.map((i: any) => ({ variantId: i?.variantId, quantity: i?.quantity }))
+        : [],
+    });
+
+    if (!quote.available) {
+      return NextResponse.json(
+        { success: false, error: quoteFailureMessage(quote.reason) },
+        { status: 400 }
+      );
+    }
+
+    const amount = quote.total;
+    const pincode = quote.pincode;
+    const subtotal = quote.subtotal;
+    const gstTotal = quote.gstTotal;
+    const deliveryFee = quote.deliveryCharge;
+    const total = quote.total;
 
     if (!amount || amount <= 0) {
       return NextResponse.json(
@@ -68,10 +93,10 @@ export async function POST(req: NextRequest) {
       city: String(city || "Thrissur").slice(0, 50),
       pincode: String(pincode || "").slice(0, 10),
       delivery_notes: String(notes || "").slice(0, 200),
-      subtotal: String(subtotal || amount),
-      gst_total: String(gst_total || gstTotal || 0),
-      delivery_fee: String(deliveryFee || 0),
-      total: String(total || amount),
+      subtotal: String(subtotal),
+      gst_total: String(gstTotal),
+      delivery_fee: String(deliveryFee),
+      total: String(total),
     };
 
     // Include compact items summary

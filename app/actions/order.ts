@@ -6,6 +6,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import crypto from "crypto";
 import { sendOrderEmails, sendDeliveryConfirmationEmail } from "@/lib/email";
 import type { OrderStatus } from "@/types/database";
+import { getDeliveryQuote, quoteFailureMessage } from "@/lib/delivery/quote";
 
 const isUUID = (str: string | undefined | null): boolean => {
   if (!str) return false;
@@ -23,8 +24,8 @@ const CheckoutSchema = z.object({
   payment_method: z.enum(["razorpay", "cod"]).default("cod"),
   razorpay_payment_id: z.string().optional().or(z.literal("")),
   razorpay_order_id: z.string().optional().or(z.literal("")),
-  gps_lat: z.number().optional().nullable(),
-  gps_lng: z.number().optional().nullable(),
+  gps_lat: z.number({ error: "Please share your delivery location" }),
+  gps_lng: z.number({ error: "Please share your delivery location" }),
   location_link: z.string().optional().nullable(),
   items: z.array(
     z.object({
@@ -39,10 +40,12 @@ const CheckoutSchema = z.object({
       gstAmount: z.number().optional().nullable(),
     })
   ).min(1, "Cart is empty"),
-  subtotal: z.number().nonnegative(),
+  // Client-calculated values are accepted for backward compatibility but the server
+  // recalculates all prices, GST, delivery charge and total (see getDeliveryQuote).
+  subtotal: z.number().nonnegative().optional().default(0),
   gstTotal: z.number().nonnegative().optional().default(0),
-  deliveryFee: z.number().nonnegative(),
-  total: z.number().positive(),
+  deliveryFee: z.number().nonnegative().optional().default(0),
+  total: z.number().nonnegative().optional().default(0),
 });
 
 export type CheckoutFormData = z.infer<typeof CheckoutSchema>;
@@ -96,6 +99,40 @@ export async function createOrder(
         }
       }
     }
+  }
+
+  // Server-side recalculation: prices, GST, eligibility, distance, delivery charge, total.
+  const quote = await getDeliveryQuote({
+    lat: data.gps_lat,
+    lng: data.gps_lng,
+    items: data.items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+  });
+
+  const isPaidOnline = data.payment_method === "razorpay" && !!data.razorpay_payment_id;
+  let useServerValues = quote.available;
+
+  if (!quote.available) {
+    if (!isPaidOnline) {
+      return { success: false, error: quoteFailureMessage(quote.reason) };
+    }
+    // Customer has already paid — never lose a paid order; keep the paid values and flag it.
+    console.error("[order] Paid order could not be re-quoted; keeping paid values:", quote.reason);
+  } else if (isPaidOnline && Math.abs(quote.total - data.total) > 1) {
+    console.error(
+      `[order] Paid total ${data.total} differs from server quote ${quote.total}; keeping paid values.`
+    );
+    useServerValues = false;
+  }
+
+  const finalSubtotal = quote.available && useServerValues ? quote.subtotal : data.subtotal;
+  const finalGstTotal = quote.available && useServerValues ? quote.gstTotal : data.gstTotal;
+  const finalDeliveryFee = quote.available && useServerValues ? quote.deliveryCharge : data.deliveryFee;
+  const finalTotal = quote.available && useServerValues ? quote.total : data.total;
+  const finalPincode = quote.available ? quote.pincode : data.pincode;
+  const serverItems = new Map(quote.available ? quote.items.map((i) => [i.variantId, i]) : []);
+
+  if (finalTotal <= 0) {
+    return { success: false, error: "Invalid order total" };
   }
 
   // Generate date-based order number in proper sequence: GB-YYMMDD-0001
@@ -162,19 +199,22 @@ export async function createOrder(
         order_number: orderNumber,
         customer_id: user?.id ?? null,
         status: orderStatus,
-        subtotal: data.subtotal,
-        delivery_fee: data.deliveryFee,
-        gst_total: data.gstTotal ?? 0,
-        total: data.total,
+        subtotal: finalSubtotal,
+        delivery_fee: finalDeliveryFee,
+        gst_total: finalGstTotal,
+        total: finalTotal,
         customer_name: data.customer_name,
         phone: data.phone,
         email: data.email || null,
         address: data.address,
         city: data.city,
-        pincode: data.pincode,
+        pincode: finalPincode,
         notes: formattedNotes || null,
-        gps_lat: data.gps_lat ?? null,
-        gps_lng: data.gps_lng ?? null,
+        gps_lat: data.gps_lat,
+        gps_lng: data.gps_lng,
+        delivery_distance_km: quote.available ? quote.distanceKm : null,
+        delivery_area: quote.available ? quote.areaName : null,
+        delivery_rule_id: quote.available ? quote.ruleId : null,
       });
 
     if (!orderError) {
@@ -198,10 +238,14 @@ export async function createOrder(
 
   // Create order items with safe UUID parsing and GST snapshot
   const orderItems = data.items.map((item) => {
-    const lineTotal = item.price * item.quantity;
-    const gstRate = item.gstPercentage ? Number(item.gstPercentage) : 0;
-    const gstAmt =
-      item.gstAmount != null
+    // Prefer server-verified pricing; fall back to the (already paid) client snapshot.
+    const srv = useServerValues ? serverItems.get(item.variantId) : undefined;
+    const unitPrice = srv ? srv.unitPrice : item.price;
+    const lineTotal = unitPrice * item.quantity;
+    const gstRate = srv ? srv.gstPercentage : item.gstPercentage ? Number(item.gstPercentage) : 0;
+    const gstAmt = srv
+      ? Math.round(((lineTotal * gstRate) / 100 + Number.EPSILON) * 100) / 100
+      : item.gstAmount != null
         ? Number(item.gstAmount)
         : Math.round(((lineTotal * gstRate) / 100 + Number.EPSILON) * 100) / 100;
 
@@ -212,7 +256,7 @@ export async function createOrder(
       variant_id: isUUID(item.variantId) ? item.variantId : null,
       product_name_snapshot: item.productName,
       variant_label_snapshot: item.variantLabel,
-      unit_price: item.price,
+      unit_price: unitPrice,
       quantity: item.quantity,
       line_total: lineTotal,
       gst_percentage_snapshot: gstRate,
@@ -259,14 +303,14 @@ export async function createOrder(
       email: data.email,
       address: data.address,
       city: data.city,
-      pincode: data.pincode,
+      pincode: finalPincode,
       notes: data.notes,
       paymentMethod: data.payment_method,
       items: data.items,
-      subtotal: data.subtotal,
-      gstTotal: data.gstTotal ?? 0,
-      deliveryFee: data.deliveryFee,
-      total: data.total,
+      subtotal: finalSubtotal,
+      gstTotal: finalGstTotal,
+      deliveryFee: finalDeliveryFee,
+      total: finalTotal,
     });
   } catch (err) {
     console.error("Email notification failed:", err);

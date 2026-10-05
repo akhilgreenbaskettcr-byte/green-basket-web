@@ -22,8 +22,8 @@ export default function CartPageContent({ defaultDeliveryFee = 40 }: CartPageCon
   const sub = subtotal();
   const tax = gstTotal();
   const breakdown = gstBreakdown();
-  const delivery = Math.max(0, defaultDeliveryFee);
-  const total = sub + tax + delivery;
+  // Delivery is location-based and calculated at checkout (see /api/delivery/quote).
+  const total = sub + tax;
   const count = itemCount();
 
   if (!mounted) {
@@ -160,13 +160,7 @@ export default function CartPageContent({ defaultDeliveryFee = 40 }: CartPageCon
 
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Delivery</span>
-                    <span className="font-medium text-gb-charcoal">
-                      {delivery === 0 ? (
-                        <span className="text-emerald-700 font-bold">FREE</span>
-                      ) : (
-                        formatPrice(delivery)
-                      )}
-                    </span>
+                    <span className="font-medium text-gray-500 text-xs">Calculated at checkout</span>
                   </div>
                 </div>
 

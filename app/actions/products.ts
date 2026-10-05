@@ -152,10 +152,11 @@ export async function searchProductsLiveAction(
       .from("products")
       .select(`
         id, name, slug, description, image_url,
-        categories:category_id(id, name, slug, gst_enabled, gst_percentage),
+        categories:category_id!inner(id, name, slug, gst_enabled, gst_percentage, is_active),
         product_variants(id, label, price, stock_quantity, is_available)
       `)
       .eq("is_active", true)
+      .eq("categories.is_active", true)
       .ilike("name", `%${cleanTerm}%`)
       .limit(8);
 
@@ -163,13 +164,13 @@ export async function searchProductsLiveAction(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: cat } = await (supabase as any)
         .from("categories")
-        .select("id")
+        .select("id, is_active")
         .eq("slug", categorySlug)
+        .eq("is_active", true)
         .maybeSingle();
 
-      if (cat?.id) {
-        query = query.eq("category_id", cat.id);
-      }
+      if (!cat) return [];
+      query = query.eq("category_id", cat.id);
     }
 
     const { data, error } = await query;
@@ -178,9 +179,39 @@ export async function searchProductsLiveAction(
       return [];
     }
 
-    return data || [];
+    return (data || []).filter(
+      (p: any) => p.is_active === true && p.categories?.is_active === true
+    );
   } catch (err: any) {
     console.error("searchProductsLiveAction exception:", err);
     return [];
   }
 }
+
+export async function toggleCategoryActiveAction(id: string, current: boolean) {
+  try {
+    const supabase = await createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
+      .from("categories")
+      .update({ is_active: !current })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error toggling category status:", error);
+      return { success: false, error: error.message };
+    }
+
+    // Revalidate paths across storefront and admin
+    revalidatePath("/", "layout");
+    revalidatePath("/categories");
+    revalidatePath("/products");
+    revalidatePath("/admin/categories");
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("toggleCategoryActiveAction exception:", err);
+    return { success: false, error: err.message || "Failed to toggle category" };
+  }
+}
+

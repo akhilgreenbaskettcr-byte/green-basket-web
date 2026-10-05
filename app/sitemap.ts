@@ -33,7 +33,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = await createClient();
     const [{ data: categories }, { data: products }] = await Promise.all([
       supabase.from("categories").select("slug, updated_at").eq("is_active", true),
-      supabase.from("products").select("slug, updated_at").eq("is_active", true),
+      supabase
+        .from("products")
+        .select("slug, updated_at, categories:category_id!inner(is_active)")
+        .eq("is_active", true)
+        .eq("categories.is_active", true),
     ]);
 
     if (categories && categories.length > 0) {

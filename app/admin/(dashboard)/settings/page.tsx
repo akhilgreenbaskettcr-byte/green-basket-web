@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/utils/supabase/server";
 import { AdminSettingsClient } from "@/components/admin/AdminSettingsClient";
+import { listDeliveryRules } from "@/app/actions/delivery-rules";
 
 export const metadata: Metadata = { title: "Settings — Admin" };
 
@@ -17,8 +18,12 @@ const SETTING_LABELS: Record<string, { label: string; type?: string }> = {
   delivery_message: { label: "Announcement Bar Message" },
   same_day_cutoff_time: { label: "Same-Day Delivery Cutoff Time" },
   same_day_message: { label: "Same-Day Delivery Message" },
-  delivery_fee: { label: "Delivery Fee (₹)", type: "number" },
-  free_delivery_above: { label: "Free Delivery Above (₹)", type: "number" },
+  free_delivery_enabled: { label: "Enable Free Delivery" },
+  free_delivery_min_order: { label: "Free Delivery Minimum Order Value (₹)", type: "number" },
+  store_lat: { label: "Store Latitude" },
+  store_lng: { label: "Store Longitude" },
+  store_location_label: { label: "Store Location Label" },
+  store_location_link: { label: "Store Location Link" },
   instagram_url: { label: "Instagram URL", type: "url" },
   facebook_url: { label: "Facebook URL", type: "url" },
   whatsapp_number: { label: "WhatsApp Number", type: "tel" },
@@ -64,7 +69,7 @@ export default async function AdminSettingsPage() {
           Update your homepage hero banner, branding, logistics rules, and contact info
         </p>
       </div>
-      <AdminSettingsClient settings={settingsWithLabels} />
+      <AdminSettingsClient settings={settingsWithLabels} deliveryRules={await listDeliveryRules()} />
     </div>
   );
 }

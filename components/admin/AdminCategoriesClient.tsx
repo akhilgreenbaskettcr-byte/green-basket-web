@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { Category } from "@/types/database";
+import { toggleCategoryActiveAction } from "@/app/actions/products";
 
 interface AdminCategoriesClientProps {
   categories: Category[];
@@ -187,10 +188,10 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
   };
 
   const toggleActive = async (id: string, current: boolean) => {
-    const supabase = createClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("categories").update({ is_active: !current }).eq("id", id);
-    router.refresh();
+    startTransition(async () => {
+      await toggleCategoryActiveAction(id, current);
+      router.refresh();
+    });
   };
 
   return (
@@ -205,13 +206,13 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
 
       {/* Add New Category form card */}
       {showCreateForm ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 shadow-sm space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 md:p-8 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900">Add New Category</h2>
+            <h2 className="text-base sm:text-lg font-bold text-gray-900">Add New Category</h2>
             <button
               type="button"
               onClick={() => setShowCreateForm(false)}
-              className="text-xs text-gray-400 hover:text-gray-600"
+              className="text-xs text-gray-400 hover:text-gray-600 p-1"
             >
               Cancel
             </button>
@@ -268,7 +269,7 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
 
             {/* GST Configuration Box */}
             <div className="p-4 rounded-xl border border-amber-200/80 bg-amber-50/40 space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <p className="text-xs font-bold text-gray-900">GST (Goods & Services Tax)</p>
                   <p className="text-[11px] text-gray-500">Enable if items in this category attract GST during checkout</p>
@@ -276,7 +277,7 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
                 <button
                   type="button"
                   onClick={() => setCreateForm((p) => ({ ...p, gst_enabled: !p.gst_enabled }))}
-                  className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+                  className={`flex items-center justify-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full transition-colors self-start sm:self-auto ${
                     createForm.gst_enabled
                       ? "bg-amber-100 text-amber-900 border border-amber-300"
                       : "bg-gray-100 text-gray-500 border border-gray-200"
@@ -326,11 +327,11 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
 
             {error && <p className="text-red-600 text-xs" role="alert">{error}</p>}
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 pt-2">
               <button
                 type="submit"
                 disabled={isPending}
-                className="btn-primary text-xs px-5 py-2.5"
+                className="btn-primary text-xs px-5 py-2.5 flex items-center justify-center gap-1.5 w-full sm:w-auto"
               >
                 {isPending ? (
                   <>
@@ -344,7 +345,7 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
               <button
                 type="button"
                 onClick={() => setShowCreateForm(false)}
-                className="text-xs font-semibold text-gray-500 hover:text-gray-900 px-4 py-2.5"
+                className="text-xs font-semibold text-gray-500 hover:text-gray-900 px-4 py-2.5 border border-gray-200 sm:border-transparent rounded-xl sm:rounded-none text-center"
               >
                 Cancel
               </button>
@@ -352,130 +353,289 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
           </form>
         </div>
       ) : (
-        <div className="flex items-center justify-between bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-gb-green">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-white rounded-2xl border border-gray-200 p-4 shadow-xs">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-gb-green shrink-0">
               <Tags size={18} />
             </div>
-            <div>
-              <p className="font-bold text-sm text-gray-900">Manage Store Categories</p>
-              <p className="text-xs text-gray-400">Add or edit category images, GST rates & details</p>
+            <div className="min-w-0">
+              <p className="font-bold text-sm text-gray-900 truncate">Manage Store Categories</p>
+              <p className="text-xs text-gray-400 truncate sm:whitespace-normal">Add or edit category images, GST rates & details</p>
             </div>
           </div>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="btn-primary text-xs flex items-center gap-1.5 px-4 py-2"
+            className="btn-primary text-xs flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 shrink-0 w-full sm:w-auto"
           >
             <Plus size={14} /> Add Category
           </button>
         </div>
       )}
 
-      {/* Categories table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-        <table className="w-full" aria-label="Categories list">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/70">
-              <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Category</th>
-              <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Slug</th>
-              <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">GST Rate</th>
-              <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Description</th>
-              <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Status</th>
-              <th className="text-right text-xs font-semibold text-gray-500 px-6 py-3.5">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {categories.map((cat) => (
-              <tr key={cat.id} className="hover:bg-gray-50/50 transition-colors">
-                {/* Category Thumbnail & Name */}
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gray-100 relative overflow-hidden shrink-0 border border-gray-200">
-                      {cat.image_url ? (
-                        <Image
-                          src={cat.image_url}
-                          alt={cat.name}
-                          fill
-                          sizes="48px"
-                          className="object-cover"
-                          unoptimized={cat.image_url.startsWith("data:")}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <ImageIcon size={18} />
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">{cat.name}</p>
-                      <button
-                        onClick={() => openEditModal(cat)}
-                        className="text-[11px] text-gb-green hover:underline font-medium flex items-center gap-1 mt-0.5"
-                      >
-                        <Edit3 size={11} /> Change Image / Edit
-                      </button>
-                    </div>
-                  </div>
-                </td>
-
-                <td className="px-6 py-4 text-xs text-gray-500 font-mono">{cat.slug}</td>
-
-                {/* GST Rate Column */}
-                <td className="px-6 py-4">
-                  {cat.gst_enabled && Number(cat.gst_percentage) > 0 ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                      {cat.gst_percentage}% GST
-                    </span>
+      {/* Mobile Categories Card List (< md) */}
+      <div className="md:hidden space-y-3.5">
+        {categories.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-400">
+            <Tags size={36} className="mx-auto mb-2 text-gray-300" />
+            <p className="text-sm font-bold text-gray-700">No categories found</p>
+            <p className="text-xs text-gray-400 mt-1">Get started by creating your first category</p>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="btn-primary text-xs inline-flex items-center gap-1.5 px-4 py-2 mt-4"
+            >
+              <Plus size={14} /> Add Category
+            </button>
+          </div>
+        ) : (
+          categories.map((cat) => (
+            <div
+              key={cat.id}
+              className="bg-white rounded-2xl border border-gray-200 p-4 shadow-2xs space-y-3.5"
+            >
+              {/* Top Section: Category Image, Name, Slug & Change Image Action */}
+              <div className="flex items-start gap-3">
+                <div className="w-14 h-14 rounded-xl bg-gray-50 relative overflow-hidden shrink-0 border border-gray-200">
+                  {cat.image_url ? (
+                    <Image
+                      src={cat.image_url}
+                      alt={cat.name}
+                      fill
+                      sizes="56px"
+                      className="object-cover"
+                      unoptimized={cat.image_url.startsWith("data:")}
+                    />
                   ) : (
-                    <span className="text-xs text-gray-400 font-medium">0% (No GST)</span>
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
+                      <ImageIcon size={22} />
+                    </div>
                   )}
-                </td>
-                
-                <td className="px-6 py-4 text-xs text-gray-500 max-w-xs truncate">
-                  {cat.description ?? "—"}
-                </td>
+                </div>
 
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() => toggleActive(cat.id, cat.is_active)}
-                    className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
-                      cat.is_active
-                        ? "bg-green-50 text-green-700"
-                        : "bg-gray-100 text-gray-400"
-                    }`}
-                    aria-label={cat.is_active ? "Deactivate category" : "Activate category"}
-                  >
-                    {cat.is_active ? (
-                      <ToggleRight size={16} className="text-green-600" />
-                    ) : (
-                      <ToggleLeft size={16} className="text-gray-400" />
-                    )}
-                    {cat.is_active ? "Active" : "Inactive"}
-                  </button>
-                </td>
-
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => openEditModal(cat)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-gb-green bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      <Edit3 size={12} /> Edit
-                    </button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-1">
+                    <h3 className="text-sm font-bold text-gray-900 leading-snug break-words">
+                      {cat.name}
+                    </h3>
                     <Link
                       href={`/categories/${cat.slug}`}
                       target="_blank"
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                      title="View category page"
+                      className="p-1 text-gray-400 hover:text-gray-700 transition-colors shrink-0 -mt-0.5"
+                      title="View public category page"
                     >
                       <ExternalLink size={14} />
                     </Link>
                   </div>
-                </td>
+
+                  <p className="text-[11px] text-gray-400 font-mono truncate mt-0.5">
+                    /{cat.slug}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => openEditModal(cat)}
+                    className="text-[11px] text-gb-green hover:underline font-medium inline-flex items-center gap-1 mt-1 cursor-pointer"
+                  >
+                    <Edit3 size={11} /> Change Image
+                  </button>
+                </div>
+              </div>
+
+              {/* Middle Section: GST Rate and Status Toggle */}
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-gray-100/80">
+                {/* GST Rate pill */}
+                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100 flex flex-col justify-center">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    GST Rate
+                  </span>
+                  <div className="mt-0.5">
+                    {cat.gst_enabled && Number(cat.gst_percentage) > 0 ? (
+                      <span className="inline-flex items-center text-[11px] font-bold text-amber-800">
+                        {cat.gst_percentage}% GST
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-gray-500 font-medium">
+                        0% (No GST)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status Toggle Button */}
+                <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100 flex flex-col justify-center">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    Status
+                  </span>
+                  <div className="mt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => toggleActive(cat.id, cat.is_active)}
+                      disabled={isPending}
+                      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                        cat.is_active
+                          ? "bg-green-100/80 text-green-800 hover:bg-green-200/80"
+                          : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                      }`}
+                      aria-label={cat.is_active ? "Deactivate category" : "Activate category"}
+                    >
+                      {cat.is_active ? (
+                        <ToggleRight size={16} className="text-green-600" />
+                      ) : (
+                        <ToggleLeft size={16} className="text-gray-400" />
+                      )}
+                      <span>{cat.is_active ? "Active" : "Inactive"}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description box */}
+              {cat.description && (
+                <div className="text-xs text-gray-600 bg-gray-50/70 rounded-xl p-2.5 border border-gray-100 leading-relaxed break-words">
+                  {cat.description}
+                </div>
+              )}
+
+              {/* Action Buttons row */}
+              <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => openEditModal(cat)}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold text-gb-green bg-green-50 hover:bg-green-100 active:bg-green-200 border border-green-200/60 py-2.5 px-4 rounded-xl transition-colors cursor-pointer"
+                >
+                  <Edit3 size={13} /> Edit Category
+                </button>
+                <Link
+                  href={`/categories/${cat.slug}`}
+                  target="_blank"
+                  className="inline-flex items-center justify-center gap-1 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 py-2.5 px-3 rounded-xl transition-colors shrink-0"
+                  title="View category page"
+                >
+                  <ExternalLink size={13} />
+                  <span>View</span>
+                </Link>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Categories table (>= md) */}
+      <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full" aria-label="Categories list">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50/70">
+                <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Category</th>
+                <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Slug</th>
+                <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">GST Rate</th>
+                <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Description</th>
+                <th className="text-left text-xs font-semibold text-gray-500 px-6 py-3.5">Status</th>
+                <th className="text-right text-xs font-semibold text-gray-500 px-6 py-3.5">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {categories.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-12 text-gray-400">
+                    <Tags size={36} className="mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm font-bold text-gray-700">No categories found</p>
+                    <p className="text-xs text-gray-400 mt-1">Get started by creating your first category</p>
+                  </td>
+                </tr>
+              ) : (
+                categories.map((cat) => (
+                  <tr key={cat.id} className="hover:bg-gray-50/50 transition-colors">
+                    {/* Category Thumbnail & Name */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-gray-100 relative overflow-hidden shrink-0 border border-gray-200">
+                          {cat.image_url ? (
+                            <Image
+                              src={cat.image_url}
+                              alt={cat.name}
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                              unoptimized={cat.image_url.startsWith("data:")}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                              <ImageIcon size={18} />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">{cat.name}</p>
+                          <button
+                            onClick={() => openEditModal(cat)}
+                            className="text-[11px] text-gb-green hover:underline font-medium flex items-center gap-1 mt-0.5"
+                          >
+                            <Edit3 size={11} /> Change Image / Edit
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 text-xs text-gray-500 font-mono">{cat.slug}</td>
+
+                    {/* GST Rate Column */}
+                    <td className="px-6 py-4">
+                      {cat.gst_enabled && Number(cat.gst_percentage) > 0 ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                          {cat.gst_percentage}% GST
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400 font-medium">0% (No GST)</span>
+                      )}
+                    </td>
+                    
+                    <td className="px-6 py-4 text-xs text-gray-500 max-w-xs truncate">
+                      {cat.description ?? "—"}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => toggleActive(cat.id, cat.is_active)}
+                        className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+                          cat.is_active
+                            ? "bg-green-50 text-green-700"
+                            : "bg-gray-100 text-gray-400"
+                        }`}
+                        aria-label={cat.is_active ? "Deactivate category" : "Activate category"}
+                      >
+                        {cat.is_active ? (
+                          <ToggleRight size={16} className="text-green-600" />
+                        ) : (
+                          <ToggleLeft size={16} className="text-gray-400" />
+                        )}
+                        {cat.is_active ? "Active" : "Inactive"}
+                      </button>
+                    </td>
+
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEditModal(cat)}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-gb-green bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          <Edit3 size={12} /> Edit
+                        </button>
+                        <Link
+                          href={`/categories/${cat.slug}`}
+                          target="_blank"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                          title="View category page"
+                        >
+                          <ExternalLink size={14} />
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Edit Category Modal */}
@@ -488,17 +648,17 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
             if (e.target === e.currentTarget) setEditingCategory(null);
           }}
         >
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-5 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto overscroll-contain">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-5 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
-                <span className="text-xs text-gray-400 font-mono">Category Editor</span>
-                <h3 className="text-lg font-bold text-gray-900">
+                <span className="text-[10px] sm:text-xs text-gray-400 font-mono uppercase tracking-wider">Category Editor</span>
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-snug">
                   Edit &ldquo;{editingCategory.name}&rdquo;
                 </h3>
               </div>
               <button
                 onClick={() => setEditingCategory(null)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors text-gray-500"
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors text-gray-500 shrink-0"
               >
                 <X size={16} />
               </button>
@@ -548,7 +708,7 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
 
               {/* GST Configuration Box in Edit Modal */}
               <div className="p-4 rounded-xl border border-amber-200/80 bg-amber-50/40 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <p className="text-xs font-bold text-gray-900">GST (Goods & Services Tax)</p>
                     <p className="text-[11px] text-gray-500">Enable if items in this category attract GST</p>
@@ -556,7 +716,7 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
                   <button
                     type="button"
                     onClick={() => setEditForm((p) => ({ ...p, gst_enabled: !p.gst_enabled }))}
-                    className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+                    className={`flex items-center justify-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full transition-colors self-start sm:self-auto ${
                       editForm.gst_enabled
                         ? "bg-amber-100 text-amber-900 border border-amber-300"
                         : "bg-gray-100 text-gray-500 border border-gray-200"
@@ -606,11 +766,11 @@ export function AdminCategoriesClient({ categories }: AdminCategoriesClientProps
 
               {error && <p className="text-red-600 text-xs">{error}</p>}
 
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setEditingCategory(null)}
-                  className="text-xs font-semibold text-gray-500 hover:text-gray-900 px-3 py-2"
+                  className="text-xs font-semibold text-gray-500 hover:text-gray-900 px-3 py-2.5 rounded-xl border border-gray-200 sm:border-transparent"
                 >
                   Cancel
                 </button>
