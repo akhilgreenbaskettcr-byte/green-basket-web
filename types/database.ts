@@ -201,6 +201,9 @@ export interface Database {
           notes: string | null;
           gps_lat: number | null;
           gps_lng: number | null;
+          delivery_distance_km: number | null;
+          delivery_area: string | null;
+          delivery_rule_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -228,6 +231,9 @@ export interface Database {
           notes?: string | null;
           gps_lat?: number | null;
           gps_lng?: number | null;
+          delivery_distance_km?: number | null;
+          delivery_area?: string | null;
+          delivery_rule_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -315,6 +321,42 @@ export interface Database {
           updated_at?: string;
         };
       };
+      delivery_pricing_rules: {
+        Row: {
+          id: string;
+          min_order: number;
+          max_order: number | null;
+          free_distance_km: number;
+          base_charge: number;
+          per_km_charge: number;
+          extra_after_km: number;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          min_order?: number;
+          max_order?: number | null;
+          free_distance_km?: number;
+          base_charge?: number;
+          per_km_charge?: number;
+          extra_after_km?: number;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+        Update: {
+          min_order?: number;
+          max_order?: number | null;
+          free_distance_km?: number;
+          base_charge?: number;
+          per_km_charge?: number;
+          extra_after_km?: number;
+          is_active?: boolean;
+          sort_order?: number;
+        };
+      };
       addresses: {
         Row: {
           id: string;
@@ -382,6 +424,8 @@ export type Order = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
 export type SiteSetting = Database["public"]["Tables"]["site_settings"]["Row"];
 export type DeliveryArea = Database["public"]["Tables"]["delivery_areas"]["Row"];
+export type DeliveryPricingRule =
+  Database["public"]["Tables"]["delivery_pricing_rules"]["Row"];
 export type SavedAddress = Database["public"]["Tables"]["addresses"]["Row"];
 
 export type OrderStatus = Order["status"];
@@ -389,7 +433,7 @@ export type OrderStatus = Order["status"];
 // Enriched product type with variants and category
 export type ProductWithVariants = Product & {
   product_variants: ProductVariant[];
-  categories: Pick<Category, "id" | "name" | "slug" | "gst_enabled" | "gst_percentage"> | null;
+  categories: Pick<Category, "id" | "name" | "slug" | "gst_enabled" | "gst_percentage" | "is_active"> | null;
 };
 
 // Enriched order type with items

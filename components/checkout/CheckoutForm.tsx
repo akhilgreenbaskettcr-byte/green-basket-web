@@ -9,7 +9,6 @@ import { createOrder } from "@/app/actions/order";
 import { formatPrice } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { MapPickerModal } from "@/components/checkout/MapPickerModal";
 import { extractCoordinatesFromUrl } from "@/lib/location-parser";
 import { loadRazorpayScript } from "@/lib/razorpay";
 import { trackBeginCheckout } from "@/lib/analytics";
@@ -31,9 +30,7 @@ import {
   Lock,
   ShoppingBag,
 } from "lucide-react";
-import type { DeliveryArea, SavedAddress } from "@/types/database";
-
-const DELIVERY_FEE = 40;
+import type { SavedAddress } from "@/types/database";
 
 interface FormData {
   customer_name: string;
@@ -50,18 +47,27 @@ interface FormErrors {
 }
 
 interface CheckoutFormProps {
-  deliveryAreas?: DeliveryArea[];
-  defaultDeliveryFee?: number;
   enableCod?: boolean;
 }
 
 type LocationFetchStatus = "IDLE" | "FETCHING" | "FILLED" | "DENIED" | "ERROR";
 
-export function CheckoutForm({
-  deliveryAreas = [],
-  defaultDeliveryFee = 40,
-  enableCod = true,
-}: CheckoutFormProps) {
+type DeliveryQuoteState =
+  | { status: "IDLE" }
+  | { status: "CHECKING" }
+  | {
+      status: "AVAILABLE";
+      pincode: string;
+      areaName: string;
+      subtotal: number;
+      gstTotal: number;
+      deliveryCharge: number;
+      total: number;
+    }
+  | { status: "UNAVAILABLE"; message: string }
+  | { status: "ERROR"; message: string };
+
+export function CheckoutForm({ enableCod = true }: CheckoutFormProps) {
   const router = useRouter();
   const { items, subtotal, gstTotal, gstBreakdown, clearCart } = useCartStore();
   const [mounted, setMounted] = useState(false);
@@ -78,19 +84,15 @@ export function CheckoutForm({
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | "custom">("custom");
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showMapModal, setShowMapModal] = useState(false);
-
-  // GPS autofill state
+  // Location & server-verified delivery quote state
   const [locationFetch, setLocationFetch] = useState<LocationFetchStatus>("IDLE");
-  const [locationNote, setLocationNote] = useState("");
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
-
-  // Paste Location Link state
-  const [initialLinkForMap, setInitialLinkForMap] = useState<string>("");
   const [locationLink, setLocationLink] = useState<string>("");
   const [pastedLinkInput, setPastedLinkInput] = useState<string>("");
   const [pastedLinkError, setPastedLinkError] = useState<string>("");
   const [pastedLinkLoading, setPastedLinkLoading] = useState<boolean>(false);
+  const [quote, setQuote] = useState<DeliveryQuoteState>({ status: "IDLE" });
+  const quoteRequestId = useRef(0);
 
   const handleFindLocationFromCheckoutLink = async () => {
     const url = pastedLinkInput.trim();
@@ -107,13 +109,9 @@ export function CheckoutForm({
       if ("error" in res) {
         setPastedLinkError(res.error);
       } else {
-        setInitialLinkForMap(url);
         setLocationLink(url);
-        if (res.lat && res.lng) {
-          setGpsCoords({ lat: res.lat, lng: res.lng });
-        }
-        setShowMapModal(true);
-        setPastedLinkError("");
+        setGpsCoords({ lat: res.lat, lng: res.lng });
+        setLocationFetch("IDLE");
       }
     } catch {
       setPastedLinkError("Unable to find a location from this link. Please check the link and try again.");
@@ -212,118 +210,113 @@ export function CheckoutForm({
     }
   };
 
-  const handleMapConfirm = (locationData: {
-    areaName: string;
-    pincode: string;
-    lat?: number;
-    lng?: number;
-    locationLink?: string;
-  }) => {
-    setForm((prev) => ({
-      ...prev,
-      city: locationData.areaName ? `${locationData.areaName}, Thrissur` : prev.city,
-      pincode: locationData.pincode || prev.pincode,
-    }));
-
-    if (locationData.lat != null && locationData.lng != null) {
-      setGpsCoords({ lat: locationData.lat, lng: locationData.lng });
-      setLocationFetch("FILLED");
-      setLocationNote(`Location pinned on map: (${locationData.lat.toFixed(5)}, ${locationData.lng.toFixed(5)})`);
-    }
-
-    if (locationData.locationLink) {
-      setLocationLink(locationData.locationLink);
-      setPastedLinkInput(locationData.locationLink);
-    }
-  };
-
   const handleGetLiveLocation = () => {
     if (!navigator.geolocation) {
       setLocationFetch("ERROR");
-      setLocationNote("Geolocation is not supported by your browser.");
+      setPastedLinkError("Location is not supported by your browser. Please paste a Google Maps link instead.");
       return;
     }
 
     setLocationFetch("FETCHING");
-    setLocationNote("");
+    setPastedLinkError("");
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      (position) => {
         const { latitude, longitude } = position.coords;
-        try {
-          // Reverse geocode via OpenStreetMap Nominatim
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-            { headers: { "Accept-Language": "en" } }
-          );
-          const data = await res.json();
-
-          if (data && data.address) {
-            const road = data.address.road || data.address.suburb || data.address.neighbourhood || "";
-            const city = data.address.city || data.address.town || data.address.village || data.address.county || "Thrissur";
-            const postcode = data.address.postcode ? data.address.postcode.replace(/\D/g, "").slice(0, 6) : "";
-            const fullAddr = data.display_name || `${road}, ${city}`;
-
-            setForm((prev) => ({
-              ...prev,
-              address: fullAddr,
-              city: city,
-              pincode: postcode || prev.pincode,
-            }));
-            setGpsCoords({ lat: latitude, lng: longitude });
-            setSelectedAddressId("custom");
-            setLocationFetch("FILLED");
-            setLocationNote("Location auto-filled from GPS.");
-          } else {
-            setLocationFetch("FILLED");
-            setGpsCoords({ lat: latitude, lng: longitude });
-            setForm((prev) => ({
-              ...prev,
-              address: `GPS: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-            }));
-            setLocationNote("Coordinates captured. Please add street details.");
-          }
-        } catch {
-          setLocationFetch("ERROR");
-          setLocationNote("Could not fetch address from coordinates. Please type manually.");
-        }
+        setGpsCoords({ lat: latitude, lng: longitude });
+        setLocationLink(`https://www.google.com/maps?q=${latitude},${longitude}`);
+        setPastedLinkInput("");
+        setLocationFetch("FILLED");
       },
       (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          setLocationFetch("DENIED");
-          setLocationNote("Location permission was denied. Please enter your address manually.");
-        } else {
-          setLocationFetch("ERROR");
-          setLocationNote("Could not retrieve GPS location. Please enter manually.");
-        }
+        const denied = error.code === error.PERMISSION_DENIED;
+        setLocationFetch(denied ? "DENIED" : "ERROR");
+        setPastedLinkError(
+          denied
+            ? "Location permission was denied. Please paste a Google Maps link instead."
+            : "Could not retrieve your location. Please paste a Google Maps link instead."
+        );
       },
       { timeout: 10000, enableHighAccuracy: true }
     );
   };
 
-  const handleDeliveryAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedPincode = e.target.value;
-    const matchedArea = deliveryAreas.find((da) => da.pincode === selectedPincode);
+  // Server-side eligibility + delivery charge. Re-runs whenever the location or cart changes.
+  const cartSignature = items.map((i) => `${i.variantId}:${i.quantity}`).join("|");
+  useEffect(() => {
+    if (!gpsCoords || items.length === 0) return;
 
-    setForm((prev) => ({
-      ...prev,
-      pincode: selectedPincode,
-      city: matchedArea?.area_name ? `${matchedArea.area_name}, Thrissur` : prev.city,
-    }));
-  };
+    const requestId = ++quoteRequestId.current;
+    setQuote({ status: "CHECKING" });
 
-  // Derive eligibility from active deliveryAreas DB prop
-  const currentPincode = form.pincode.trim();
-  const matchedDeliveryArea = deliveryAreas.find(
-    (da) => da.pincode.trim() === currentPincode && da.is_active
-  );
-  const isPinApproved = Boolean(matchedDeliveryArea);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/delivery/quote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lat: gpsCoords.lat,
+            lng: gpsCoords.lng,
+            items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+          }),
+        });
+        const data = await res.json();
+        if (requestId !== quoteRequestId.current) return;
+
+        if (!res.ok || !data.success) {
+          setQuote({ status: "ERROR", message: data?.error || "Unable to check delivery right now. Please try again." });
+          return;
+        }
+
+        if (data.available) {
+          setQuote({
+            status: "AVAILABLE",
+            pincode: data.pincode,
+            areaName: data.areaName,
+            subtotal: data.subtotal,
+            gstTotal: data.gstTotal,
+            deliveryCharge: data.deliveryCharge,
+            total: data.total,
+          });
+          setForm((prev) => ({
+            ...prev,
+            pincode: data.pincode,
+            city: data.areaName ? `${data.areaName}, Thrissur` : prev.city,
+          }));
+          setErrors((prev) => ({ ...prev, location: "" }));
+        } else if (data.reason === "area_unavailable") {
+          setQuote({ status: "UNAVAILABLE", message: data.message });
+        } else {
+          setQuote({ status: "ERROR", message: data.message });
+        }
+      } catch {
+        if (requestId === quoteRequestId.current) {
+          setQuote({ status: "ERROR", message: "Unable to check delivery right now. Please try again." });
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gpsCoords, cartSignature]);
+
+  const canOrder = quote.status === "AVAILABLE" && gpsCoords !== null;
 
   const sub = subtotal();
   const tax = gstTotal();
   const breakdown = gstBreakdown();
-  const delivery = Math.max(0, defaultDeliveryFee);
-  const total = sub + tax + delivery;
+  const delivery = quote.status === "AVAILABLE" ? quote.deliveryCharge : 0;
+  const total = quote.status === "AVAILABLE" ? quote.total : sub + tax;
+  // Server-verified figures (the server recalculates everything again before charging).
+  const orderTotals =
+    quote.status === "AVAILABLE"
+      ? {
+          subtotal: quote.subtotal,
+          gstTotal: quote.gstTotal,
+          deliveryFee: quote.deliveryCharge,
+          total: quote.total,
+        }
+      : { subtotal: sub, gstTotal: tax, deliveryFee: 0, total: sub + tax };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -349,8 +342,8 @@ export function CheckoutForm({
     }
     if (form.address.trim().length < 10)
       newErrors.address = "Please enter a complete address";
-    if (!isPinApproved)
-      newErrors.pincode = `Delivery is currently unavailable for PIN code ${form.pincode || "(empty)"}. Please select an active delivery area.`;
+    if (!canOrder)
+      newErrors.location = "Please check your delivery location to continue.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -371,8 +364,8 @@ export function CheckoutForm({
         const result = await createOrder({
           ...form,
           payment_method: "cod",
-          gps_lat: gpsCoords?.lat ?? null,
-          gps_lng: gpsCoords?.lng ?? null,
+          gps_lat: gpsCoords?.lat as number,
+          gps_lng: gpsCoords?.lng as number,
           location_link:
             locationLink ||
             pastedLinkInput.trim() ||
@@ -396,10 +389,7 @@ export function CheckoutForm({
               gstAmount: gstAmt,
             };
           }),
-          subtotal: sub,
-          gstTotal: tax,
-          deliveryFee: delivery,
-          total,
+          ...orderTotals,
         });
 
         if (result.success) {
@@ -430,15 +420,15 @@ export function CheckoutForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: total,
           receipt: `rcpt_${Date.now()}`,
           customer_name: form.customer_name,
           phone: form.phone,
           email: form.email,
           address: form.address,
           city: form.city,
-          pincode: form.pincode,
           notes: form.notes,
+          gps_lat: gpsCoords?.lat,
+          gps_lng: gpsCoords?.lng,
           items: items.map((i) => ({
             productId: i.productId,
             variantId: i.variantId,
@@ -448,10 +438,6 @@ export function CheckoutForm({
             quantity: i.quantity,
             imageUrl: i.imageUrl,
           })),
-          subtotal: sub,
-          gstTotal: tax,
-          deliveryFee: delivery,
-          total: total,
         }),
       });
 
@@ -498,8 +484,8 @@ export function CheckoutForm({
               payment_method: "razorpay",
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
-              gps_lat: gpsCoords?.lat ?? null,
-              gps_lng: gpsCoords?.lng ?? null,
+              gps_lat: gpsCoords?.lat as number,
+              gps_lng: gpsCoords?.lng as number,
               location_link:
                 locationLink ||
                 pastedLinkInput.trim() ||
@@ -523,10 +509,7 @@ export function CheckoutForm({
                   gstAmount: gstAmt,
                 };
               }),
-              subtotal: sub,
-              gstTotal: tax,
-              deliveryFee: delivery,
-              total,
+              ...orderTotals,
             });
 
             if (result.success) {
@@ -608,52 +591,40 @@ export function CheckoutForm({
                   Delivery Location
                 </h2>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Select your delivery area below or enter your location details.
+                  We need your location to check delivery availability.
                 </p>
               </div>
             </div>
 
-            {/* Delivery Area Dropdown */}
-            <div className="space-y-1">
-              <label htmlFor="delivery_area_select" className="gb-label flex items-center justify-between">
-                <span>Select Delivery Area <span className="text-red-400">*</span></span>
-                <span className="text-[11px] text-gray-400 font-normal">
-                  {deliveryAreas.length} area{deliveryAreas.length !== 1 ? "s" : ""} available
-                </span>
-              </label>
-
-              {deliveryAreas.length === 0 ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-                  No active delivery areas are currently configured. Please contact store support.
-                </div>
+            {/* Option 1: Current location */}
+            <button
+              type="button"
+              id="use-current-location-btn"
+              onClick={handleGetLiveLocation}
+              disabled={locationFetch === "FETCHING"}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-gb-green text-gb-green font-bold text-sm hover:bg-gb-green hover:text-white transition-colors disabled:opacity-60"
+            >
+              {locationFetch === "FETCHING" ? (
+                <Loader2 size={16} className="animate-spin" />
               ) : (
-                <select
-                  id="delivery_area_select"
-                  value={deliveryAreas.some((da) => da.pincode === form.pincode) ? form.pincode : ""}
-                  onChange={handleDeliveryAreaChange}
-                  className="gb-input cursor-pointer font-medium text-gb-charcoal"
-                  aria-label="Select a delivery area"
-                >
-                  <option value="" disabled>
-                    — Select an approved delivery area —
-                  </option>
-                  {deliveryAreas.map((area) => (
-                    <option key={area.id} value={area.pincode}>
-                      {area.area_name} — PIN {area.pincode}
-                    </option>
-                  ))}
-                </select>
+                <span aria-hidden="true">📍</span>
               )}
+              <span>{locationFetch === "FETCHING" ? "Getting your location…" : "Use My Current Location"}</span>
+            </button>
+
+            <div className="flex items-center gap-3 text-[11px] font-semibold text-gray-400">
+              <span className="flex-1 h-px bg-gray-200" />
+              OR
+              <span className="flex-1 h-px bg-gray-200" />
             </div>
 
-            {/* Paste Location Link Box */}
+            {/* Option 2: Paste Google Maps link */}
             <div className="p-3.5 bg-gray-50/90 rounded-xl border border-gray-200/80 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
                   <LinkIcon size={14} className="text-gb-green" />
-                  Have a location link? Paste it here
+                  Paste your Google Maps location link
                 </span>
-                <span className="text-[10px] text-gray-400 font-mono">Google Maps link</span>
               </div>
               <div className="flex gap-2">
                 <input
@@ -663,11 +634,13 @@ export function CheckoutForm({
                     setPastedLinkInput(e.target.value);
                     if (pastedLinkError) setPastedLinkError("");
                   }}
-                  placeholder="Paste Google Maps location link (e.g. https://maps.app.goo.gl/...)"
+                  placeholder="https://maps.app.goo.gl/..."
                   className="gb-input text-xs py-2 bg-white flex-1"
+                  aria-label="Google Maps location link"
                 />
                 <button
                   type="button"
+                  id="check-location-btn"
                   onClick={handleFindLocationFromCheckoutLink}
                   disabled={pastedLinkLoading || !pastedLinkInput.trim()}
                   className="px-3.5 py-2 rounded-xl bg-gb-green text-white text-xs font-bold hover:bg-gb-green-dark transition-colors disabled:opacity-50 flex items-center gap-1.5 shrink-0"
@@ -677,7 +650,7 @@ export function CheckoutForm({
                   ) : (
                     <Search size={13} />
                   )}
-                  <span>Find Location</span>
+                  <span>Check Location</span>
                 </button>
               </div>
               {pastedLinkError && (
@@ -685,42 +658,33 @@ export function CheckoutForm({
               )}
             </div>
 
-            {/* Live PIN Code Status Banner */}
-            {form.pincode.trim().length === 6 && (
-              <div
-                className={`p-3.5 rounded-xl border flex items-start gap-2.5 transition-all text-xs ${
-                  isPinApproved
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : "bg-red-50 border-red-200 text-red-800"
-                }`}
-                role="status"
-              >
-                {isPinApproved ? (
-                  <>
-                    <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-bold text-emerald-900">
-                        ✓ Delivery available to {matchedDeliveryArea?.area_name || form.city || "your area"}
-                      </p>
-                      <p className="text-emerald-700 text-[11px] mt-0.5">
-                        PIN Code: <span className="font-mono font-bold">{form.pincode}</span>
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <XCircle size={18} className="text-red-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-bold text-red-900">
-                        ✕ Delivery currently unavailable in PIN {form.pincode}
-                      </p>
-                      <p className="text-red-700 text-[11px] mt-0.5">
-                        Please select an active delivery area from the dropdown above.
-                      </p>
-                    </div>
-                  </>
-                )}
+            {/* Delivery availability status (no distance / pricing details are ever shown) */}
+            {quote.status === "CHECKING" && (
+              <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50 text-xs text-gray-600 flex items-center gap-2" role="status">
+                <Loader2 size={16} className="animate-spin text-gb-green shrink-0" />
+                Checking delivery availability…
               </div>
+            )}
+            {quote.status === "AVAILABLE" && (
+              <div className="p-3.5 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-800 flex items-start gap-2.5 text-xs" role="status">
+                <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                <p className="font-bold text-emerald-900">✓ Delivery available to your location</p>
+              </div>
+            )}
+            {quote.status === "UNAVAILABLE" && (
+              <div className="p-3.5 rounded-xl border bg-red-50 border-red-200 text-red-800 flex items-start gap-2.5 text-xs" role="status">
+                <XCircle size={18} className="text-red-600 shrink-0 mt-0.5" />
+                <p className="font-bold text-red-900">{quote.message}</p>
+              </div>
+            )}
+            {quote.status === "ERROR" && (
+              <div className="p-3.5 rounded-xl border bg-amber-50 border-amber-200 text-amber-800 flex items-start gap-2.5 text-xs" role="alert">
+                <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                <p className="font-semibold">{quote.message}</p>
+              </div>
+            )}
+            {errors.location && quote.status !== "AVAILABLE" && (
+              <p className="text-red-500 text-xs">{errors.location}</p>
             )}
           </div>
 
@@ -984,10 +948,16 @@ export function CheckoutForm({
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Delivery</span>
                 <span className="font-medium text-gb-charcoal">
-                  {delivery === 0 ? (
-                    <span className="text-emerald-700 font-bold">FREE</span>
+                  {quote.status === "AVAILABLE" ? (
+                    delivery === 0 ? (
+                      <span className="text-emerald-700 font-bold">FREE</span>
+                    ) : (
+                      formatPrice(delivery)
+                    )
+                  ) : quote.status === "CHECKING" ? (
+                    <Loader2 size={14} className="animate-spin text-gray-400" />
                   ) : (
-                    formatPrice(delivery)
+                    <span className="text-gray-400 text-xs font-normal">Add location</span>
                   )}
                 </span>
               </div>
@@ -1012,13 +982,6 @@ export function CheckoutForm({
               </div>
             )}
 
-            {/* Delivery unavailable inline warning above button */}
-            {form.pincode.trim().length === 6 && !isPinApproved && (
-              <div className="bg-red-50 border border-red-100 rounded-xl px-3 py-2.5 text-xs text-red-700 font-medium">
-                ✕ Delivery is currently unavailable for PIN code{" "}
-                <span className="font-mono font-bold">{form.pincode}</span>. Select an eligible area to continue.
-              </div>
-            )}
 
             {/* Delivery Inspection & Verification Policy Notice */}
             <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-3.5 space-y-1 text-left">
@@ -1034,14 +997,14 @@ export function CheckoutForm({
             {/* Place Order / Razorpay Payment Button */}
             <button
               type="submit"
-              disabled={!isPinApproved || loading}
+              disabled={!canOrder || loading}
               className={`btn-primary w-full justify-center py-3.5 text-sm font-bold transition-all shadow-md flex items-center gap-2 ${
-                !isPinApproved || loading
+                !canOrder || loading
                   ? "opacity-50 cursor-not-allowed saturate-0"
                   : "hover:shadow-lg"
               }`}
               id="place-order-btn"
-              aria-disabled={!isPinApproved || loading}
+              aria-disabled={!canOrder || loading}
             >
               {loading ? (
                 <>
@@ -1065,9 +1028,9 @@ export function CheckoutForm({
               )}
             </button>
 
-            {!isPinApproved && form.pincode.trim().length < 6 && (
+            {quote.status === "IDLE" && (
               <p className="text-[11px] text-center text-gray-500">
-                Select or enter a delivery area and PIN code to continue.
+                Share your delivery location to continue.
               </p>
             )}
 
@@ -1088,13 +1051,6 @@ export function CheckoutForm({
           const supabase = createClient();
           supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u));
         }}
-      />
-
-      <MapPickerModal
-        isOpen={showMapModal}
-        onClose={() => setShowMapModal(false)}
-        onConfirm={handleMapConfirm}
-        initialLink={initialLinkForMap}
       />
     </form>
   );

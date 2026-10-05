@@ -14,6 +14,7 @@ import {
   Check,
   ChevronDown,
   RotateCcw,
+  Clock,
 } from "lucide-react";
 
 interface ShopAllClientProps {
@@ -57,9 +58,16 @@ export function ShopAllClient({
     return count;
   }, [selectedCategory, selectedSort, onlyFeatured, onlyInStock, searchQuery]);
 
+  // Defensive check: ensure only active products belonging to active category are processed
+  const activeProducts = useMemo(() => {
+    return initialProducts.filter(
+      (p) => p.is_active === true && (p.categories as any)?.is_active !== false
+    );
+  }, [initialProducts]);
+
   // Filter & Sort Logic
   const filteredProducts = useMemo(() => {
-    let list = [...initialProducts];
+    let list = [...activeProducts];
 
     // 1. Search Query
     if (searchQuery.trim()) {
@@ -118,7 +126,7 @@ export function ShopAllClient({
     }
 
     return list;
-  }, [initialProducts, searchQuery, selectedCategory, selectedSort, onlyFeatured, onlyInStock]);
+  }, [activeProducts, searchQuery, selectedCategory, selectedSort, onlyFeatured, onlyInStock]);
 
   const handleResetFilters = () => {
     setSearchQuery("");
@@ -222,7 +230,7 @@ export function ShopAllClient({
           </button>
 
           {categories.map((cat) => {
-            const count = initialProducts.filter((p) => p.category_id === cat.id).length;
+            const count = activeProducts.filter((p) => p.category_id === cat.id).length;
             const isSelected = selectedCategory === cat.id;
             return (
               <button
@@ -246,7 +254,7 @@ export function ShopAllClient({
       <div className="flex items-center justify-between text-xs text-gray-500 px-1">
         <p>
           Showing <strong className="text-gb-charcoal">{filteredProducts.length}</strong> of{" "}
-          <strong className="text-gb-charcoal">{initialProducts.length}</strong> products
+          <strong className="text-gb-charcoal">{activeProducts.length}</strong> products
         </p>
 
         {activeFiltersCount > 0 && (
@@ -267,8 +275,32 @@ export function ShopAllClient({
             <ProductCardClient key={product.id} product={product} />
           ))}
         </div>
+      ) : activeProducts.length === 0 ? (
+        /* Empty State: Sold Out for Today, Available Tomorrow */
+        <div className="bg-white rounded-3xl border border-gray-200/80 p-12 text-center max-w-lg mx-auto space-y-4 shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-amber-50 border border-amber-200/60 flex items-center justify-center mx-auto text-amber-600 shadow-2xs">
+            <Clock size={28} />
+          </div>
+          <div>
+            <span className="inline-block px-3 py-1 rounded-full bg-amber-100/70 text-amber-800 text-[11px] font-extrabold uppercase tracking-wide mb-2">
+              Today Sold Out
+            </span>
+            <h3 className="text-xl font-black text-gb-charcoal mb-1.5">Fresh Batch Available Tomorrow</h3>
+            <p className="text-xs sm:text-sm text-gray-500 leading-relaxed max-w-sm mx-auto">
+              Our daily batch of farm-fresh produce is currently sold out for today. Fresh harvests arrive tomorrow morning!
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/"
+              className="btn-primary py-2.5 px-6 text-xs font-bold inline-flex gap-1.5 uppercase tracking-wider"
+            >
+              Back to Home
+            </Link>
+          </div>
+        </div>
       ) : (
-        /* Empty State */
+        /* Empty Filter State */
         <div className="bg-white rounded-3xl border border-gray-200/80 p-12 text-center max-w-md mx-auto space-y-4 shadow-xs">
           <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto text-gb-green">
             <ShoppingBag size={28} className="text-gray-400" />
@@ -362,11 +394,11 @@ export function ShopAllClient({
                       : "bg-[#FAFAF5] border-gray-200/80 text-gray-700"
                   }`}
                 >
-                  All Categories ({initialProducts.length})
+                  All Categories ({activeProducts.length})
                 </button>
                 {categories.map((cat) => {
                   const isSelected = selectedCategory === cat.id;
-                  const count = initialProducts.filter((p) => p.category_id === cat.id).length;
+                  const count = activeProducts.filter((p) => p.category_id === cat.id).length;
                   return (
                     <button
                       key={cat.id}

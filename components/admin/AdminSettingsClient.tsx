@@ -19,6 +19,9 @@ import {
   QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { DeliveryPricingRule } from "@/types/database";
+import { StoreLocationEditor } from "@/components/admin/StoreLocationEditor";
+import { DeliveryPricingRulesEditor } from "@/components/admin/DeliveryPricingRulesEditor";
 
 interface Setting {
   key: string;
@@ -29,6 +32,7 @@ interface Setting {
 
 interface AdminSettingsClientProps {
   settings: Setting[];
+  deliveryRules?: DeliveryPricingRule[];
 }
 
 const TABS = [
@@ -40,7 +44,7 @@ const TABS = [
   { id: "security", label: "Security", icon: ShieldCheck },
 ];
 
-export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
+export function AdminSettingsClient({ settings, deliveryRules = [] }: AdminSettingsClientProps) {
   const [activeTab, setActiveTab] = useState("hero");
   const [values, setValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {
@@ -49,8 +53,8 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
       hero_description:
         "From freshly cut vegetables to aromatic powders and pure oils — everything your kitchen needs, made easy.",
       hero_image_url: "/images/hero-vegetables.jpg",
-      delivery_fee: "40",
-      free_delivery_above: "0",
+      free_delivery_enabled: "true",
+      free_delivery_min_order: "1500",
       same_day_cutoff_time: "1:00 PM",
       same_day_message: "Order before 1PM for same day delivery.",
       enable_cod: "true",
@@ -299,35 +303,11 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
               Delivery & Order Rules
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Configure cutoff times for same-day delivery and delivery fees.
+              Configure cutoff times, store location, free delivery and delivery pricing rules.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="gb-label">Standard Delivery Fee (₹)</label>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={values["delivery_fee"] ?? ""}
-                onChange={(e) => handleChange("delivery_fee", e.target.value)}
-                placeholder="0"
-                className="gb-input"
-              />
-            </div>
-            <div>
-              <label className="gb-label">Free Delivery Threshold (₹)</label>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={values["free_delivery_above"] ?? ""}
-                onChange={(e) => handleChange("free_delivery_above", e.target.value)}
-                placeholder="0 for none"
-                className="gb-input"
-              />
-            </div>
             <div>
               <label className="gb-label">Same-Day Cutoff Time</label>
               <input
@@ -378,6 +358,49 @@ export function AdminSettingsClient({ settings }: AdminSettingsClientProps) {
                 className="gb-input"
               />
             </div>
+
+            {/* Store Location (origin for delivery distance) */}
+            <StoreLocationEditor values={values} onChange={handleChange} />
+
+            {/* Free delivery for high-value orders */}
+            <div className="sm:col-span-2 pt-4 border-t border-gray-100 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-bold text-gb-charcoal block">Enable Free Delivery</label>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Orders at or above the minimum value below always get free delivery.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={values["free_delivery_enabled"] !== "false"}
+                    onChange={(e) =>
+                      handleChange("free_delivery_enabled", e.target.checked ? "true" : "false")
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gb-green"></div>
+                </label>
+              </div>
+              {values["free_delivery_enabled"] !== "false" && (
+                <div className="max-w-xs">
+                  <label className="gb-label">Free Delivery Minimum Order Value (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={values["free_delivery_min_order"] ?? ""}
+                    onChange={(e) => handleChange("free_delivery_min_order", e.target.value)}
+                    placeholder="1500"
+                    className="gb-input"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Delivery Pricing Rules (managed through dedicated server actions) */}
+            <DeliveryPricingRulesEditor initialRules={deliveryRules} />
 
             {/* Cash on Delivery (COD) Switch */}
             <div className="sm:col-span-2 pt-4 border-t border-gray-100 flex items-center justify-between">
