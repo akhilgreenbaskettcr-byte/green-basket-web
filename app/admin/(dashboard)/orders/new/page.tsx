@@ -41,18 +41,17 @@ export default async function AdminNewOrderPage() {
   const role = profile.role as "admin" | "staff";
   const adminClient = createAdminClient();
 
-  // Fetch active products with categories and variants
+  // Fetch all products (both active & inactive) with categories and variants for Admin POS
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: productsData } = await (adminClient as any)
     .from("products")
     .select(`
       id, name, slug, image_url, category_id, base_price, unit_type, is_active,
-      categories:category_id (name, gst_enabled, gst_percentage),
+      categories:category_id (name, gst_enabled, gst_percentage, is_active),
       product_variants (
         id, label, price, quantity_value, stock_quantity, is_available, is_auto_priced
       )
     `)
-    .eq("is_active", true)
     .order("name", { ascending: true });
 
   // Format products
@@ -63,6 +62,8 @@ export default async function AdminNewOrderPage() {
     slug: p.slug,
     category_id: p.category_id,
     category_name: p.categories?.name || "General",
+    category_is_active: p.categories?.is_active !== undefined ? Boolean(p.categories.is_active) : true,
+    is_active: Boolean(p.is_active),
     gst_enabled: Boolean(p.categories?.gst_enabled),
     gst_percentage: Number(p.categories?.gst_percentage) || 0,
     image_url: p.image_url,
@@ -80,12 +81,11 @@ export default async function AdminNewOrderPage() {
     })),
   }));
 
-  // Fetch categories for filtering
+  // Fetch all categories for filtering (both active and inactive)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: categoriesData } = await (adminClient as any)
     .from("categories")
-    .select("id, name")
-    .eq("is_active", true)
+    .select("id, name, is_active")
     .order("name", { ascending: true });
 
   // Fetch delivery areas
