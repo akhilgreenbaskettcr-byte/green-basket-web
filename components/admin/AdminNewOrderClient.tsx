@@ -29,6 +29,7 @@ import {
   ChevronRight,
   Truck,
   RotateCcw,
+  EyeOff,
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { createManualAdminOrder } from "@/app/actions/order";
@@ -47,6 +48,8 @@ export interface CatalogueProduct {
   slug: string;
   category_id: string;
   category_name: string;
+  category_is_active?: boolean;
+  is_active: boolean;
   gst_enabled?: boolean;
   gst_percentage?: number;
   image_url: string | null;
@@ -90,13 +93,15 @@ export interface CartItem {
   unitType: UnitType;
   basePrice: number;
   isCustomSize: boolean;
+  isActive?: boolean;
+  categoryIsActive?: boolean;
   gstEnabled?: boolean;
   gstPercentage?: number;
 }
 
 interface AdminNewOrderClientProps {
   products: CatalogueProduct[];
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; is_active?: boolean }[];
   deliveryAreas: DeliveryAreaOption[];
   pastCustomers: CustomerContact[];
   defaultDeliveryFee: number;
@@ -185,6 +190,21 @@ export function AdminNewOrderClient({
   // Product Catalogue Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+
+  // Product Counts for quick Admin tabs
+  const productStatusCounts = useMemo(() => {
+    let active = 0;
+    let inactive = 0;
+    for (const p of products) {
+      if (p.is_active && p.category_is_active !== false) {
+        active++;
+      } else {
+        inactive++;
+      }
+    }
+    return { total: products.length, active, inactive };
+  }, [products]);
 
   // Custom Weight / Size Calculator Modal State
   const [calculatorProduct, setCalculatorProduct] = useState<CatalogueProduct | null>(null);
@@ -209,6 +229,10 @@ export function AdminNewOrderClient({
   // Filtered Products
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
+      const isItemActive = p.is_active && p.category_is_active !== false;
+      if (statusFilter === "active" && !isItemActive) return false;
+      if (statusFilter === "inactive" && isItemActive) return false;
+
       const matchesCategory =
         selectedCategory === "all" || p.category_id === selectedCategory;
       const q = searchQuery.toLowerCase().trim();
@@ -219,7 +243,7 @@ export function AdminNewOrderClient({
         p.product_variants.some((v) => v.label.toLowerCase().includes(q));
       return matchesCategory && matchesSearch;
     });
-  }, [products, selectedCategory, searchQuery]);
+  }, [products, statusFilter, selectedCategory, searchQuery]);
 
   // Customer Autocomplete Filter
   const customerSuggestions = useMemo(() => {
@@ -276,6 +300,8 @@ export function AdminNewOrderClient({
           unitType: product.unit_type,
           basePrice: product.base_price,
           isCustomSize: false,
+          isActive: product.is_active,
+          categoryIsActive: product.category_is_active,
           gstEnabled: product.gst_enabled,
           gstPercentage: product.gst_percentage,
         },
@@ -382,6 +408,8 @@ export function AdminNewOrderClient({
         unitType: calculatorProduct.unit_type,
         basePrice: calculatorProduct.base_price,
         isCustomSize: true,
+        isActive: calculatorProduct.is_active,
+        categoryIsActive: calculatorProduct.category_is_active,
         gstEnabled: calculatorProduct.gst_enabled,
         gstPercentage: calculatorProduct.gst_percentage,
       },
@@ -869,23 +897,72 @@ export function AdminNewOrderClient({
                 <ShoppingBag size={18} className="text-gb-green" />
                 <h2 className="font-bold text-sm sm:text-base">Product Catalogue & Weights</h2>
               </div>
-              <span className="text-xs text-gray-500 font-medium">
-                {filteredProducts.length} items available
-              </span>
+              <div className="flex items-center gap-2 text-xs flex-wrap">
+                <span className="text-gray-500 font-medium">
+                  {filteredProducts.length} items shown
+                </span>
+                {productStatusCounts.inactive > 0 && (
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <EyeOff size={11} className="text-amber-600" />
+                    {productStatusCounts.inactive} hidden on store
+                  </span>
+                )}
+              </div>
             </div>
 
-            {/* Search & Category Filter Pills */}
+            {/* Search, Status & Category Filter Pills */}
             <div className="space-y-3">
-              <div className="relative">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search products by name, category or unit..."
-                  className="gb-input !pl-10 text-xs py-2.5 w-full bg-gray-50/60 focus:bg-white"
-                  style={{ paddingLeft: "2.5rem" }}
-                />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 justify-between">
+                <div className="relative flex-1">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products by name, category or unit..."
+                    className="gb-input !pl-10 text-xs py-2.5 w-full bg-gray-50/60 focus:bg-white"
+                    style={{ paddingLeft: "2.5rem" }}
+                  />
+                </div>
+
+                {/* Status Filter Tabs */}
+                <div className="flex items-center gap-1 p-1 bg-gray-100/80 rounded-xl shrink-0 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter("all")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                      statusFilter === "all"
+                        ? "bg-white text-gray-900 shadow-xs"
+                        : "text-gray-500 hover:text-gray-900"
+                    }`}
+                  >
+                    All ({productStatusCounts.total})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter("active")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      statusFilter === "active"
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "text-gray-500 hover:text-gray-900"
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+                    Active ({productStatusCounts.active})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter("inactive")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      statusFilter === "inactive"
+                        ? "bg-amber-600 text-white shadow-xs"
+                        : "text-gray-500 hover:text-gray-900"
+                    }`}
+                  >
+                    <EyeOff size={11} />
+                    Hidden ({productStatusCounts.inactive})
+                  </button>
+                </div>
               </div>
 
               {/* Category Pills */}
@@ -899,22 +976,30 @@ export function AdminNewOrderClient({
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  All Products
+                  All Categories
                 </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all ${
-                      selectedCategory === cat.id
-                        ? "bg-gb-green text-white shadow-xs"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
+                {categories.map((cat) => {
+                  const isCatInactive = cat.is_active === false;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all flex items-center gap-1 ${
+                        selectedCategory === cat.id
+                          ? "bg-gb-green text-white shadow-xs"
+                          : isCatInactive
+                          ? "bg-amber-50 text-amber-800 border border-dashed border-amber-300 hover:bg-amber-100"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      <span>{cat.name}</span>
+                      {isCatInactive && (
+                        <span className="text-[9px] opacity-75 font-normal">(Hidden)</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -923,76 +1008,124 @@ export function AdminNewOrderClient({
               {filteredProducts.length === 0 ? (
                 <div className="p-8 text-center text-gray-400">
                   <ShoppingBag size={32} className="mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm font-medium">No products match your search</p>
+                  <p className="text-sm font-medium">No products match your search or filter</p>
+                  {(statusFilter !== "all" || selectedCategory !== "all" || searchQuery) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStatusFilter("all");
+                        setSelectedCategory("all");
+                        setSearchQuery("");
+                      }}
+                      className="mt-2 text-xs text-gb-green hover:underline font-bold"
+                    >
+                      Reset filters
+                    </button>
+                  )}
                 </div>
               ) : (
-                filteredProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/60 p-2 rounded-xl transition-colors"
-                  >
-                    {/* Left: Thumbnail & Info */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gray-100 relative overflow-hidden shrink-0 border border-gray-100 flex items-center justify-center">
-                        {product.image_url ? (
-                          <Image
-                            src={product.image_url}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                            sizes="48px"
-                          />
-                        ) : (
-                          <ShoppingBag size={20} className="text-gray-300" />
-                        )}
-                      </div>
+                filteredProducts.map((product) => {
+                  const isProductInactive = !product.is_active;
+                  const isCategoryInactive = product.category_is_active === false;
+                  const isDelisted = isProductInactive || isCategoryInactive;
 
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-xs sm:text-sm font-bold text-gray-900">
-                            {product.name}
-                          </h3>
-                          <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                            {product.category_name}
-                          </span>
+                  return (
+                    <div
+                      key={product.id}
+                      className={`py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2 rounded-xl transition-colors ${
+                        isDelisted
+                          ? "bg-amber-50/30 hover:bg-amber-50/60 border border-dashed border-amber-200/80 my-1"
+                          : "hover:bg-gray-50/60"
+                      }`}
+                    >
+                      {/* Left: Thumbnail & Info */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-gray-100 relative overflow-hidden shrink-0 border border-gray-100 flex items-center justify-center">
+                          {product.image_url ? (
+                            <Image
+                              src={product.image_url}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                              sizes="48px"
+                            />
+                          ) : (
+                            <ShoppingBag size={20} className="text-gray-300" />
+                          )}
                         </div>
-                        <p className="text-xs text-emerald-700 font-extrabold mt-0.5">
-                          Base: {formatPrice(product.base_price)} / {product.unit_type}
-                        </p>
+
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-xs sm:text-sm font-bold text-gray-900">
+                              {product.name}
+                            </h3>
+                            <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                              {product.category_name}
+                            </span>
+                            {isProductInactive && (
+                              <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <EyeOff size={10} className="text-amber-700" />
+                                Storefront Inactive
+                              </span>
+                            )}
+                            {!isProductInactive && isCategoryInactive && (
+                              <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <EyeOff size={10} className="text-amber-700" />
+                                Category Hidden
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-emerald-700 font-extrabold mt-0.5">
+                            Base: {formatPrice(product.base_price)} / {product.unit_type}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: Variants + Custom Size Button */}
+                      <div className="flex flex-wrap items-center gap-1.5 shrink-0 justify-start sm:justify-end">
+                        {product.product_variants.map((variant) => {
+                          const isOos = variant.stock_quantity <= 0;
+                          const isUnavailable = !variant.is_available;
+                          return (
+                            <button
+                              key={variant.id}
+                              type="button"
+                              onClick={() => addStandardVariant(product, variant)}
+                              className={`px-2.5 py-1.5 text-[11px] font-bold rounded-lg border transition-all hover:scale-105 active:scale-95 flex items-center gap-1 ${
+                                isOos || isUnavailable
+                                  ? "bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200"
+                                  : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200/60"
+                              }`}
+                              title={`Add ${variant.label} for ${formatPrice(variant.price)}${isOos ? " (0 in stock)" : ""}${isUnavailable ? " (disabled)" : ""}`}
+                            >
+                              <Plus size={12} className={isOos || isUnavailable ? "text-amber-600" : "text-emerald-600"} />
+                              <span>{variant.label}</span>
+                              <span className={`font-mono font-black ${isOos || isUnavailable ? "text-amber-900" : "text-emerald-900"}`}>
+                                {formatPrice(variant.price)}
+                              </span>
+                              {isOos && (
+                                <span className="text-[9px] text-amber-700 font-semibold bg-amber-100 px-1 rounded">
+                                  0 stock
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+
+                        {/* Interactive Custom Weight / Size Button */}
+                        <button
+                          type="button"
+                          onClick={() => openCalculator(product)}
+                          className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-bold rounded-lg border border-amber-200 transition-all hover:scale-105 active:scale-95 flex items-center gap-1"
+                          title="Calculate custom weight or quantity (e.g. 350g, 2.5kg, 250ml)"
+                        >
+                          <Calculator size={13} className="text-amber-600" />
+                          <span>+ Custom Size</span>
+                        </button>
                       </div>
                     </div>
-
-                    {/* Right: Variants + Custom Size Button */}
-                    <div className="flex flex-wrap items-center gap-1.5 shrink-0 justify-start sm:justify-end">
-                      {product.product_variants.map((variant) => (
-                        <button
-                          key={variant.id}
-                          type="button"
-                          onClick={() => addStandardVariant(product, variant)}
-                          className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-lg border border-emerald-200/60 transition-all hover:scale-105 active:scale-95 flex items-center gap-1"
-                          title={`Add ${variant.label} for ${formatPrice(variant.price)}`}
-                        >
-                          <Plus size={12} className="text-emerald-600" />
-                          <span>{variant.label}</span>
-                          <span className="font-mono text-emerald-900 font-black">
-                            {formatPrice(variant.price)}
-                          </span>
-                        </button>
-                      ))}
-
-                      {/* Interactive Custom Weight / Size Button */}
-                      <button
-                        type="button"
-                        onClick={() => openCalculator(product)}
-                        className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-bold rounded-lg border border-amber-200 transition-all hover:scale-105 active:scale-95 flex items-center gap-1"
-                        title="Calculate custom weight or quantity (e.g. 350g, 2.5kg, 250ml)"
-                      >
-                        <Calculator size={13} className="text-amber-600" />
-                        <span>+ Custom Size</span>
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -1029,13 +1162,18 @@ export function AdminNewOrderClient({
                   >
                     {/* Item Details */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="font-bold text-gray-900 truncate">
                           {item.productName}
                         </p>
                         {item.isCustomSize && (
                           <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded shrink-0">
                             Custom
+                          </span>
+                        )}
+                        {(!item.isActive || item.categoryIsActive === false) && (
+                          <span className="text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded shrink-0">
+                            Hidden on Store
                           </span>
                         )}
                       </div>
